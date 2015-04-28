@@ -8,7 +8,7 @@
  */
 
 
-#include "../../../../../include/nexell/boards/s5p6818_svt_gpio.h"
+#include "../../../../../include/nexell/target/s5p6818_svt_gpio.h"
 
 		pinctrl {
           	pio_a:pinctrl@1a000 {
