@@ -221,6 +221,12 @@ config PINCTRL_S3C64XX
 	depends on ARCH_S3C64XX
 	select PINCTRL_SAMSUNG
 
+config PINCTRL_NXP
+	bool "SLsiAP SoC pinctrl driver"
+	depends on PLAT_SLSIAP
+	select PINMUX
+	select PINCONF
+
 source "drivers/pinctrl/mvebu/Kconfig"
 source "drivers/pinctrl/sh-pfc/Kconfig"
 source "drivers/pinctrl/spear/Kconfig"

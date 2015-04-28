@@ -1,0 +1,240 @@
+/*
+ * s5p6818.dtsi - Device Tree Include file for SLsiAp SoC
+ *
+ * Copyright 2009 Nexell Co.
+ *		http://www.nexell.co.kr
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+/dts-v1/;
+
+#include "../skeleton.dtsi"
+
+#include "../../../../../include/generated/autoconf.h"
+#include "../../../../../include/nexell/s5p6818/s5p6818-base.h"
+#include "../../../../../include/nexell/s5p6818/s5p6818-irq.h"
+
+/ {
+	model = "nexell soc";
+	compatible = "nexell,s5p6818";
+	#address-cells = <0x1>;
+	#size-cells = <0x1>;
+
+	cpus {
+		#address-cells = <0x1>;
+		#size-cells = <0x0>;
+
+		cpu@0 {
+			compatible = "arm,cortex-a53";
+			reg = <0x0>;
+		};
+
+		cpu@1 {
+			compatible = "arm,cortex-a53";
+			reg = <0x1>;
+		};
+
+		cpu@2 {
+			compatible = "arm,cortex-a53";
+			reg = <0x2>;
+		};
+
+		cpu@3 {
+			compatible = "arm,cortex-a53";
+			reg = <0x3>;
+		};
+
+		cpu@4 {
+			compatible = "arm,cortex-a53";
+			reg = <0x0>;
+		};
+
+		cpu@5 {
+			compatible = "arm,cortex-a53";
+			reg = <0x1>;
+		};
+
+		cpu@6 {
+			compatible = "arm,cortex-a53";
+			reg = <0x2>;
+		};
+
+		cpu@7 {
+			compatible = "arm,cortex-a53";
+			reg = <0x3>;
+		};
+	};
+
+	refclk: oscillator {
+		compatible = "nexell,s5p6818,refclk";
+		ref-freuecny = <24000000>;
+	};
+
+    aliases {
+        uart0 = &serial0;
+        uart1 = &serial1;
+        uart2 = &serial2;
+        uart3 = &serial3;
+        uart4 = &serial4;
+        uart5 = &serial5;
+    };
+
+	soc {
+		compatible = "nexell,s5p6818-soc", "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		reg = <0xc0000000 0x100000>;
+		interrupt-parent = <&gic>;
+		ranges;
+
+		#include "s5p6818-soc.dtsi"
+
+		gic:interrupt-controller@09000 {
+			compatible = "arm,cortex-a9-gic";
+			interrupt-controller;
+			#interrupt-cells = <3>;
+			reg	= <PHYS_BASE_INT_DIST 0x1000>, <PHYS_BASE_INT_CPU 0x100>;
+		};
+
+		cpu:interrupt-controller@08000 {
+			compatible = "nexell,s5p6818-gic-cpu";
+			interrupt-controller;
+		  	#address-cells = <1>;
+    	    #size-cells = <1>;
+			ranges;
+
+			io_interrupt@0 {
+				device_type = "gpio";
+				reg = <PHYS_BASE_GPIOA 0x1000>;
+				hw_irq = <IRQ_GPIOA>;
+				first_irq = <IRQ_GPIO_A_START>;
+				nr_irqs = <32>;
+			};
+
+			io_interrupt@1 {
+				device_type = "gpio";
+				reg = <PHYS_BASE_GPIOB 0x1000>;
+				hw_irq = <IRQ_GPIOB>;
+				first_irq = <IRQ_GPIO_B_START>;
+				nr_irqs = <32>;
+			};
+
+			io_interrupt@2 {
+				device_type = "gpio";
+				reg = <PHYS_BASE_GPIOC 0x1000>;
+				hw_irq = <IRQ_GPIOC>;
+				first_irq = <IRQ_GPIO_C_START>;
+				nr_irqs = <32>;
+			};
+
+			io_interrupt@3 {
+				device_type = "gpio";
+				reg = <PHYS_BASE_GPIOD 0x1000>;
+				hw_irq = <IRQ_GPIOD>;
+				first_irq = <IRQ_GPIO_D_START>;
+				nr_irqs = <32>;
+			};
+
+			io_interrupt@4 {
+				device_type = "gpio";
+				reg = <PHYS_BASE_GPIOE 0x1000>;
+				hw_irq = <IRQ_GPIOE>;
+				first_irq = <IRQ_GPIO_E_START>;
+				nr_irqs = <32>;
+			};
+
+			io_interrupt@5 {
+				device_type = "alive";
+				reg = <PHYS_BASE_ALIVE 0x1000>;
+				hw_irq = <IRQ_ALIVE>;
+				first_irq = <IRQ_ALIVE_START>;
+				nr_irqs = <6>;
+			};
+		};
+
+		timer@17000 {
+			compatible = "nexell,nxp-timer";
+			reg = <PHYS_BASE_TIMER 0x1000>;
+			interrupts = <0 IRQ_TIMER1 0>;
+			reset-id = <RESET_ID_TIMER>;
+			clksource = <0>;
+			clkevent = <1>;
+			clocks = <&timer0>, <&timer1>;
+			clock-names = "timer0", "timer1";
+		};
+
+		serial0:serial@a1000 {
+			compatible = "nexell,nxp-uart";
+			reg = <PHYS_BASE_UART0 0x1000>;
+			interrupts = <0 IRQ_UART0 0>;
+			clock-names = "uart0";
+			clocks = <&uart0>;
+			#if !defined(CONFIG_SERIAL_NXP_UART0)
+			#if  defined(CONFIG_SERIAL_NXP_UART0_DMA)
+			dma-names = "tx", "rx";
+			dmas = <&pl08xdma0 2 &pl08xdma0 3>;
+			#endif
+			status = "disabled";
+			#endif
+			reset-id = <RESET_ID_UART0>;
+			tieoff-id = <TIEOFF_UART0_USESMC TIEOFF_UART0_SMCTXENB TIEOFF_UART0_SMCRXENB>;
+		};
+
+		serial1:serial@a0000 {
+			compatible = "nexell,nxp-uart";
+			reg = <PHYS_BASE_UART1 0x1000>;
+			interrupts = <0 IRQ_UART1 0>;
+			clock-names = "uart1";
+			clocks = <&uart1>;
+			#if !defined(CONFIG_SERIAL_NXP_UART1)
+			#if  defined(CONFIG_SERIAL_NXP_UART1_DMA)
+			dma-names = "tx", "rx";
+			dmas = <&pl08xdma0 0 &pl08xdma0 1>;
+			#endif
+			status = "disabled";
+			#endif
+		};
+
+		serial2:serial@a2000 {
+			compatible = "nexell,nxp-uart";
+			reg = <PHYS_BASE_UART2 0x1000>;
+			interrupts = <IRQ_UART2>;
+			clock-names = "uart2";
+			#if !defined(CONFIG_SERIAL_NXP_UART2)
+			status = "disabled";
+			#endif
+		};
+
+		serial3:serial@a3000 {
+			compatible = "nexell,nxp-uart";
+			reg = <PHYS_BASE_UART3 0x1000>;
+			interrupts = <IRQ_UART3>;
+			clock-names = "uart3";
+			#if !defined(CONFIG_SERIAL_NXP_UART3)
+			status = "disabled";
+			#endif
+		};
+
+		serial4:serial@6d000 {
+			compatible = "nexell,nxp-uart";
+			reg = <PHYS_BASE_UART4 0x1000>;
+			interrupts = <IRQ_UART4>;
+			clock-names = "uart4";
+			#if !defined(CONFIG_SERIAL_NXP_UART4)
+			status = "disabled";
+			#endif
+		};
+
+		serial5:serial@6f000 {
+			compatible = "nexell,nxp-uart";
+			reg = <PHYS_BASE_UART5 0x1000>;
+			interrupts = <IRQ_UART5>;
+			clock-names = "uart5";
+			#if !defined(CONFIG_SERIAL_NXP_UART5)
+			status = "disabled";
+			#endif
+		};
+	};
+};
+
