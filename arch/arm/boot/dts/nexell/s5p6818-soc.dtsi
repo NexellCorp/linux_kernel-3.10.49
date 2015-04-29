@@ -7,6 +7,19 @@
  * Licensed under GPLv2 or later.
  */
 
+	pin_config {
+	  	#address-cells = <1>;
+        #size-cells = <1>;
+		ranges;
+
+    	pio_a:pins@1a000 { device_type = "gpio";  reg = <PHYS_BASE_GPIOA 0x1000>; };
+    	pio_b:pins@1b000 { device_type = "gpio";  reg = <PHYS_BASE_GPIOB 0x1000>; };
+    	pio_c:pins@1c000 { device_type = "gpio";  reg = <PHYS_BASE_GPIOC 0x1000>; };
+		pio_d:pins@1d000 { device_type = "gpio";  reg = <PHYS_BASE_GPIOD 0x1000>; };
+    	pio_e:pins@1e000 { device_type = "gpio";  reg = <PHYS_BASE_GPIOE 0x1000>; };
+    	alive:pins@10800 { device_type = "alive"; reg = <PHYS_BASE_ALIVE 0x1000>; };
+	};
+
 	clocks {
 		compatible = "nexell,s5pxx18,clocks";
 	  	#address-cells = <1>;
@@ -622,44 +635,4 @@
 		};
 	};
 
-	pinctrl {
-		compatible = "nexell,nxp-pinctrl";
-	  	#address-cells = <1>;
-        #size-cells = <1>;
 
-    	pio_a:pinctrl@1a000 {
-	    	reg = <PHYS_BASE_GPIOA 0x1000>;
-        	gpio-controller;
-    		device_type = "gpio";
-    	};
-
-    	pio_b:pinctrl@1b000 {
-    		reg = <PHYS_BASE_GPIOB 0x1000>;
-    		gpio-controller;
-    		device_type = "gpio";
-    	};
-
-    	pio_c:pinctrl@1c000 {
-    		reg = <PHYS_BASE_GPIOC 0x1000>;
-    		gpio-controller;
-    		device_type = "gpio";
-    	};
-
-    	pio_d:pinctrl@1d000 {
-    		reg = <PHYS_BASE_GPIOD 0x1000>;
-    		gpio-controller;
-    		device_type = "gpio";
-    	};
-
-    	pio_e:pinctrl@1e000 {
-    		reg = <PHYS_BASE_GPIOE 0x1000>;
-    		gpio-controller;
-    		device_type = "gpio";
-    	};
-
-    	alive:pinctrl@10800 {
-    		reg = <PHYS_BASE_ALIVE 0x1000>;
-    		gpio-controller;
-    		device_type = "alive";
-    	};
-	};

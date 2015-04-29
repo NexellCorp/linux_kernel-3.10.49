@@ -5,6 +5,6 @@ if GOLDFISH
 source "drivers/platform/goldfish/Kconfig"
 endif
 if PLAT_SLSIAP 
-#source "drivers/platform/nexell/Kconfig"
+source "drivers/platform/nexell/Kconfig"
 endif
 

@@ -481,7 +481,7 @@ static int __init nxp_pinctrl_init(void)
 {
 	return platform_driver_register(&nxp_pinctrl_driver);
 }
-pure_initcall(nxp_pinctrl_init);
+subsys_initcall(nxp_pinctrl_init);
 
 MODULE_DESCRIPTION("SLsiAP pinctrl driver");
 MODULE_LICENSE("GPL");

@@ -2,14 +2,9 @@
 # Copyright 2009 Nexell.
 #		http://www.nexell.co.kr
 #
-menu "Nexell SLsiAP specific device drivers"
-	depends on PLAT_SLSIAP
+# Select Board types
 
-config NXP_NXP_SETUP_CPU
-	bool "Setup cpu interface"
-	help
-		If you say yes to this option, support will be included for the
-		built-in setup cpu interface on bootup for Nexell SLsiAP processors.
-
-
+if ARCH_S5P6818
+source "drivers/platform/nexell/s5p6818/Kconfig"
+endif
 
