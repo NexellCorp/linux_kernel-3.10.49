@@ -12,6 +12,10 @@
 #define	UART_CLOCK_FREQUENCY	147500000
 
 / {
+	memory {
+		reg = <0x40000000 0x40000000>;
+	};
+
 	soc {
 
 		clocks {
