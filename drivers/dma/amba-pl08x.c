@@ -84,6 +84,10 @@
 #include <linux/seq_file.h>
 #include <linux/slab.h>
 #include <linux/amba/pl080.h>
+#ifdef CONFIG_OF
+#include <linux/of_address.h>
+#include <linux/of_dma.h>
+#endif
 
 #include "dmaengine.h"
 #include "virt-dma.h"
@@ -92,6 +96,10 @@
 
 static struct amba_driver pl08x_amba_driver;
 struct pl08x_driver_data;
+
+/*
+#define dev_dbg(f, m...)	printk(m)
+*/
 
 /**
  * struct vendor_data - vendor-specific config parameters for PL08x derivatives
@@ -1842,6 +1850,143 @@ static inline void init_pl08x_debugfs(struct pl08x_driver_data *pl08x)
 }
 #endif
 
+/* add by jhkim for device tree */
+#ifdef CONFIG_OF
+struct dma_pl08x_filter_args {
+	struct pl08x_driver_data *pdmac;
+	unsigned int chan_id;
+};
+
+static bool pl08x_dt_filter(struct dma_chan *chan, void *chan_id)
+{
+	struct dma_pl08x_filter_args *fargs = chan_id;
+	struct pl08x_dma_chan *plchan;
+	char *name = chan_id;
+
+	if (chan->device != &fargs->pdmac->slave &&
+		chan->device != &fargs->pdmac->memcpy)
+		return false;
+
+	plchan = to_pl08x_chan(chan);
+
+	/* Check that the channel is not taken! */
+	if (!strcmp(plchan->name, name))
+		return true;
+
+	return false;
+}
+
+static struct dma_chan *of_dma_pl08x_xlate(struct of_phandle_args *dma_spec,
+						struct of_dma *ofdma)
+{
+	int count = dma_spec->args_count;
+	struct pl08x_driver_data *pdmac = ofdma->of_dma_data;
+	struct dma_pl08x_filter_args fargs;
+	dma_cap_mask_t cap;
+
+	if (!pdmac)
+		return NULL;
+
+	if (count != 1)
+		return NULL;
+
+	fargs.pdmac = pdmac;
+	fargs.chan_id = dma_spec->args[0];
+
+	dma_cap_zero(cap);
+	dma_cap_set(DMA_SLAVE, cap);
+	dma_cap_set(DMA_CYCLIC, cap);
+
+	return dma_request_channel(cap, pl08x_dt_filter, &fargs);
+}
+
+static int pl08x_get_signal(const struct pl08x_channel_data *cd)
+{
+	return cd->min_signal;	/* return Peripheral ID */
+}
+
+static struct pl08x_platform_data *pl08x_parse_dt(struct device *dev,
+						struct pl08x_driver_data *pl08x)
+{
+	struct device_node *np = dev->of_node, *child_np;
+	struct pl08x_platform_data *pd = NULL;
+	struct pl08x_channel_data *slave = NULL;
+	int size, num_slave = 0, ch = 0, ret;
+	const char *str;
+	u32 val;
+
+	if (!np) {
+		dev_err(dev, "no device tree data supplied\n");
+		return NULL;
+	}
+
+	num_slave = of_get_child_count(np);
+	size = ALIGN(sizeof(*pd)+sizeof(*slave)*num_slave, 4);
+
+	pd = kzalloc(size, GFP_KERNEL);
+	if (!pd) {
+		dev_err(dev, "failed memoary allocation for slave channel!\n");
+		return NULL;
+	}
+	slave = (struct pl08x_channel_data*)
+				ALIGN((unsigned long)pd + sizeof(*pd), 4);
+
+	pd->slave_channels = slave;
+	pd->num_slave_channels = num_slave;
+	pd->get_signal = pl08x_get_signal;
+
+	if (!of_property_read_u32(np, "master_lli_buses", &val))
+		pd->lli_buses = (u8)val;
+
+	if (!of_property_read_u32(np, "master_mem_buses", &val))
+		pd->mem_buses = (u8)val;
+
+   	of_property_read_string(np, "memcpy_bus_id", &pd->memcpy_channel.bus_id);
+   	of_property_read_u32(np, "memcpy_cctl", &pd->memcpy_channel.cctl_memcpy);
+
+	dev_dbg(dev,"DT buses lli=0x%x, mem=0x%x\n", pd->lli_buses, pd->mem_buses);
+	dev_dbg(dev,"DT memcpy bus_id=%s, cctl=0x%08x\n",
+		pd->memcpy_channel.bus_id, pd->memcpy_channel.cctl_memcpy);
+
+	for_each_child_of_node(np, child_np) {
+
+		if (!of_property_read_string(child_np, "slave_bus_id", &str))
+			slave[ch].bus_id = str;
+
+		if (!of_property_read_u32(child_np, "slave_min_signal", &val))
+			slave[ch].min_signal = (u8)val;
+
+		if (!of_property_read_u32(child_np, "slave_periph_buses", &val))
+			slave[ch].periph_buses = (u8)val;
+
+		dev_dbg(dev,"DT slave.%d bus_id=%s, min_signal=%d, buses=0x%x\n",
+			ch, slave[ch].bus_id, slave[ch].min_signal, slave[ch].periph_buses);
+		ch++;
+	}
+
+	ret = of_dma_controller_register(dev->of_node, of_dma_pl08x_xlate, pl08x);
+	if (ret) {
+		dev_err(dev, "unable to register DMA to the generic DT DMA helpers\n");
+		kfree(pd);
+		return NULL;
+	}
+
+	return pd;
+}
+#else
+static inline struct pl08x_platform_data *pl08x_parse_dt(struct device *dev,
+						struct pl08x_driver_data *pl08x)
+{
+	return NULL;
+}
+
+static struct dma_chan *of_dma_pl08x_xlate(struct of_phandle_args *dma_spec,
+						struct of_dma *ofdma)
+{
+	return NULL;
+}
+#endif
+
 static int pl08x_probe(struct amba_device *adev, const struct amba_id *id)
 {
 	struct pl08x_driver_data *pl08x;
@@ -1884,6 +2029,11 @@ static int pl08x_probe(struct amba_device *adev, const struct amba_id *id)
 
 	/* Get the platform data */
 	pl08x->pd = dev_get_platdata(&adev->dev);
+
+	/* add by jhkim for device tree */
+	if (!pl08x->pd)
+		pl08x->pd = pl08x_parse_dt(&adev->dev, pl08x);
+
 	if (!pl08x->pd) {
 		dev_err(&adev->dev, "no platform data supplied\n");
 		ret = -EINVAL;
