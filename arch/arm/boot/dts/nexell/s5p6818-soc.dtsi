@@ -421,7 +421,7 @@
 			#dma-cells = <1>;
 
 			/* ID and bus config */
-			arm,primecell-periphid = <0x00041081>;
+			arm,primecell-periphid = <0x00041080>;
 			master_lli_buses = <PL08X_AHB1>;
 
 			/* memeory copy config */
@@ -534,7 +534,7 @@
 			#dma-cells = <1>;
 
 			/* ID and bus config */
-			arm,primecell-periphid = <0x00041081>;
+			arm,primecell-periphid = <0x00041080>;
 			master_lli_buses = <PL08X_AHB1>;
 			master_mem_buses = <PL08X_AHB1>;
 
