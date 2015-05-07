@@ -853,7 +853,7 @@ static int pl08x_fill_llis_for_desc(struct pl08x_driver_data *pl08x,
 
 		pl08x_choose_master_bus(&bd, &mbus, &sbus, cctl);
 
-		dev_vdbg(&pl08x->adev->dev, "src=0x%08x%s/%u dst=0x%08x%s/%u len=%zu\n",
+		dev_vdbg(&pl08x->adev->dev, "src=0x%08llx%s/%u dst=0x%08llx%s/%u len=%zu\n",
 			bd.srcbus.addr, cctl & PL080_CONTROL_SRC_INCR ? "+" : "",
 			bd.srcbus.buswidth,
 			bd.dstbus.addr, cctl & PL080_CONTROL_DST_INCR ? "+" : "",
@@ -925,7 +925,7 @@ static int pl08x_fill_llis_for_desc(struct pl08x_driver_data *pl08x,
 
 		if (early_bytes) {
 			dev_vdbg(&pl08x->adev->dev,
-				"%s byte width LLIs (remain 0x%08x)\n",
+				"%s byte width LLIs (remain 0x%08lx)\n",
 				__func__, bd.remainder);
 			prep_byte_width_lli(&bd, &cctl, early_bytes, num_llis++,
 				&total_bytes);
