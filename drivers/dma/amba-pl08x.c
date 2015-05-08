@@ -307,8 +307,8 @@ static int pl08x_request_mux(struct pl08x_dma_chan *plchan)
 	const struct pl08x_platform_data *pd = plchan->host->pd;
 	int ret;
 
-	if (plchan->mux_use++ == 0 && pd->get_signal) {
-		ret = pd->get_signal(plchan->cd);
+	if (plchan->mux_use++ == 0 && pd->get_dma_signal) {
+		ret = pd->get_dma_signal(plchan->cd);
 		if (ret < 0) {
 			plchan->mux_use = 0;
 			return ret;
@@ -326,8 +326,8 @@ static void pl08x_release_mux(struct pl08x_dma_chan *plchan)
 	if (plchan->signal >= 0) {
 		WARN_ON(plchan->mux_use == 0);
 
-		if (--plchan->mux_use == 0 && pd->put_signal) {
-			pd->put_signal(plchan->cd, plchan->signal);
+		if (--plchan->mux_use == 0 && pd->put_dma_signal) {
+			pd->put_dma_signal(plchan->cd, plchan->signal);
 			plchan->signal = -1;
 		}
 	}
@@ -853,7 +853,7 @@ static int pl08x_fill_llis_for_desc(struct pl08x_driver_data *pl08x,
 
 		pl08x_choose_master_bus(&bd, &mbus, &sbus, cctl);
 
-		dev_vdbg(&pl08x->adev->dev, "src=0x%08x%s/%u dst=0x%08x%s/%u len=%zu\n",
+		dev_vdbg(&pl08x->adev->dev, "src=0x%08llx%s/%u dst=0x%08llx%s/%u len=%zu\n",
 			bd.srcbus.addr, cctl & PL080_CONTROL_SRC_INCR ? "+" : "",
 			bd.srcbus.buswidth,
 			bd.dstbus.addr, cctl & PL080_CONTROL_DST_INCR ? "+" : "",
@@ -925,7 +925,7 @@ static int pl08x_fill_llis_for_desc(struct pl08x_driver_data *pl08x,
 
 		if (early_bytes) {
 			dev_vdbg(&pl08x->adev->dev,
-				"%s byte width LLIs (remain 0x%08x)\n",
+				"%s byte width LLIs (remain 0x%08lx)\n",
 				__func__, bd.remainder);
 			prep_byte_width_lli(&bd, &cctl, early_bytes, num_llis++,
 				&total_bytes);
@@ -1933,7 +1933,7 @@ static struct pl08x_platform_data *pl08x_parse_dt(struct device *dev,
 
 	pd->slave_channels = slave;
 	pd->num_slave_channels = num_slave;
-	pd->get_signal = pl08x_get_signal;
+	pd->get_dma_signal = pl08x_get_signal;
 
 	if (!of_property_read_u32(np, "master_lli_buses", &val))
 		pd->lli_buses = (u8)val;
