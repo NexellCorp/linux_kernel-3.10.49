@@ -21,12 +21,14 @@
 #include <nexell/s5p6818/s5p6818-head.h>
 #include <nexell/s5p6818/s5p6818-base.h>
 #include <nexell/s5p6818/s5p6818-irq.h>
-#include <nexell/s5p6818/s5p6818-io-desc.h>
+#include <nexell/s5p6818/s5p6818-iodesc.h>
 #endif
 
-#include <nexell/pio_type.h>
+#if defined (CONFIG_ARM)
 #include <mach/iomap.h>
 #include <mach/io.h>
+#endif
+#include <nexell/io_type.h>
 
 #ifndef __ASSEMBLY__
 
