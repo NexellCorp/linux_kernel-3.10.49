@@ -3,6 +3,17 @@
 #
 menu "SLsiAP s5p6818"
 
+choice
+	prompt "Prototype build mode"
+	default S5P6818_PROTO_RELEASE
+
+	config S5P6818_PROTO_RELEASE
+		bool "Release"
+
+	config S5P6818_PROTO_DEBUG
+		bool "Debug"
+endchoice
+
 config ARCH_S5P6818_BD
 	bool "s5p6818 board feactures"
 	default n
