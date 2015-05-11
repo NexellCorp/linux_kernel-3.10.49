@@ -26,9 +26,45 @@
         #size-cells = <1>;
 		ranges;
 
-		apb_pclk {
+		pll0: pll0 {
 			#clock-cells = <0>;
-			clock-names = "bbclk";
+			clock-names = "sys-pll0";
+			clock-output-names = "pll0";
+		};
+
+		pll1: pll1 {
+			#clock-cells = <0>;
+			clock-names = "sys-pll1";
+			clock-output-names = "pll1";
+		};
+
+		pll2: pll2 {
+			#clock-cells = <0>;
+			clock-names = "sys-pll2";
+			clock-output-names = "pll2";
+		};
+
+		pll3: pll3 {
+			#clock-cells = <0>;
+			clock-names = "sys-pll3";
+			clock-output-names = "pll3";
+		};
+
+		bclk: bclk {
+			#clock-cells = <0>;
+			clock-names = "sys-bbclk";
+			clock-output-names = "bclk";
+		};
+
+		pclk: pclk {
+			#clock-cells = <0>;
+			clock-names = "sys-bpclk";
+			clock-output-names = "pclk";
+		};
+
+		apb_pclk: apb_pclk {
+			#clock-cells = <0>;
+			clock-names = "sys-bbclk";
 			clock-output-names = "apb_pclk";
 		};
 

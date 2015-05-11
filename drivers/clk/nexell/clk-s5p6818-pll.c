@@ -28,6 +28,10 @@
 #include "clk-s5pxx18.h"
 #include "clk-s5p6818-pll.h"
 
+/*
+#define	pr_debug	printk
+*/
+
 struct pll_pms {
 	long rate;	/* unint Khz */
 	int	P;

@@ -37,7 +37,6 @@
 #define	pr_debug	printk
 */
 
-#define	PCLK_NAME				"bpclk"
 #define	CLK_SOURCE_HZ			(10*1000000)	/* or 1MHZ */
 #define	CLK_EVENT_HZ			(10*1000000)	/* or 1MHZ */
 
@@ -78,6 +77,7 @@ struct timer_info {
 struct timer_of_dev {
 	void __iomem *base;
 	int reset_id;
+	struct clk *pclk;
 	struct timer_info timer_source;
 	struct timer_info timer_event;
 };
@@ -139,31 +139,31 @@ static inline unsigned int timer_read(void __iomem *base, int ch)
 /*
  * Timer clock source
  */
-static void timer_clock_select(struct timer_info *info)
+static void timer_clock_select(struct timer_of_dev *dev,
+					struct timer_info *info)
 {
-	struct clk *pclk = NULL;
-	char name[16] = PCLK_NAME;
-	ulong rate, tout = 0;
+	unsigned long rate, tout = 0;
+	unsigned long mout, thz, delt = (-1UL);
+	unsigned long frequency = info->request;
 	int tscl = 0, tmux = 5, smux = 0, pscl = 0;
-	ulong mout, thz, delt = (-1UL);
-	ulong frequency = info->request;
 	int from_tclk = 0;
 
-	pclk = clk_get(NULL, name);	/* from pclk */
-   	rate = clk_get_rate(pclk);
-   	for (smux = 0; 5 > smux; smux++) {
-   		mout = rate/(1<<smux), pscl = mout/frequency;
-   		thz  = mout/(pscl?pscl:1);
-   		if (!(mout % frequency) && 256 > pscl) {
-   			tout = thz, tmux = smux, tscl = pscl;
-   			break;
+	if (dev->pclk) {
+	   	rate = clk_get_rate(dev->pclk);
+   		for (smux = 0; 5 > smux; smux++) {
+   			mout = rate/(1<<smux), pscl = mout/frequency;
+   			thz  = mout/(pscl?pscl:1);
+   			if (!(mout % frequency) && 256 > pscl) {
+   				tout = thz, tmux = smux, tscl = pscl;
+   				break;
+   			}
+			if (pscl > 256)
+				continue;
+			if (abs(frequency-thz) >= delt)
+				continue;
+			tout = thz, tmux = smux, tscl = pscl;
+			delt = abs(frequency-thz);
    		}
-		if (pscl > 256)
-			continue;
-		if (abs(frequency-thz) >= delt)
-			continue;
-		tout = thz, tmux = smux, tscl = pscl;
-		delt = abs(frequency-thz);
    	}
 
 	if (tout != frequency) {
@@ -175,10 +175,10 @@ static void timer_clock_select(struct timer_info *info)
 		}
 	}
 
-	if (!from_tclk) {
+	if (dev->pclk && !from_tclk) {
 		clk_put(info->clk);
 		info->clk = NULL;
-		rate = clk_get_rate(pclk);	/* restore pclk */
+		rate = clk_get_rate(dev->pclk);	/* restore pclk */
 	}
 
 	info->tmux = tmux;
@@ -235,6 +235,7 @@ static cycle_t timer_source_read(struct clocksource *cs)
 	int ch = info->channel;
 
 	info->rcount = (info->tcount - timer_read(base, ch));
+
 	return (cycle_t)info->rcount;
 }
 
@@ -259,7 +260,8 @@ static int __init timer_source_of_init(struct device_node *node)
 
 	info->request = CLK_SOURCE_HZ;
 	info->tcount = -1UL;
-	timer_clock_select(info);
+
+	timer_clock_select(dev, info);
 
 	clocksource_register_hz(cs, info->rate);
 
@@ -278,9 +280,8 @@ static int __init timer_source_of_init(struct device_node *node)
 /*
  * Timer clock event
  */
-static inline void timer_event_resume(void)
+static inline void timer_event_resume(struct timer_of_dev *dev)
 {
-	struct timer_of_dev *dev = get_timer_dev();
 	struct timer_info *info = &dev->timer_event;
 	void __iomem *base = dev->base;
 	int ch = info->channel;
@@ -315,7 +316,7 @@ static void timer_event_set_mode(enum clock_event_mode mode,
 		break;
 
 	case CLOCK_EVT_MODE_RESUME:		// 0x4
-		timer_event_resume();
+		timer_event_resume(dev);
 	case CLOCK_EVT_MODE_PERIODIC:	// 0x2
 		timer_stop (base, ch, 0);
 		timer_count(base, ch, cnt);
@@ -336,7 +337,6 @@ static int timer_event_set_next(unsigned long delta,
 	int ch = info->channel;
 	ulong flags;
 
-	pr_debug("%s (ch:%d,delta:%ld)\n", __func__, ch, delta);
 	raw_local_irq_save(flags);
 
 	timer_stop (base, ch, 0);
@@ -398,7 +398,7 @@ static int __init timer_event_of_init(struct device_node *node)
 
 	info->request = CLK_EVENT_HZ;
 
-	timer_clock_select(info);
+	timer_clock_select(dev, info);
 	timer_stop (base, ch, 1);
 	timer_clock(base, ch, info->tmux, info->prescale);
 
@@ -420,8 +420,8 @@ static int __init timer_event_of_init(struct device_node *node)
 static int __init timer_get_device_data(struct device_node *node,
 					struct timer_of_dev *dev)
 {
-	struct timer_info *source = &dev->timer_source;
-	struct timer_info *event = &dev->timer_event;
+	struct timer_info *tsrc = &dev->timer_source;
+	struct timer_info *tevt = &dev->timer_event;
 
 	dev->base = of_iomap(node, 0);
 	if (!dev->base) {
@@ -432,32 +432,36 @@ static int __init timer_get_device_data(struct device_node *node,
    	if (of_property_read_u32(node, "reset-id", &dev->reset_id))
    		dev->reset_id = -1;
 
-   	if (of_property_read_u32(node, "clksource", &source->channel)) {
+   	if (of_property_read_u32(node, "clksource", &tsrc->channel)) {
 		pr_err("timer node is missing 'clksource'\n");
 		return -EINVAL;
 	}
 
-   	if (of_property_read_u32(node, "clkevent", &event->channel)) {
+   	if (of_property_read_u32(node, "clkevent", &tevt->channel)) {
    		pr_err("timer node is missing 'clkevent'\n");
        	return -EINVAL;
 	}
-	event->interrupt = irq_of_parse_and_map(node, 0);
+	tevt->interrupt = irq_of_parse_and_map(node, 0);
 
-	source->clk = of_clk_get(node, 0);
-	if (IS_ERR(source->clk)) {
-		pr_err("failed timer source clock\n");
+	tsrc->clk = of_clk_get(node, 0);
+	if (IS_ERR(tsrc->clk)) {
+		pr_err("failed timer tsrc clock\n");
 		return -EINVAL;
 	}
 
-	event->clk = of_clk_get(node, 1);
-	if (IS_ERR(event->clk)) {
+	tevt->clk = of_clk_get(node, 1);
+	if (IS_ERR(tevt->clk)) {
 		pr_err("failed timer event clock\n");
 		return -EINVAL;
 	}
 
-	pr_debug("%s : ch %d,%d irq %d (reset %d)\n",
-		node->name, source->channel, event->channel,
-		event->interrupt, dev->reset_id);
+	dev->pclk = of_clk_get(node, 2);
+	if (IS_ERR(dev->pclk))
+		dev->pclk = NULL;
+
+	pr_debug("%s : ch %d,%d irq %d (reset %d, pclk 0x%p)\n",
+		node->name, tsrc->channel, tevt->channel,
+		tevt->interrupt, dev->reset_id, dev->pclk);
 
 	return 0;
 }

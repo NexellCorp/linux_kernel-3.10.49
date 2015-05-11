@@ -165,8 +165,8 @@
 			reset-id = <RESET_ID_TIMER>;
 			clksource = <0>;
 			clkevent = <1>;
-			clocks = <&timer0>, <&timer1>;
-			clock-names = "timer0", "timer1";
+			clocks =  <&timer0>, <&timer1>, <&pclk>;
+			clock-names = "timer0", "timer1", "pclk";
 		};
 
 		serial0:serial@a1000 {
