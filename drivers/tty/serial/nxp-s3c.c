@@ -1938,11 +1938,11 @@ static struct s3c24xx_serial_drv_data *s3c24xx_get_driver_data(struct platform_d
 	if (!of_property_read_u32(pdev->dev.of_node, "reset-id", &reset))
 		ud->reset_id = reset;
 
-	ud->hwport = *port_index;
-	ud->init =& s3c24xx_serial_drv_init;
-
 	*port_index = ret;
 	*udata = ud;
+
+	ud->hwport = *port_index;
+	ud->init =& s3c24xx_serial_drv_init;
 
 	return drv_data;
 }
