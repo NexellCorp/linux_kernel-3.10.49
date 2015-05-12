@@ -758,6 +758,7 @@ config I2C_XLR
 	  This driver can also be built as a module.  If so, the module
 	  will be called i2c-xlr.
 
+
 config I2C_RCAR
 	tristate "Renesas R-Car I2C Controller"
 	depends on ARCH_SHMOBILE && I2C
@@ -767,6 +768,14 @@ config I2C_RCAR
 
 	  This driver can also be built as a module.  If so, the module
 	  will be called i2c-rcar.
+
+
+
+config I2C_SLSI
+	tristate "Slsiap I2C"
+	depends on PLAT_SLSIAP
+	help
+	  Support for nexell SoC processor's I2C driver.
 
 comment "External I2C/SMBus adapter drivers"
 
