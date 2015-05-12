@@ -41,8 +41,8 @@
 
 #include <asm/irq.h>
 
-#include <nexell/s5p6818/regs-iic.h>
-#include <nexell/s5p6818/iic.h>
+#include <nexell/regs-iic.h>
+#include <nexell/iic.h>
 #include <nexell/platform.h>
 #include <nexell/soc-s5pxx18.h>
 
@@ -967,7 +967,6 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	struct resource *res;
 	int ret;
 	char s[20] = {0, };
-	lldebugout(" %s %d \n", __func__,__LINE__);
 	if (!pdev->dev.of_node) {
 		pdata = pdev->dev.platform_data;
 		if (!pdata) {
@@ -982,7 +981,6 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
-	lldebugout(" %s %d \n", __func__,__LINE__);
 	i2c->pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
 	if (!i2c->pdata) {
 		ret = -ENOMEM;
@@ -994,8 +992,6 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	else
 		s3c24xx_i2c_parse_dt(pdev->dev.of_node, i2c);
 
-	lldebugout("parse %d %d %d \n", i2c->pdata->sda_delay, i2c->pdata->slave_addr, i2c->pdata->frequency);
-	lldebugout(" %s %d \n", __func__,__LINE__);
 	strlcpy(i2c->adap.name, "s3c2410-i2c", sizeof(i2c->adap.name));
 	i2c->adap.owner   = THIS_MODULE;
 	i2c->adap.algo    = &s3c24xx_i2c_algorithm;
@@ -1010,12 +1006,7 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 
 	i2c->dev = &pdev->dev;
 	
-	lldebugout(" %s %d \n", __func__,__LINE__);
-	//sprintf(s,"%s%d","i2c", i2c->pdata->bus_num);
-	sprintf(s,"%s%d","i2c",0) ;
-	//i2c->clk = clk_get(NULL,s);
 	i2c->clk = clk_get(&pdev->dev,NULL);
-	//i2c->clk = devm_clk_get(&pdev->dev,NULL);
 	if (IS_ERR(i2c->clk)) {
 		dev_err(&pdev->dev, "cannot get clock %p \n",i2c->clk);
 		ret = -ENOENT;
@@ -1026,7 +1017,6 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 
 	clk_prepare_enable(i2c->clk);
 
-	printk("reset id  %d ",i2c->pdata->reset_id );
 	nxp_soc_peri_reset_set(i2c->pdata->reset_id );
 	
 	/* map the registers */
@@ -1038,7 +1028,6 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 		goto err_clk;
 	}
 
-	lldebugout(" %s %d \n", __func__,__LINE__);
 	i2c->ioarea = request_mem_region(res->start, resource_size(res),
 					 pdev->name);
 
@@ -1055,7 +1044,6 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 		goto err_ioarea;
 	}
 
-	lldebugout(" %s %d \n", __func__,__LINE__);
 	dev_dbg(&pdev->dev, "registers %p (%p, %p)\n",
 		i2c->regs, i2c->ioarea, res);
 
@@ -1075,7 +1063,6 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	 */
 
 	i2c->irq = ret = platform_get_irq(pdev, 0);
-	lldebugout("irq : %d ",ret);
 	if (ret <= 0) {
 		dev_err(&pdev->dev, "cannot find IRQ %d \n", ret);
 		goto err_iomap;
@@ -1104,7 +1091,6 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	i2c->adap.nr = i2c->pdata->bus_num;
 	i2c->adap.dev.of_node = pdev->dev.of_node;
 
-	lldebugout(" %s %d \n", __func__,__LINE__);
 	ret = i2c_add_numbered_adapter(&i2c->adap);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to add bus to i2c core\n");
