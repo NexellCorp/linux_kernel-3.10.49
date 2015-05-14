@@ -715,6 +715,12 @@ config GPIO_VIPERBOARD
 	  board: gpioa and gpiob.
           See viperboard API specification and Nano
           River Tech's viperboard.h for detailed meaning
-          of the module parameters.
+          of the module parameters.'
+
+config GPIO_SLSI
+	 bool "SLsiAP GPIO"
+     depends on PLAT_SLSIAP
+     help
+	     Select this option to enable GPIO driver for the SLsiAP chip family.
 
 endif
