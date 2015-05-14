@@ -1328,6 +1328,7 @@ CONFIG_I2C_GPIO=y
 # CONFIG_I2C_PXA_PCI is not set
 # CONFIG_I2C_SIMTEC is not set
 # CONFIG_I2C_XILINX is not set
+CONFIG_I2C_SLSI=y
 
 #
 # External I2C/SMBus adapter drivers
@@ -1368,6 +1369,7 @@ CONFIG_SPI_MASTER=y
 #
 CONFIG_SPI_SPIDEV=y
 # CONFIG_SPI_TLE62X0 is not set
+CONFIG_SPI_SLSI=y
 
 #
 # Qualcomm MSM SSBI bus support
@@ -1464,6 +1466,7 @@ CONFIG_GPIO_SYSFS=y
 #
 # USB GPIO expanders:
 #
+CONFIG_GPIO_SLSI=y
 # CONFIG_W1 is not set
 CONFIG_POWER_SUPPLY=y
 # CONFIG_POWER_SUPPLY_DEBUG is not set
@@ -1757,6 +1760,7 @@ CONFIG_DVB_TUNER_DIB0090=m
 # Tools to develop new frontends
 #
 # CONFIG_DVB_DUMMY_FE is not set
+CONFIG_NXP_MP2TS_IF=y
 
 #
 # Graphics support
