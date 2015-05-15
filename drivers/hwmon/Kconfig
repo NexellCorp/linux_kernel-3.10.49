@@ -1528,6 +1528,13 @@ config SENSORS_MC13783_ADC
         help
           Support for the A/D converter on MC13783 and MC13892 PMIC.
 
+config SENSORS_NXP_TMU
+		tristate "SLsiAP Temperature sensor"
+		depends on PLAT_SLSIAP && ARCH_S5P6818 
+    	help
+		If you say yes here you get support for TMU (Thermal Managment
+		Unit) on SlsiAP series of SoC.
+
 if ACPI
 
 comment "ACPI drivers"

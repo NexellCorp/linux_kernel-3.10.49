@@ -351,7 +351,16 @@
 			enable_dma = <1>;
 			status = "disabled";
 		};
+		
+		tmu_0@96000 {
+			compatible = "nexell,nxp-tmu";
+			interrupt = <0 IRQ_TMU0 0>;
+			channel_id    = <0>;
+			trig_degree   = <85>;
+			trig_duration = <100>;
+			trig_cpufreq  = <800000>;
+			poll_duration = <100>;
+		};
 	};
 	
 };
-
