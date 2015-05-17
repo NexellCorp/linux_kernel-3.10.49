@@ -255,7 +255,7 @@ CONFIG_SMP=y
 # CONFIG_SCHED_MC is not set
 # CONFIG_SCHED_SMT is not set
 # CONFIG_DISABLE_CPU_SCHED_DOMAIN_BALANCE is not set
-CONFIG_NR_CPUS=2
+CONFIG_NR_CPUS=8
 CONFIG_HOTPLUG_CPU=y
 # CONFIG_PREEMPT_NONE is not set
 # CONFIG_PREEMPT_VOLUNTARY is not set
@@ -1237,6 +1237,7 @@ CONFIG_I2C_GPIO=y
 # CONFIG_I2C_PXA_PCI is not set
 # CONFIG_I2C_SIMTEC is not set
 # CONFIG_I2C_XILINX is not set
+# CONFIG_I2C_SLSI is not set
 
 #
 # External I2C/SMBus adapter drivers
@@ -1277,6 +1278,7 @@ CONFIG_SPI_MASTER=y
 #
 CONFIG_SPI_SPIDEV=y
 # CONFIG_SPI_TLE62X0 is not set
+# CONFIG_SPI_SLSI is not set
 
 #
 # Qualcomm MSM SSBI bus support
@@ -1359,6 +1361,7 @@ CONFIG_GPIO_SYSFS=y
 #
 # USB GPIO expanders:
 #
+# CONFIG_GPIO_SLSI is not set
 # CONFIG_W1 is not set
 CONFIG_POWER_SUPPLY=y
 # CONFIG_POWER_SUPPLY_DEBUG is not set
@@ -1491,6 +1494,7 @@ CONFIG_HWMON=y
 # CONFIG_SENSORS_W83L786NG is not set
 # CONFIG_SENSORS_W83627HF is not set
 # CONFIG_SENSORS_W83627EHF is not set
+# CONFIG_SENSORS_NXP_TMU is not set
 # CONFIG_THERMAL is not set
 CONFIG_WATCHDOG=y
 CONFIG_WATCHDOG_CORE=y
@@ -1500,6 +1504,7 @@ CONFIG_WATCHDOG_CORE=y
 # Watchdog Device Drivers
 #
 # CONFIG_SOFT_WATCHDOG is not set
+# CONFIG_NXP_WDT is not set
 
 #
 # USB-based Watchdog Cards
@@ -1645,6 +1650,7 @@ CONFIG_DVB_TUNER_DIB0090=m
 # Tools to develop new frontends
 #
 # CONFIG_DVB_DUMMY_FE is not set
+# CONFIG_NXP_MP2TS_IF is not set
 
 #
 # Graphics support
@@ -2077,6 +2083,7 @@ CONFIG_RTC_INTF_DEV=y
 # CONFIG_RTC_DRV_PL030 is not set
 # CONFIG_RTC_DRV_PL031 is not set
 # CONFIG_RTC_DRV_SNVS is not set
+# CONFIG_RTC_DRV_NXP is not set
 
 #
 # HID Sensor RTC drivers

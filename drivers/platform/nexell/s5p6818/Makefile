@@ -7,7 +7,7 @@ obj-y += cpu.o
 
 ifeq ($(CONFIG_ARM64),y)
 obj-$(CONFIG_SMP) += platsmp.o headsmp.o
-obj-$(CONFIG_SMP) += sched_clock.o
+#obj-$(CONFIG_SMP) += sched_clock.o
 endif
 
 PROTO_MODULE := drivers/platform/nexell/s5p6818/prototype/module

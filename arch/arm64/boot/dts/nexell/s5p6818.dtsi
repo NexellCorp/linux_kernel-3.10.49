@@ -14,6 +14,7 @@
 #include "../../../../../include/generated/autoconf.h"
 #include "../../../../../include/nexell/s5p6818/s5p6818-base.h"
 #include "../../../../../include/nexell/s5p6818/s5p6818-irq.h"
+#include "../../../../../include/nexell/s5p6818/s5p6818-pm.h"
 
 / {
 	model = "nexell soc";
