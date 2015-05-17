@@ -66,5 +66,9 @@
 			num_cs = <1>;
 			clk_nr = <0>;
 		};
+
+		rtc@10c00 {
+			status = "okay";
+		};
 	};
 };

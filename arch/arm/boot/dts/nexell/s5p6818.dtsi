@@ -361,6 +361,13 @@
 			trig_cpufreq  = <800000>;
 			poll_duration = <100>;
 		};
+
+		rtc@10c00 {
+			compatible = "nexell,nxp-rtc";
+			reg = <PHYS_BASE_RTC 0x100>;
+			interrupts = <IRQ_RTC>;
+			status = "disabled";
+		};
 	};
 	
 };

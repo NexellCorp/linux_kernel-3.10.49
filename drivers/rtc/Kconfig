@@ -1233,6 +1233,13 @@ config RTC_DRV_SNVS
 	   This driver can also be built as a module, if so, the module
 	   will be called "rtc-snvs".
 
+config RTC_DRV_NXP
+   tristate "SLsiAP RTC"
+   depends on PLAT_SLSIAP
+   help
+     Driver for the internal RTC (Realtime Clock) module found on
+     SLsiAP processor.
+
 comment "HID Sensor RTC drivers"
 
 config RTC_DRV_HID_SENSOR_TIME
