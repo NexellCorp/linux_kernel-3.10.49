@@ -22,6 +22,7 @@
 #include <nexell/s5p6818/s5p6818-base.h>
 #include <nexell/s5p6818/s5p6818-irq.h>
 #include <nexell/s5p6818/s5p6818-iodesc.h>
+#include <nexell/s5p6818/s5p6818-pm.h>
 #endif
 
 #if defined (CONFIG_ARM)

@@ -51,7 +51,7 @@ static struct map_desc cpu_iomap_desc[] = {
 	#include <mach/s5p6818_iomap.h>
 };
 
-/*------------------------------------------------------------------------------
+/*
  * 	cpu initialize and io/memory map.
  * 	procedure: fixup -> map_io -> init_irq -> timer init -> init_machine
  */
@@ -98,7 +98,7 @@ extern void nxp_reserve_mem(void);
 }
 #endif
 
-/*------------------------------------------------------------------------------
+/*
  * Maintainer: Nexell Co., Ltd.
  */
 extern void nxp_cpu_init_time(void);

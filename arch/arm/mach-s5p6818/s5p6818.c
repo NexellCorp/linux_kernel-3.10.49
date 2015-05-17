@@ -30,37 +30,37 @@
 #include <asm/io.h>
 
 #include <nexell/platform.h>
-#include <mach/pm.h>
 
 static void cpu_setup_base(void)
 {
 	int i = 0;
+
 	NX_RSTCON_Initialize();
-	NX_RSTCON_SetBaseAddress((U32)IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_RSTCON_SetBaseAddress((void*)IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
 
 	NX_TIEOFF_Initialize();
-	NX_TIEOFF_SetBaseAddress((U32)IO_ADDRESS(NX_TIEOFF_GetPhysicalAddress()));
+	NX_TIEOFF_SetBaseAddress((void*)IO_ADDRESS(NX_TIEOFF_GetPhysicalAddress()));
 
 	NX_GPIO_Initialize();
 	for (i = 0; NX_GPIO_GetNumberOfModule() > i; i++) {
-		NX_GPIO_SetBaseAddress(i, (U32)IO_ADDRESS(NX_GPIO_GetPhysicalAddress(i)));
+		NX_GPIO_SetBaseAddress(i, (void*)IO_ADDRESS(NX_GPIO_GetPhysicalAddress(i)));
 		NX_GPIO_OpenModule(i);
 	}
 
 	NX_ALIVE_Initialize();
-	NX_ALIVE_SetBaseAddress((U32)IO_ADDRESS(NX_ALIVE_GetPhysicalAddress()));
+	NX_ALIVE_SetBaseAddress((void*)IO_ADDRESS(NX_ALIVE_GetPhysicalAddress()));
 	NX_ALIVE_OpenModule();
 
 	NX_CLKPWR_Initialize();
-	NX_CLKPWR_SetBaseAddress((U32)IO_ADDRESS(NX_CLKPWR_GetPhysicalAddress()));
+	NX_CLKPWR_SetBaseAddress((void*)IO_ADDRESS(NX_CLKPWR_GetPhysicalAddress()));
 	NX_CLKPWR_OpenModule();
 
 	NX_ECID_Initialize();
-	NX_ECID_SetBaseAddress((U32)IO_ADDRESS(NX_ECID_GetPhysicalAddress()));
+	NX_ECID_SetBaseAddress((void*)IO_ADDRESS(NX_ECID_GetPhysicalAddress()));
 
 	/* MCUS for Static Memory. */
 	NX_MCUS_Initialize();
-	NX_MCUS_SetBaseAddress((U32)IO_ADDRESS(NX_MCUS_GetPhysicalAddress()));
+	NX_MCUS_SetBaseAddress((void*)IO_ADDRESS(NX_MCUS_GetPhysicalAddress()));
 	NX_MCUS_OpenModule();
 
 	/*
@@ -68,29 +68,15 @@ static void cpu_setup_base(void)
 	 * 		 must be clear wfi jump address
 	 */
 	NX_ALIVE_SetWriteEnable(CTRUE);
-	__raw_writel(0xFFFFFFFF, (void*)SCR_ARM_SECOND_BOOT);
+	__raw_writel(0xFFFFFFFF, (void*)__io_address(SCR_ARM_SECOND_BOOT));
 
 	/* clear cpu id register for second cores */
-	__raw_writel((-1UL), (void*)SCR_SMP_WAKE_CPU_ID);
+	__raw_writel((-1UL), (void*)__io_address(SCR_SMP_WAKE_CPU_ID));
 }
 
 static void cpu_setup_bus(void)
 {
 }
-
-#ifdef CONFIG_SMP
-static void cpu_setup_smp(void)
-{
-	/* CCI400 BUS */
-	#define	CCI_REG	__PB_IO_MAP_CCI4_VIRT			// 0xe0090000
-	writel(0x8, (void*)(CCI_REG + 0x0000));				// CCI
-	writel(0x0, (void*)(CCI_REG + 0x1000));				// S0 : coresight
- 	writel(0x0, (void*)(CCI_REG + 0x2000));				// S1 : bottom bus
-	writel(0x0, (void*)(CCI_REG + 0x3000));				// S2 : top bus
-	writel((0x3<<30) | 0x3, (void*)(CCI_REG + 0x4000));	// S3: cpu cluster 1
-	writel((0x3<<30) | 0x3, (void*)(CCI_REG + 0x5000));	// S4: cpu cluster 0
-}
-#endif
 
 void (*nxp_pm_poweroff)(void) = NULL;
 void (*nxp_pm_reset)(char str, const char *cmd) = NULL;
@@ -143,10 +129,6 @@ void nxp_cpu_init(void)
 {
 	cpu_setup_base();
 	cpu_setup_bus();
-
-#ifdef CONFIG_SMP
-	cpu_setup_smp();
-#endif
 
 	/* redefine poweroff */
 	pm_power_off = cpu_shutdown;

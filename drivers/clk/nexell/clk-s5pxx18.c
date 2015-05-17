@@ -273,6 +273,10 @@ static int dev_set_rate(struct clk_hw *hw, unsigned long rate)
 			continue;
 
 		/* change rate */
+		#ifdef CONFIG_EARLY_PRINTK
+		if (!strcmp(peri->name, "uart0"))
+			break;
+		#endif
 		clk_dev_rate((void*)peri->base, i, s, d);
 
 		pr_debug("clk: %s (%p) set_rate [%d] src[%d] div[%d]\n",
@@ -281,7 +285,6 @@ static int dev_set_rate(struct clk_hw *hw, unsigned long rate)
 	peri->rate = rate;
 	return rate;
 }
-
 
 /*
  *	clock devices interface
@@ -505,8 +508,10 @@ static void __init clk_dev_of_setup(struct device_node *node)
 			continue;
 
 		clk_data->clk = clk;
-		if (clk_data->rate)
+		if (clk_data->rate) {
+			pr_debug("[%s set boot rate %u]\n", node->name, clk_data->rate);
 			clk_set_rate(clk, clk_data->rate);
+		}
 	}
 
 	pr_debug("[%s:%d] %s (%d)\n", __func__, __LINE__, node->name, num_clks);
