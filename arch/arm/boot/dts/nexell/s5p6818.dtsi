@@ -419,6 +419,16 @@
 			clocks =  <&pwm3>;
 			status = "disabled";
 		};
+
+		ppm@54000 {
+			compatible = "nexell,nxp-ppm";
+			reg = <PHYS_BASE_PPM 0x1000>;
+			interrupts = <IRQ_PPM>;
+			clock-names = "ppm";
+			clocks = <&ppm>;
+			in_pol = "invert";
+			status = "disabled";
+		};
 	};
 	
 };

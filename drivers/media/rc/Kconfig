@@ -321,4 +321,17 @@ config IR_GPIO_CIR
 	   To compile this driver as a module, choose M here: the module will
 	   be called gpio-ir-recv.
 
+config PPM_NXP
+	tristate "SLsiAP IR remote control"
+	depends on RC_CORE && PLAT_SLSIAP
+	---help---
+	   Say Y if you want to use SLsiAP IR Receiver.
+
+	   To compile this driver as a module, choose M here.
+
+config PPM_SYSFS
+	bool "/sys/devices/platform/ppm/duty (sysfs interface)"
+	depends on PPM_NXP
+	default n
+
 endif #RC_DEVICES

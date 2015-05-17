@@ -65,6 +65,7 @@
 #include <../../drivers/platform/nexell/s5p6818/prototype/module/nx_adc.h>
 #include <../../drivers/platform/nexell/s5p6818/prototype/module/nx_ecid.h>
 #include <../../drivers/platform/nexell/s5p6818/prototype/module/nx_tmu.h>
+#include <../../drivers/platform/nexell/s5p6818/prototype/module/nx_ppm.h>
 #endif /* 	__ASSEMBLY__ */
 
 #endif /*	__S5P6818_H__ */
