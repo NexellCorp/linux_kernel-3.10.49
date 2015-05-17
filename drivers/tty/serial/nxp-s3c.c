@@ -1795,6 +1795,11 @@ static void s3c24xx_serial_resetport(struct uart_port *port,
 
 	wr_regl(port, S3C2410_ULCON, data->ulcon);
 
+#ifdef CONFIG_EARLY_PRINTK
+	if (0 == port->line)
+		return;
+#endif
+
 	/* reset both fifos */
 	wr_regl(port, S3C2410_UFCON, data->ufcon | S3C2410_UFCON_RESETBOTH);
 	wr_regl(port, S3C2410_UFCON, data->ufcon);
