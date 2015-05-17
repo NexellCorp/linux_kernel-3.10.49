@@ -368,6 +368,15 @@
 			interrupts = <IRQ_RTC>;
 			status = "disabled";
 		};
+
+		wdt@19000 {
+			compatible = "nexell,nxp-wdt";
+			reg = <PHYS_BASE_WDT 0x1000>;
+			interrupts = <0 IRQ_WDT 0>;
+			clock-names = "pclk";
+			clocks = <&pclk>;
+			status = "disabled";
+		};
 	};
 	
 };

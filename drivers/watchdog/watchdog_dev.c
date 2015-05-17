@@ -42,6 +42,9 @@
 #include <linux/init.h>		/* For __init/__exit/... */
 #include <linux/uaccess.h>	/* For copy_to_user/put_user/... */
 
+#include <linux/workqueue.h>
+#include <linux/sched.h>
+
 #include "watchdog_core.h"
 
 /* the dev_t structure to store the dynamically allocated watchdog devices */
@@ -319,6 +322,60 @@ static ssize_t watchdog_write(struct file *file, const char __user *data,
 	return len;
 }
 
+
+static ssize_t
+watchdog_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+{
+	DECLARE_WAITQUEUE(wait, current);
+	unsigned long data;
+	ssize_t ret;
+
+	if (count != sizeof(unsigned int) && count < sizeof(unsigned long))
+		return -EINVAL;
+
+	add_wait_queue(&old_wdd->irq_queue, &wait);
+	do {
+		__set_current_state(TASK_INTERRUPTIBLE);
+
+		spin_lock_irq(&old_wdd->irq_lock);
+		data = old_wdd->irq_data;
+		old_wdd->irq_data = 0;
+		spin_unlock_irq(&old_wdd->irq_lock);
+
+		if (data != 0) {
+			ret = 0;
+			break;
+		}
+		if (file->f_flags & O_NONBLOCK) {
+			ret = -EAGAIN;
+			break;
+		}
+		if (signal_pending(current)) {
+			ret = -ERESTARTSYS;
+			break;
+		}
+		schedule();
+	} while (1);
+	set_current_state(TASK_RUNNING);
+	remove_wait_queue(&old_wdd->irq_queue, &wait);
+
+	if (ret == 0) {
+		/* Check for any data updates */
+		if (old_wdd->ops->read_callback)
+			data = old_wdd->ops->read_callback(old_wdd->dev->parent,
+						       data);
+
+		if (sizeof(int) != sizeof(long) &&
+		    count == sizeof(unsigned int))
+			ret = put_user(data, (unsigned int __user *)buf) ?:
+				sizeof(unsigned int);
+		else
+			ret = put_user(data, (unsigned long __user *)buf) ?:
+				sizeof(unsigned long);
+	}
+	return ret;
+}
+
 /*
  *	watchdog_ioctl: handle the different ioctl's for the watchdog device.
  *	@file: file handle to the device
@@ -498,6 +555,7 @@ static int watchdog_release(struct inode *inode, struct file *file)
 static const struct file_operations watchdog_fops = {
 	.owner		= THIS_MODULE,
 	.write		= watchdog_write,
+	.read		= watchdog_read,
 	.unlocked_ioctl	= watchdog_ioctl,
 	.open		= watchdog_open,
 	.release	= watchdog_release,
@@ -525,6 +583,10 @@ int watchdog_dev_register(struct watchdog_device *watchdog)
 	if (watchdog->id == 0) {
 		old_wdd = watchdog;
 		watchdog_miscdev.parent = watchdog->parent;
+
+		spin_lock_init(&old_wdd->irq_lock);
+		init_waitqueue_head(&old_wdd->irq_queue);
+
 		err = misc_register(&watchdog_miscdev);
 		if (err != 0) {
 			pr_err("%s: cannot register miscdev on minor=%d (err=%d).\n",

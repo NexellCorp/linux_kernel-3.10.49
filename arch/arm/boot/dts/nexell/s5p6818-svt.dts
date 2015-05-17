@@ -70,5 +70,9 @@
 		rtc@10c00 {
 			status = "okay";
 		};
+
+		wdt@19000 {
+			status = "okay";
+		};
 	};
 };

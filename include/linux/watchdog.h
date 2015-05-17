@@ -48,6 +48,8 @@ struct watchdog_ops {
 	void (*ref)(struct watchdog_device *);
 	void (*unref)(struct watchdog_device *);
 	long (*ioctl)(struct watchdog_device *, unsigned int, unsigned long);
+
+    int (*read_callback)(struct device *, int data);
 };
 
 /** struct watchdog_device - The structure that defines a watchdog device
@@ -88,6 +90,9 @@ struct watchdog_device {
 	unsigned int max_timeout;
 	void *driver_data;
 	struct mutex lock;
+	unsigned long irq_data;
+	spinlock_t irq_lock;
+	wait_queue_head_t irq_queue;
 	unsigned long status;
 /* Bit numbers for status flags */
 #define WDOG_ACTIVE		0	/* Is the watchdog running/active */
