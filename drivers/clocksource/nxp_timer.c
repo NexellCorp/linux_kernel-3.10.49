@@ -83,7 +83,7 @@ struct timer_of_dev {
 };
 
 static struct timer_of_dev *timer_dev = NULL;
-#define	get_timer_dev()		(struct timer_of_dev *)(timer_dev)
+#define	get_timer_dev()		((struct timer_of_dev *)timer_dev)
 
 static inline void timer_periph_reset(int id)
 {
@@ -134,6 +134,20 @@ static inline void timer_stop(void __iomem *base, int ch, int irqon)
 static inline unsigned int timer_read(void __iomem *base, int ch)
 {
 	return readl(base + REG_TCNT0 + (TIMER_TCNT_OFFS * ch));
+}
+
+static inline u32 timer_read_count(void)
+{
+	struct timer_of_dev *dev = get_timer_dev();
+	struct timer_info *info;
+
+	if (NULL == dev || NULL == dev->base)
+		return 0;
+
+	info = &dev->timer_source;
+
+	info->rcount = (info->tcount - timer_read(dev->base, info->channel));
+	return (cycle_t)info->rcount;
 }
 
 /*
@@ -229,14 +243,7 @@ static void timer_source_resume(struct clocksource *cs)
 
 static cycle_t timer_source_read(struct clocksource *cs)
 {
-	struct timer_of_dev *dev = get_timer_dev();
-	struct timer_info *info = &dev->timer_source;
-	void __iomem *base = dev->base;
-	int ch = info->channel;
-
-	info->rcount = (info->tcount - timer_read(base, ch));
-
-	return (cycle_t)info->rcount;
+	return (cycle_t)timer_read_count();
 }
 
 static struct clocksource timer_clocksource = {
@@ -388,6 +395,21 @@ static struct irqaction timer_event_irqaction = {
 	.handler	= timer_event_handler,
 };
 
+#ifdef CONFIG_ARM64
+/*
+ * to __delay , refer to arch_timer.h and  arm64 lib delay.c
+ */
+u64 arch_counter_get_cntvct(void)
+{
+	return timer_read_count();
+}
+
+int arch_timer_arch_init(void)
+{
+	return 0;
+}
+#endif
+
 static int __init timer_event_of_init(struct device_node *node)
 {
 	struct timer_of_dev *dev = get_timer_dev();
@@ -459,9 +481,9 @@ static int __init timer_get_device_data(struct device_node *node,
 	if (IS_ERR(dev->pclk))
 		dev->pclk = NULL;
 
-	pr_debug("%s : ch %d,%d irq %d (reset %d, pclk 0x%p)\n",
+	pr_debug("%s : ch %d,%d irq %d (reset %d)\n",
 		node->name, tsrc->channel, tevt->channel,
-		tevt->interrupt, dev->reset_id, dev->pclk);
+		tevt->interrupt, dev->reset_id);
 
 	return 0;
 }

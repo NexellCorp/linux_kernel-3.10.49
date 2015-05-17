@@ -33,6 +33,7 @@
 #include <linux/irq.h>
 #include <linux/delay.h>
 #include <linux/clocksource.h>
+#include <linux/clk-provider.h>
 
 #include <clocksource/arm_arch_timer.h>
 
@@ -61,19 +62,26 @@ unsigned long profile_pc(struct pt_regs *regs)
 EXPORT_SYMBOL(profile_pc);
 #endif
 
+#ifdef CONFIG_ARM_ARCH_TIMER
 static u64 sched_clock_mult __read_mostly;
-
 unsigned long long notrace sched_clock(void)
 {
 	return arch_timer_read_counter() * sched_clock_mult;
 }
+#endif
+
+extern void sched_clock_postinit(void);
 
 void __init time_init(void)
 {
+#ifdef CONFIG_ARM_ARCH_TIMER
 	u32 arch_timer_rate;
+#endif
 
+	of_clk_init(NULL);
 	clocksource_of_init();
 
+#ifdef CONFIG_ARM_ARCH_TIMER
 	arch_timer_rate = arch_timer_get_rate();
 	if (!arch_timer_rate)
 		panic("Unable to initialise architected timer.\n");
@@ -83,4 +91,5 @@ void __init time_init(void)
 
 	/* Calibrate the delay loop directly */
 	lpj_fine = arch_timer_rate / HZ;
+#endif
 }

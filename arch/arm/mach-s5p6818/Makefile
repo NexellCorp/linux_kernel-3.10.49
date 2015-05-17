@@ -4,8 +4,9 @@
 #
 # Makefile for the S5P6818
 
-obj-y := cpu.o s5p6818.o
-obj-y += lldebug.o
+obj-y := cpu.o s5p6818.o lldebug.o
+
+obj-$(CONFIG_SMP)			+= platsmp.o headsmp.o
 
 #===============================================================================
 #	Build options for nexell soc

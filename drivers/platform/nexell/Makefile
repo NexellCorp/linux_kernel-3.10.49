@@ -3,6 +3,5 @@
 #	http://www.nexell.co.kr
 #
 
-obj-y += setup.o
 obj-y += soc/
 obj-$(CONFIG_ARCH_S5P6818) += s5p6818/

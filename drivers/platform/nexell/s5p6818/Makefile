@@ -3,6 +3,13 @@
 #	http://www.nexell.co.kr
 #
 
+obj-y += cpu.o
+
+ifeq ($(CONFIG_ARM64),y)
+obj-$(CONFIG_SMP) += platsmp.o headsmp.o
+obj-$(CONFIG_SMP) += sched_clock.o
+endif
+
 PROTO_MODULE := drivers/platform/nexell/s5p6818/prototype/module
 PROTO_BASE   := drivers/platform/nexell/s5p6818/prototype/base
 KBUILD_CFLAGS += -I$(PROTO_MODULE) -I$(PROTO_BASE)

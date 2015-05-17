@@ -261,7 +261,9 @@ static int irq_gpio_set_type(struct irq_data *d, unsigned int type)
 	struct cpu_irq_domain_data *data = irq_data_get_irq_chip_data(d);
 	void __iomem *base = data->base;
 	int bit = d->hwirq;
-	u32 reg, val, alt;
+	u32 val, alt;
+	ulong reg;
+
 	NX_GPIO_INTMODE mode = 0;
 
 	pr_debug("%s: gpio irq=%d, %s.%d, type=0x%x\n",
@@ -284,16 +286,16 @@ static int irq_gpio_set_type(struct irq_data *d, unsigned int type)
 	writel(readl(base + GPIO_INT_OUT) & ~(1<<bit), base + GPIO_INT_OUT);
 
 	/* gpio mode : interrupt mode */
-	reg = (u32)(base + GPIO_INT_MODE0 + (bit/16) * 4);
+	reg = (ulong)(base + GPIO_INT_MODE0 + (bit/16) * 4);
 	val = (readl((void*)reg) & ~(3<<((bit&0xf) * 2))) | ((mode&0x3) << ((bit&0xf) * 2));
 	writel(val, (void*)reg);
 
-	reg = (u32)(base + GPIO_INT_MODE1);
+	reg = (ulong)(base + GPIO_INT_MODE1);
 	val = (readl((void*)reg) & ~(1<<bit)) | (((mode>>2) & 0x1) << bit);
 	writel(val, (void*)reg);
 
 	/* gpio alt : gpio mode for irq */
-	reg  = (u32)(base + GPIO_INT_ALT + (bit/16) * 4);
+	reg  = (ulong)(base + GPIO_INT_ALT + (bit/16) * 4);
 	val  = readl((void*)reg) & ~(3<<((bit&0xf) * 2));
 	alt  = GET_GPIO_ALTFUNC((d->irq-VIO_IRQ_BASE)/32, bit);
 	val |= alt << ((bit&0xf) * 2);
@@ -449,6 +451,7 @@ static void __init irq_cpu_interface_setup(struct device_node *np,
  	base = of_iomap(parent, 0);
 	WARN(!base, "%s: unable to map gic cpu registers\n", __func__);
 
+#if 1
 	nr_irq = readl_relaxed(base + GIC_DIST_CTR) & 0x1f;
 	nr_irq = (nr_irq + 1) * 32;
 	if (nr_irq > 1020)
@@ -462,6 +465,7 @@ static void __init irq_cpu_interface_setup(struct device_node *np,
 	d = irq_get_chip(16);
 	if (d->irq_set_affinity)
 		d->irq_set_affinity = &irq_cpu_set_affinity;
+#endif
 
 	/* replace gic xlate */
 	data = irq_get_irq_data(16);
@@ -520,8 +524,7 @@ static int __init irq_cpu_of_setup(struct device_node *np,
 		data[i].node = dp;
 		data[i].base = base;
 
-		irq_cpu_domain_setup(np, &data[i++],
-						first_irq, hw_irq, nr_irq, offs_irq);
+		irq_cpu_domain_setup(np, &data[i++], first_irq, hw_irq, nr_irq, offs_irq);
 
 		printk("HW IRQ[%d] %d %dEA\n",  hw_irq, first_irq, nr_irq);
 	}

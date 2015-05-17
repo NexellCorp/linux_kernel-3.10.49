@@ -30,6 +30,16 @@
 
 static DEFINE_SPINLOCK(lock);
 
+#ifdef CONFIG_ARM64
+static void __iomem* reset_base = NULL;
+static inline void __iomem* __io_address(unsigned long base)
+{
+	if (!reset_base)
+		reset_base = ioremap(base, PAGE_SIZE);
+	return reset_base;
+}
+#endif
+
 void nxp_soc_peri_reset_enter(int id)
 {
 	unsigned long flags;
@@ -50,7 +60,7 @@ void nxp_soc_peri_reset_enter(int id)
 
 	spin_lock_irqsave(&lock, flags);
 
-	NX_RSTCON_SetBaseAddress(IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_RSTCON_SetBaseAddress(__io_address(NX_RSTCON_GetPhysicalAddress()));
 	NX_RSTCON_SetRST(RSTIndex, RSTCON_ASSERT);
 
 	spin_unlock_irqrestore(&lock, flags);
@@ -77,7 +87,7 @@ void nxp_soc_peri_reset_exit(int id)
 
 	spin_lock_irqsave(&lock, flags);
 
-	NX_RSTCON_SetBaseAddress(IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_RSTCON_SetBaseAddress(__io_address(NX_RSTCON_GetPhysicalAddress()));
 	NX_RSTCON_SetRST(RSTIndex, RSTCON_NEGATE);
 
 	spin_unlock_irqrestore(&lock, flags);
@@ -104,7 +114,7 @@ void nxp_soc_peri_reset_set(int id)
 
 	spin_lock_irqsave(&lock, flags);
 
-	NX_RSTCON_SetBaseAddress(IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_RSTCON_SetBaseAddress(__io_address(NX_RSTCON_GetPhysicalAddress()));
 	NX_RSTCON_SetRST(RSTIndex, RSTCON_ASSERT);
 	mdelay(1);
 	NX_RSTCON_SetRST(RSTIndex, RSTCON_NEGATE);
@@ -124,7 +134,7 @@ int nxp_soc_peri_reset_status(int id)
 
 	spin_lock_irqsave(&lock, flags);
 
-	NX_RSTCON_SetBaseAddress(IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_RSTCON_SetBaseAddress(__io_address(NX_RSTCON_GetPhysicalAddress()));
 	power = NX_RSTCON_GetRST(RSTIndex) ? 1 : 0;
 
 	spin_unlock_irqrestore(&lock, flags);
@@ -133,14 +143,3 @@ int nxp_soc_peri_reset_status(int id)
 }
 EXPORT_SYMBOL_GPL(nxp_soc_peri_reset_status);
 
-void nxp_soc_rsc_enter(int id)
-{
-	nxp_soc_peri_reset_enter(id);
-}
-EXPORT_SYMBOL_GPL(nxp_soc_rsc_enter);
-
-void nxp_soc_rsc_exit(int id)
-{
-	nxp_soc_peri_reset_exit(id);
-}
-EXPORT_SYMBOL_GPL(nxp_soc_rsc_exit);

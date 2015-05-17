@@ -5,21 +5,41 @@
 #include <linux/of.h>
 #include <linux/of_fdt.h>
 #include <linux/of_address.h>
+#include <asm/io.h>
 
 #include <nexell/platform.h>
 
-#define	PIN_FN_SIZE		4
-
+/*
 #define	pr_debug	printk
+*/
+static void cpu_early_setup_iomap(void)
+{
+	void __iomem *base;
 
+	base = ioremap(NX_TIEOFF_GetPhysicalAddress(), PAGE_SIZE);
+	NX_TIEOFF_SetBaseAddress(base);
 
-static void cpu_pin_setup_gpio(void __iomem *base, int index, u32 *pins, int size)
+	base = ioremap(NX_CLKPWR_GetPhysicalAddress(), PAGE_SIZE);
+	NX_CLKPWR_SetBaseAddress(base);
+
+	base = ioremap(NX_ECID_GetPhysicalAddress(), PAGE_SIZE);
+	NX_ECID_SetBaseAddress(base);
+
+//	__raw_writel(0xFFFFFFFF, (void*)SCR_ARM_SECOND_BOOT);
+//	__raw_writel((-1UL), (void*)SCR_SMP_WAKE_CPU_ID);
+}
+
+#define	PIN_FN_SIZE		4
+static void cpu_early_setup_gpio(void __iomem *base,
+							int index, u32 *pins, int size)
 {
 	int pin = 0;
 
+	NX_GPIO_SetBaseAddress(index, base);
 	NX_GPIO_ClearInterruptPendingAll(index);
 
-	for (pin = 0; size > pin; pin++) {
+	while (size > pin) {
+
 		int io = pins[pin], alt = PAD_GET_FUNC(io);
 		int mod = PAD_GET_MODE(io), lv = PAD_GET_LEVEL(io);
 		int str = PAD_GET_STRENGTH(io), plup = PAD_GET_PULLUP(io);
@@ -29,7 +49,8 @@ static void cpu_pin_setup_gpio(void __iomem *base, int index, u32 *pins, int siz
 		case PAD_GET_FUNC(PAD_FUNC_ALT1): alt = NX_GPIO_PADFUNC_1;	break;
 		case PAD_GET_FUNC(PAD_FUNC_ALT2): alt = NX_GPIO_PADFUNC_2;	break;
 		case PAD_GET_FUNC(PAD_FUNC_ALT3): alt = NX_GPIO_PADFUNC_3;	break;
-		default: pr_err("Error, unknown alt (%d.%02d=%d)\n", index, pin, alt);
+		default: pr_err("Error, unknown alt (%d.%02d=%d) def 0x%08x\n",
+				index, pin, alt, io);
 			continue;
 		}
 
@@ -44,20 +65,26 @@ static void cpu_pin_setup_gpio(void __iomem *base, int index, u32 *pins, int siz
 		pr_debug("[Gpio %d.%2d: DIR %s, ALT %d, Level %s, Pull %s, Str %d]\n",
 			index, pin, mod == PAD_GET_MODE(PAD_MODE_OUT)?"OUT":" IN",
 			alt, lv?"H":"L", plup==0?" DN":(plup==1?" UP":"OFF"), str);
+		pin++;
 	}
 }
 
-static void cpu_pin_setup_alive(void __iomem *base, int index, u32 *pins, int size)
+static void cpu_early_setup_alive(void __iomem *base,
+							int index, u32 *pins, int size)
 {
 	int pin = 0;
 
-	for (pin = 0; size > pin; pin++) {
+	NX_ALIVE_SetBaseAddress(base);
+
+	while (size > pin) {
+
 		int io = pins[pin], mod = PAD_GET_MODE(io);
 		int lv = PAD_GET_LEVEL(io), plup = PAD_GET_PULLUP(io);
 		int det = 0;
 
 		NX_ALIVE_ClearInterruptPending(pin);
-		NX_ALIVE_SetOutputEnable(pin, (mod == PAD_GET_MODE(PAD_MODE_OUT) ? CTRUE : CFALSE));
+		NX_ALIVE_SetOutputEnable(pin,
+				(mod == PAD_GET_MODE(PAD_MODE_OUT) ? CTRUE : CFALSE));
 		NX_ALIVE_SetOutputValue (pin, lv);
 		NX_ALIVE_SetPullUpEnable(pin, (plup & 1 ? CTRUE : CFALSE));
 
@@ -66,12 +93,15 @@ static void cpu_pin_setup_alive(void __iomem *base, int index, u32 *pins, int si
 			NX_ALIVE_SetDetectMode(det, pin, (lv == det ? CTRUE : CFALSE)) :
 			NX_ALIVE_SetDetectMode(det, pin, CFALSE);
 		}
-		NX_ALIVE_SetDetectEnable(pin, (mod == PAD_MODE_INT ? CTRUE : CFALSE));
 
+		NX_ALIVE_SetDetectEnable(pin, (mod == PAD_MODE_INT ? CTRUE : CFALSE));
 		pr_debug("[ALive%d: DIR %s, evel %s, Pull %s]\n",
 			pin, mod == PAD_GET_MODE(PAD_MODE_OUT)?"OUT":" IN",
 			lv?"H":"L", lv==0?" DN": (lv==1?" UP":"OFF"));
+		pin++;
 	}
+
+	NX_ALIVE_SetWriteEnable(CTRUE);
 }
 
 static int __init cpu_early_initcall_setup(void)
@@ -86,6 +116,8 @@ static int __init cpu_early_initcall_setup(void)
 	if (!np)
 		return -EINVAL;
 
+	cpu_early_setup_iomap();
+
 	for_each_child_of_node(np, child) {
 		list = of_get_property(child, "pin,functions", &size);
 		size /= PIN_FN_SIZE;
@@ -98,14 +130,15 @@ static int __init cpu_early_initcall_setup(void)
 			pins[i] = be32_to_cpu(*list++);
 
 		if (!of_node_cmp(child->type, "gpio"))
-			cpu_pin_setup_gpio (base, index, pins, size);
+			cpu_early_setup_gpio (base, index, pins, size);
 		else if (!of_node_cmp(child->type, "alive"))
-			cpu_pin_setup_alive(base, index, pins, size);
+			cpu_early_setup_alive(base, index, pins, size);
 		else
 			continue;
 
 		index++;
 	}
+
 	return 0;
 }
 early_initcall(cpu_early_initcall_setup);

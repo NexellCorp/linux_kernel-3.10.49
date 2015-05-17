@@ -1,0 +1,40 @@
+/*
+ * s5p6818.dtsi - Device Tree Include file for SLsiAp SoC
+ *
+ * Copyright 2009 Nexell Co.
+ *		http://www.nexell.co.kr
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+#include "s5p6818.dtsi"
+
+#define	UART_CLOCK_FREQUENCY	147500000
+
+/ {
+	memory {
+		reg = <0x40000000 0x40000000>;
+	};
+
+	soc {
+
+		clocks {
+			uart0:uart@a9000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			uart1:uart@a8000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			uart2:uart@aa000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			uart3:uart@ab000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			uart4:uart@6e000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			uart5:uart@84000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+		};
+
+		#include "s5p6818-svt-pin.dtsi"
+
+		serial@a1000 {
+			enable_dma = <1>;
+		};
+
+		serial@a0000 {
+			enable_dma = <1>;
+		};
+	};
+};
