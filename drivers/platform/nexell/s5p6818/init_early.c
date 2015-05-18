@@ -12,23 +12,6 @@
 /*
 #define	pr_debug	printk
 */
-static void cpu_early_setup_iomap(void)
-{
-	void __iomem *base;
-
-	base = ioremap(NX_TIEOFF_GetPhysicalAddress(), PAGE_SIZE);
-	NX_TIEOFF_SetBaseAddress(base);
-
-	base = ioremap(NX_CLKPWR_GetPhysicalAddress(), PAGE_SIZE);
-	NX_CLKPWR_SetBaseAddress(base);
-
-	base = ioremap(NX_ECID_GetPhysicalAddress(), PAGE_SIZE);
-	NX_ECID_SetBaseAddress(base);
-
-//	__raw_writel(0xFFFFFFFF, (void*)SCR_ARM_SECOND_BOOT);
-//	__raw_writel((-1UL), (void*)SCR_SMP_WAKE_CPU_ID);
-}
-
 #define	PIN_FN_SIZE		4
 static void cpu_early_setup_gpio(void __iomem *base,
 							int index, u32 *pins, int size)
@@ -116,8 +99,6 @@ static int __init cpu_early_initcall_setup(void)
 	if (!np)
 		return -EINVAL;
 
-	cpu_early_setup_iomap();
-
 	for_each_child_of_node(np, child) {
 		list = of_get_property(child, "pin,functions", &size);
 		size /= PIN_FN_SIZE;
@@ -136,6 +117,7 @@ static int __init cpu_early_initcall_setup(void)
 		else
 			continue;
 
+		iounmap(base);
 		index++;
 	}
 

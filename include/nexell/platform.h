@@ -29,13 +29,12 @@
 #include <mach/iomap.h>
 #include <mach/io.h>
 #endif
+#if defined (CONFIG_ARM64)
+#include <nexell/io_map.h>
+#endif
 #include <nexell/io_type.h>
 
 #ifndef __ASSEMBLY__
-
-void nxp_cpu_init(void);			/* No init section for suspend */
-void nxp_cpu_reset(char str, const char *cmd);
-int  nxp_soc_version(void);
 
 #endif	/* __ASSEMBLY__ */
 

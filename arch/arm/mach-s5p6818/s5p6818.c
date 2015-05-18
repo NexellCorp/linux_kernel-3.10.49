@@ -81,17 +81,17 @@ static void cpu_setup_bus(void)
 void (*nxp_pm_poweroff)(void) = NULL;
 void (*nxp_pm_reset)(char str, const char *cmd) = NULL;
 
-void cpu_shutdown(void)
+static void cpu_shutdown(void)
 {
-	int cpu = smp_processor_id();
-	int n;
+	int n, cpu = raw_smp_processor_id();
 
 	if (nxp_pm_poweroff)
 		nxp_pm_poweroff();
 
 	for_each_present_cpu(n) {
-		if (n != cpu)
-			NX_CLKPWR_SetCPUPowerOff(n);
+		if (n == cpu)
+			continue;
+		NX_CLKPWR_SetCPUPowerOff(n);
 	}
 
 	printk("cpu.%d shutdown ...\n", cpu);
@@ -103,7 +103,7 @@ void cpu_shutdown(void)
 	halt();
 }
 
-void nxp_cpu_reset(char str, const char *cmd)
+static void cpu_reset(char str, const char *cmd)
 {
 	lldebugout("System reset: %s ...\n", cmd);
 	mdelay(10);
@@ -125,6 +125,8 @@ void nxp_cpu_reset(char str, const char *cmd)
 	NX_CLKPWR_DoSoftwareReset();
 }
 
+extern void (*arm_pm_restart)(char str, const char *cmd);
+
 void nxp_cpu_init(void)
 {
 	cpu_setup_base();
@@ -132,5 +134,6 @@ void nxp_cpu_init(void)
 
 	/* redefine poweroff */
 	pm_power_off = cpu_shutdown;
+	arm_pm_restart = cpu_reset;
 }
 

@@ -34,12 +34,8 @@
 */
 
 extern void secondary_start_head(void);
-
 volatile unsigned long secondary_pen_release = INVALID_HWID;
 
-static phys_addr_t boot_sig_addr = SCR_ARM_SECOND_BOOT;
-static phys_addr_t cpu_sig_addr = SCR_SMP_WAKE_CPU_ID;
-static void __iomem *release_addr;
 
 /*
  * Write secondary_pen_release in a way that is guaranteed to be
@@ -56,20 +52,10 @@ static void write_pen_release(u64 val)
 	__flush_dcache_area(start, size);
 }
 
-static void smp_soc_cpu_unprepare(unsigned int cpu)
-{
-	if (cpu == (setup_max_cpus-1) && release_addr) {
-		iounmap(release_addr);
-		printk("cpu.%d unmap scr 0x%p\n", cpu, release_addr);
-	}
-}
-
 static void inline smp_soc_cpu_signature(unsigned int cpu)
 {
-	unsigned long base = boot_sig_addr & ~(PAGE_SIZE-1);
-
-	__raw_writel(__pa(secondary_start_head), release_addr + (boot_sig_addr - base));
-	__raw_writel(cpu, release_addr + (cpu_sig_addr - base));
+	__raw_writel(__pa(secondary_start_head), __io_address(SCR_ARM_SECOND_BOOT));
+	__raw_writel(cpu, __io_address(SCR_SMP_WAKE_CPU_ID));
 }
 
 static int smp_soc_cpu_init(struct device_node *dn, unsigned int cpu)
@@ -77,7 +63,6 @@ static int smp_soc_cpu_init(struct device_node *dn, unsigned int cpu)
 	return 0;
 }
 
-//#define	RESET_SNOOP_CTRL
 #ifdef  RESET_SNOOP_CTRL
 #define	CCI400_BASE		0xe0090000
 static void smp_soc_cpu_set_snoop(void)
@@ -96,24 +81,6 @@ static void smp_soc_cpu_set_snoop(void)
 #endif
 static int smp_soc_cpu_prepare(unsigned int cpu)
 {
-	phys_addr_t base = boot_sig_addr & ~(PAGE_SIZE-1);
-	if (1 != cpu)
-		return 0;
-
-	release_addr = ioremap(base, PAGE_SIZE);
-	if (!release_addr)
-		return -ENODEV;
-
-	#ifdef RESET_SNOOP_CTRL
-	/*
-	 *	skip this routine
-	 *	occur "Bad mode in Error handler detected, code 0xbf000000"
-	 */
-	smp_soc_cpu_set_snoop();
-	#endif
-
-	printk("cpu.%d  map scr 0x%llx:0x%p\n", cpu, base, release_addr);
-
 	return 0;
 }
 
@@ -136,9 +103,9 @@ static int smp_soc_cpu_boot(unsigned int cpu)
      * the boot monitor to read the system wide flags register,
      * and branch to the address found there.
      */
-#if 0
+	#if 0
     sev();
-#else
+	#else
     arch_send_call_function_ipi_mask(cpumask_of(cpu));
 
     timeout = jiffies + (1000 * HZ);
@@ -149,14 +116,12 @@ static int smp_soc_cpu_boot(unsigned int cpu)
 
         udelay(10);
     }
-#endif
+	#endif
 
     /*
      * now the secondary core is starting up let it run its
      * calibrations, then wait for it to finish
      */
-
-	smp_soc_cpu_unprepare(cpu);
 
     return secondary_pen_release != INVALID_HWID ? -ENOSYS : 0;
 }

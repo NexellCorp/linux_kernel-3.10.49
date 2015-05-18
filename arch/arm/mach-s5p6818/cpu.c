@@ -51,6 +51,11 @@ static struct map_desc cpu_iomap_desc[] = {
 	#include <mach/s5p6818_iomap.h>
 };
 
+extern void nxp_cpu_init(void);
+extern void nxp_cpu_init_time(void);
+extern void nxp_cpu_init_irq(void);
+extern struct smp_operations nxp_smp_ops;
+
 /*
  * 	cpu initialize and io/memory map.
  * 	procedure: fixup -> map_io -> init_irq -> timer init -> init_machine
@@ -79,11 +84,6 @@ static void __init cpu_init_machine(void)
 	of_platform_populate(NULL, of_default_bus_match_table, NULL, NULL);
 }
 
-static void cpu_restart(char str, const char *cmd)
-{
-	nxp_cpu_reset(str, cmd);
-}
-
 #if defined CONFIG_CMA && defined CONFIG_ION
 static void __init cpu_mem_reserve(void)
 {
@@ -101,24 +101,18 @@ extern void nxp_reserve_mem(void);
 /*
  * Maintainer: Nexell Co., Ltd.
  */
-extern void nxp_cpu_init_time(void);
-extern void nxp_cpu_init_irq(void);
-extern struct smp_operations nxp_smp_ops;
-#define	CFG_SYS_CPU_NAME	"s5p6818"
-
 static const char * const cpu_dt_compat[] = {
     "Nexell,s5p6818",
     NULL
 };
 
-DT_MACHINE_START(S5P6818, CFG_SYS_CPU_NAME)
+DT_MACHINE_START(S5P6818, "s5p6818")
 	.atag_offset	= 0x00000100,
 	.nr				= 6818,
 	.smp			= smp_ops(nxp_smp_ops),
 	.map_io			= cpu_map_io,
 	.init_early		= cpu_init_early,
 	.init_machine	= cpu_init_machine,
-	.restart		= cpu_restart,
 	.dt_compat  	= cpu_dt_compat,
 #if defined CONFIG_CMA && defined CONFIG_ION
     .reserve        = cpu_mem_reserve,

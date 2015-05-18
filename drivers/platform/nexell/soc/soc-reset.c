@@ -31,6 +31,8 @@
 static DEFINE_SPINLOCK(lock);
 
 #ifdef CONFIG_ARM64
+#undef __io_address
+
 static void __iomem* reset_base = NULL;
 static inline void __iomem* __io_address(unsigned long base)
 {
