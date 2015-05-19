@@ -680,6 +680,9 @@ struct v4l2_buffer {
 /* Cache handling flags */
 #define V4L2_BUF_FLAG_NO_CACHE_INVALIDATE	0x0800
 #define V4L2_BUF_FLAG_NO_CACHE_CLEAN		0x1000
+/* Expects and returns a sync fence */
+#define V4L2_BUF_FLAG_USE_SYNC	0x2000
+
 /* Timestamp type */
 #define V4L2_BUF_FLAG_TIMESTAMP_MASK		0xe000
 #define V4L2_BUF_FLAG_TIMESTAMP_UNKNOWN		0x0000
@@ -795,6 +798,8 @@ struct v4l2_cropcap {
 struct v4l2_crop {
 	__u32			type;	/* enum v4l2_buf_type */
 	struct v4l2_rect        c;
+    /* psw0523 add for nexell set_crop_with_pad API */
+    int                     pad;
 };
 
 /**
