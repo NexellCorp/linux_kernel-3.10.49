@@ -837,6 +837,7 @@ static inline void s3c24xx_i2c_deregister_cpufreq(struct s3c24xx_i2c *i2c)
 #endif
 
 #ifdef CONFIG_OF
+#if 0
 static int s3c24xx_i2c_parse_dt_gpio(struct s3c24xx_i2c *i2c)
 {
 	int idx, gpio, ret;
@@ -861,7 +862,7 @@ free_gpio:
 		gpio_free(i2c->gpios[idx]);
 	return -EINVAL;
 }
-
+#endif
 static void s3c24xx_i2c_dt_gpio_free(struct s3c24xx_i2c *i2c)
 {
 	unsigned int idx;
@@ -945,7 +946,6 @@ s3c24xx_i2c_parse_dt(struct device_node *np, struct s3c24xx_i2c *i2c)
 	of_property_read_u32(np, "nexell,i2c-max-bus-freq",
 				(u32 *)&pdata->frequency);
 
-	printk("parse %d %d %d %d \n", pdata->reset_id, pdata->sda_delay, pdata->slave_addr, pdata->frequency);
 }
 #else
 static void
@@ -966,7 +966,7 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	struct s3c2410_platform_i2c *pdata = NULL;
 	struct resource *res;
 	int ret;
-	char s[20] = {0, };
+
 	if (!pdev->dev.of_node) {
 		pdata = pdev->dev.platform_data;
 		if (!pdata) {
