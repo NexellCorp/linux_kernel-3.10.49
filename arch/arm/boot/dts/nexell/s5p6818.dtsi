@@ -437,6 +437,17 @@
 			in_pol = "invert";
 			status = "disabled";
 		};
+
+		adc:adc@53000 {
+			compatible = "nexell,nxp-adc";
+			reg = <PHYS_BASE_ADC 0x1000>;
+			interrupts = <0 IRQ_ADC 0>;
+			clocks = <&pclk>;
+			clock-names = "sys-bpclk";
+			sample_rate = <200000>;
+			#io-channel-cells = <1>;
+			status = "disabled";
+		};
 	};
 	
 };

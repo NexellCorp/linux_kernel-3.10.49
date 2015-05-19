@@ -78,5 +78,10 @@
 		ppm@54000 {
 			status = "okay";
 		};
+
+		adc:adc@53000 {
+			status = "okay";
+		};
+
 	};
 };
