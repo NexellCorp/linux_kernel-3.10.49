@@ -15,6 +15,7 @@
 #include "../../../../../include/nexell/s5p6818/s5p6818-base.h"
 #include "../../../../../include/nexell/s5p6818/s5p6818-irq.h"
 #include "../../../../../include/nexell/s5p6818/s5p6818-pm.h"
+#include "../../../../../include/nexell/arch_type.h"
 
 / {
 	model = "nexell soc";
@@ -96,7 +97,7 @@
 		reg = <0x40000000 0x40000000>;
 	};
 
-	refclk: oscillator {
+	refclk:oscillator {
 		compatible = "nexell,s5p6818,refclk";
 		ref-freuecny = <24000000>;
 	};
@@ -117,7 +118,7 @@
 		compatible = "nexell,s5p6818-soc", "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <1>;
-		reg = <0xc0000000 0x100000>;
+		reg = <0xc0000000 0x300000>;
 		interrupt-parent = <&gic>;
 		ranges;
 
@@ -133,6 +134,7 @@
 		cpu:interrupt-controller@08000 {
 			compatible = "nexell,s5p6818-gic-cpu";
 			interrupt-controller;
+			reg	= <0xC0008000 0x1000>;
 		  	#address-cells = <1>;
     	    #size-cells = <1>;
 			ranges;
@@ -368,6 +370,46 @@
 			dma-names = "tx", "rx";
 			dmas = <&pl08xdma0 10 &pl08xdma0 11>;
 			enable_dma = <1>;
+			status = "disabled";
+		};
+
+
+		display@0 {
+			compatible = "nexell,nxp-display";
+			reg = <0xc0102800 0x100>;
+			interrupts = < 0 IRQ_DPC_P 0 >;
+			module = <0>;
+			#if !defined(CONFIG_NXP_DISPLAY_1ST)
+			status = "disabled";
+			#endif
+		};
+
+		display@1 {
+			compatible = "nexell,nxp-display";
+			reg = <0xc0102c00 0x100>;
+			interrupts = <0 IRQ_DPC_S 0>;
+			module = <1>;
+			#if !defined(CONFIG_NXP_DISPLAY_2ST)
+			status = "disabled";
+			#endif
+		};
+
+		framebuffer@0 {
+			compatible = "nexell,nxp-fb";
+			reg = <0xc0102000 0x100>;
+			status = "disabled";
+		};
+
+		framebuffer@1 {
+			compatible = "nexell,nxp-fb";
+			reg = <0xc0102400 0x100>;
+			status = "disabled";
+		};
+
+		lvds@0 {
+			compatible = "nexell,nxp-lvds";
+			display_in = <(6 + CONFIG_NXP_DISPLAY_LVDS_IN)>; /* 6: syncgen0, 7:syncgen1 */
+			device_id = <4>;
 			status = "disabled";
 		};
 	};

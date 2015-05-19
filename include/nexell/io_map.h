@@ -5,7 +5,7 @@ extern void __iomem *io_map_base;
 #define	__PB_IO_MAP_REGS_PHYS	(0xC0000000)
 #define	__PB_IO_MAP_REGS_SIZE	(SZ_1M * 3)
 
-static inline void __iomem * IO_ADDRESS(long addr)
+static inline void __iomem * __io_address(long addr)
 {
 	if (!io_map_base ||
 		__PB_IO_MAP_REGS_PHYS > addr ||
@@ -18,6 +18,6 @@ static inline void __iomem * IO_ADDRESS(long addr)
 	return (void __iomem *)(addr - __PB_IO_MAP_REGS_PHYS + io_map_base);
 }
 
-#define __io_address(n)	((void __iomem * )IO_ADDRESS(n))
+#define IO_ADDRESS(n)	((void __iomem * )__io_address(n))
 
 #endif

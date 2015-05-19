@@ -362,7 +362,7 @@ config HAVE_ARCH_TRANSPARENT_HUGEPAGE
 source "mm/Kconfig"
 
 config FORCE_MAX_ZONEORDER
-	int
+	int "Memory Max Zone Oreder (11:4MB, 12:8MB 13:16MB)"
 	default "14" if (ARM64_64K_PAGES && TRANSPARENT_HUGEPAGE)
 	default "11"
 
