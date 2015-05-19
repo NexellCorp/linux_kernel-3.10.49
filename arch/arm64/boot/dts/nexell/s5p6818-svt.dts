@@ -10,6 +10,8 @@
 #include "s5p6818.dtsi"
 
 #define	UART_CLOCK_FREQUENCY	147500000
+#define I2C_CLOCK_FREQUENCY		100000000
+#define SPI_CLOCK_FREQUENCY		100000000
 
 / {
 	memory {
@@ -25,6 +27,12 @@
 			uart3:uart@ab000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
 			uart4:uart@6e000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
 			uart5:uart@84000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			i2c0:i2c@ae000 { clock-frequency = <I2C_CLOCK_FREQUENCY>; };
+			i2c1:i2c@af000 { clock-frequency = <I2C_CLOCK_FREQUENCY>; };
+			i2c2:i2c@b0000 { clock-frequency = <I2C_CLOCK_FREQUENCY>; };
+			spi0:spi@ac000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
+			spi1:spi@ad000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
+			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 		};
 
 		#include "s5p6818-svt-pin.dtsi"
@@ -36,5 +44,34 @@
 		serial@a0000 {
 			enable_dma = <1>;
 		};
+		spi@5b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			num_cs = <1>;
+			clk_nr = <0>;
+			
+
+			spidev@0 {
+				compatible = "spidev";
+				reg = <0>;							
+				spi-max-frequency = < 50000000 >;
+				controller-data {
+				  spi-cs-gpio = <10>;
+					spi-feedback-delay = <02>;
+				};
+			};
+
+				
+		};
+		spi@5c000 {
+			num_cs = <1>;
+			clk_nr = <0>;
+		};
+		spi@5f000 {
+			num_cs = <1>;
+			clk_nr = <0>;
+		};
+
+		
 	};
 };
