@@ -12,6 +12,8 @@
 #define	UART_CLOCK_FREQUENCY	147500000
 #define I2C_CLOCK_FREQUENCY		100000000
 #define SPI_CLOCK_FREQUENCY		100000000
+#define GMAC_CLOCK_FREQUENCY	200000000
+
 / {
 	memory {
 		reg = <0x40000000 0x40000000>;
@@ -30,6 +32,7 @@
 			spi0:spi@ac000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi1:spi@ad000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
+			gmac:gmac@c8000  { clock-frequency = <GMAC_CLOCK_FREQUENCY>; };
 		};
 
 		#include "s5p6818-svt-pin.dtsi"
@@ -97,6 +100,24 @@
 			nand-ecc-bits = <40>;
 			wp-gpio = <91>;							/* GPIO_C27 */
 			status = "okay";
+		};
+
+		gmac0:ethernet@60000 {
+			phy = <&phy0>;
+			status = "okay";
+			#address-cells = <0x1>;
+			#size-cells = <0x0>;
+			phy-addr = <3>;
+			probed-phy-irq = <(IRQ_GPIO_A_START+9)>;
+			phy0:ethernet-phy@0 {
+				compatible = "ethernet-phy-ieee802.3-c22";
+				/*max-speed = <1000>;*/
+				/*linux,phandle = <2452000>;*/
+				/*interrupt-parent = <40000>;*/
+				/*interrupts = <(IRQ_GPIO_A_START+9) 0>;*/
+				reg = <0>;
+				device_type = "ethernet-phy";
+			};
 		};
 
 	};
