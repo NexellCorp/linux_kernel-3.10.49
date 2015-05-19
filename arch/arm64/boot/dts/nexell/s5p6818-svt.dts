@@ -49,11 +49,11 @@
 			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
-			
+
 
 			spidev@0 {
 				compatible = "spidev";
-				reg = <0>;							
+				reg = <0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
 				  spi-cs-gpio = <10>;
@@ -61,7 +61,7 @@
 				};
 			};
 
-				
+
 		};
 		spi@5c000 {
 			num_cs = <1>;
@@ -79,8 +79,8 @@
 			frame_format = <MLC_RGBFMT_A8R8G8B8>;
 			back_color = <0x0>;
 			bit_per_pixel	= <(4 * 8)>;
-			lcd_x_resol	= <480>;
-			lcd_y_resol	= <320>;
+			lcd_x_resol	= <1024>;
+			lcd_y_resol	= <600>;
 			#ifdef CONFIG_ANDROID
 			frame_buffers = <3>;
 			skip_pan_vsync = <1>;

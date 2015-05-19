@@ -88,8 +88,8 @@
 			frame_format = <MLC_RGBFMT_A8R8G8B8>;
 			back_color = <0x0>;
 			bit_per_pixel	= <(4 * 8)>;
-			lcd_x_resol	= <480>;
-			lcd_y_resol	= <320>;
+			lcd_x_resol	= <1024>;
+			lcd_y_resol	= <600>;
 			#ifdef CONFIG_ANDROID
 			frame_buffers = <3>;
 			skip_pan_vsync = <1>;
