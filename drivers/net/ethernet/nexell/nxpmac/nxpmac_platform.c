@@ -40,8 +40,6 @@
 #ifdef CONFIG_OF
 int  nxpmac_init(struct platform_device *pdev)
 {
-	u32 addr;
-
 #if 0
 #if defined (CONFIG_REALTEK_PHY_RTL8201)	// 20140515
 	// 100 & 10Base-T
@@ -85,8 +83,7 @@ int  nxpmac_init(struct platform_device *pdev)
 
 	// Clock control
 	NX_CLKGEN_Initialize();
-	addr = NX_CLKGEN_GetPhysicalAddress(CLOCKINDEX_OF_DWC_GMAC_MODULE);
-	NX_CLKGEN_SetBaseAddress( CLOCKINDEX_OF_DWC_GMAC_MODULE, (u32)IO_ADDRESS(addr) );
+	NX_CLKGEN_SetBaseAddress( CLOCKINDEX_OF_DWC_GMAC_MODULE, (void *)__io_address(NX_CLKGEN_GetPhysicalAddress(CLOCKINDEX_OF_DWC_GMAC_MODULE)) );
 
 	NX_CLKGEN_SetClockSource( CLOCKINDEX_OF_DWC_GMAC_MODULE, 0, 4);     // Sync mode for 100 & 10Base-T : External RX_clk
 	NX_CLKGEN_SetClockDivisor( CLOCKINDEX_OF_DWC_GMAC_MODULE, 0, 1);    // Sync mode for 100 & 10Base-T
@@ -98,8 +95,7 @@ int  nxpmac_init(struct platform_device *pdev)
 
 	// Reset control
 	NX_RSTCON_Initialize();
-	addr = NX_RSTCON_GetPhysicalAddress();
-	NX_RSTCON_SetBaseAddress( (u32)IO_ADDRESS(addr) );
+	NX_RSTCON_SetBaseAddress((void *)__io_address(NX_RSTCON_GetPhysicalAddress()) );
 	NX_RSTCON_SetRST(RESETINDEX_OF_DWC_GMAC_MODULE_aresetn_i, RSTCON_NEGATE);
 	udelay(100);
 	NX_RSTCON_SetRST(RESETINDEX_OF_DWC_GMAC_MODULE_aresetn_i, RSTCON_ASSERT);

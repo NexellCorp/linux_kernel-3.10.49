@@ -100,10 +100,12 @@ struct nxp_adc_info {
 
 #define	STATE_RESUME_DONE	0
 
+#if 0
 static const char *str_adc_ch[] = {
 	"adc.0", "adc.1", "adc.2", "adc.3",
 	"adc.4", "adc.5", "adc.6", "adc.7",
 };
+#endif
 
 static const char *str_adc_label[] = {
 	"ADC0", "ADC1", "ADC2", "ADC3",
@@ -243,9 +245,11 @@ static int setup_adc_con(struct nxp_adc_info *adc)
 
 static int nxp_adc_setup(struct nxp_adc_info *adc, struct platform_device *pdev)
 {
-	ulong sample_rate, clk_rate, min_rate;
+	ulong clk_rate, min_rate;
+	uint32_t sample_rate;
 	int irq = 0, interrupt = 0, prescale = 0;
 	int ret = 0;
+	int arr_size;
 
 	adc->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(adc->clk)) {
@@ -262,7 +266,7 @@ static int nxp_adc_setup(struct nxp_adc_info *adc, struct platform_device *pdev)
 
 	if (sample_rate > ADC_MAX_SAMPLE_RATE ||
 		min_rate > sample_rate) {
-		pr_err("ADC: not suport %lu(%d ~ %lu) sample rate\n",
+		pr_err("ADC: not suport %u(%d ~ %lu) sample rate\n",
 			sample_rate, ADC_MAX_SAMPLE_RATE, min_rate);
 		clk_disable_unprepare(adc->clk);
 		return -EINVAL;
@@ -291,7 +295,7 @@ static int nxp_adc_setup(struct nxp_adc_info *adc, struct platform_device *pdev)
 	ADC_HW_RESET();
 
 	NX_ADC_Initialize();
-	NX_ADC_SetBaseAddress(0, (U32)IO_ADDRESS(NX_ADC_GetPhysicalAddress(0)));
+	NX_ADC_SetBaseAddress(0, (void *)__io_address(NX_ADC_GetPhysicalAddress(0)));
  	NX_ADC_OpenModule(0);
 
 	NX_ADC_SetInputChannel(0, 0);
@@ -316,8 +320,9 @@ static int nxp_adc_setup(struct nxp_adc_info *adc, struct platform_device *pdev)
 	setup_adc_con(adc);
 #endif
 
+	arr_size = ARRAY_SIZE(nxp_adc_iio_channels);
 	pr_info("ADC: CHs %d, %ld(%ld ~ %ld) sample rate, %s mode, scale=%d(bit %d)\n",
-		ARRAY_SIZE(nxp_adc_iio_channels), adc->sample_rate,
+		arr_size, adc->sample_rate,
 		adc->max_sampele_rate, adc->min_sampele_rate,
 		interrupt?"irq":"polling", prescale, ADC_MAX_SAMPLE_BITS);
 
@@ -342,7 +347,7 @@ static int nxp_read_raw(struct iio_dev *indio_dev,
 	unsigned long wait = loops_per_jiffy * (HZ/10);
 	volatile unsigned int adcon = 0;
 	volatile int value = 0;
-	unsigned long flags;
+	unsigned long flags = flags;
 
 	if (adc->support_interrupt) {
 		mutex_lock(&indio_dev->mlock);
@@ -448,7 +453,7 @@ static int nxp_adc_resume(struct platform_device *pdev)
 	struct nxp_adc_info *adc = iio_priv(indio_dev);
 
 #ifdef ADC_USING_PROTOTYPE
-	NX_ADC_SetBaseAddress(0, (U32)IO_ADDRESS(NX_ADC_GetPhysicalAddress(0)));
+	NX_ADC_SetBaseAddress(0, (void *)__io_address(NX_ADC_GetPhysicalAddress(0)));
  	NX_ADC_OpenModule(0);
 
 	ADC_HW_RESET();
@@ -720,13 +725,13 @@ err_of_populate:
 	device_for_each_child(&pdev->dev, NULL,
 				nxp_adc_remove_devices);
 	clk_disable_unprepare(adc->clk);
-err_iio_register:
+//err_iio_register:
 	iio_device_unregister(iio);
 err_iio_release:
 	nxp_adc_release(adc);
 err_iio_free:
 	iio_device_free(iio);
-err_clk:
+//err_clk:
 	pr_err("Fail: load ADC driver ...\n");
 	return ret;
 }

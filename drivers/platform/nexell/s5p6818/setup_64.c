@@ -56,6 +56,7 @@ static void s5p6818_cpu_iomap(void)
 	NX_TIEOFF_SetBaseAddress((void*)__io_address(NX_TIEOFF_GetPhysicalAddress()));
 	NX_CLKPWR_SetBaseAddress((void*)__io_address(NX_CLKPWR_GetPhysicalAddress()));
 	NX_ECID_SetBaseAddress((void*)__io_address(NX_ECID_GetPhysicalAddress()));
+	NX_MCUS_SetBaseAddress((void*)__io_address(NX_MCUS_GetPhysicalAddress()));
 
 	/*
 	 * NOTE> ALIVE Power Gate must enable for RTC register access.

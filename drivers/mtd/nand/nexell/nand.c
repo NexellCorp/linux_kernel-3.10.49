@@ -30,7 +30,6 @@
 #include <linux/irq.h>
 #include <asm/io.h>
 #include <asm/sizes.h>
-#include <asm/mach-types.h>
 #include <linux/bitops.h>
 #include <linux/of.h>
 #include <linux/of_mtd.h>
@@ -40,7 +39,6 @@
 #include <linux/sched.h>
 #include <asm/stacktrace.h>
 #include <asm/traps.h>
-#include <asm/unwind.h>
 
 #include <nexell/platform.h>
 #include <nexell/soc-s5pxx18.h>
@@ -678,7 +676,6 @@ static int nand_probe(struct platform_device *pdev)
 	struct mtd_part_parser_data ppdata = {};
 	uint32_t ecc_bch_bits = ecc_bch_bits;
 	int ret = 0;
-
 
 	nxp = devm_kzalloc(&pdev->dev, sizeof(*nxp), GFP_KERNEL);
 	if (!nxp) {

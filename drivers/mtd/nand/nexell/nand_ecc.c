@@ -76,8 +76,7 @@ static int iNX_BCH_VAR_M	 = 14;		/* 13, 14 */
 static int iNX_BCH_VAR_T	 = 60;		/* 4, 8, 12, 16, 24, 40, 60 ... */
 static int iNX_BCH_VAR_R	 = 104;		/* (iNX_BCH_VAR_K * iNX_BCH_VAR_M) / 8 - 1 */
 
-static struct NX_MCUS_RegisterSet * const _pNCTRL =
-	(struct NX_MCUS_RegisterSet *)IO_ADDRESS(PHY_BASEADDR_MCUSTOP_MODULE);
+struct NX_MCUS_RegisterSet * _pNCTRL = 0;
 
 static void inline __ecc_reset_decoder(void)
 {
@@ -213,6 +212,7 @@ static struct nand_ecclayout nand_ecc_oob = {
 };
 
 
+#if 0
 static int nand_sw_ecc_verify_buf(struct mtd_info *mtd, const uint8_t *buf, int len)
 {
 	int i;
@@ -223,6 +223,7 @@ static int nand_sw_ecc_verify_buf(struct mtd_info *mtd, const uint8_t *buf, int 
 			return -EFAULT;
 	return 0;
 }
+#endif
 
 
 #ifdef NXP_NAND_PROFILE
@@ -540,14 +541,15 @@ static int nand_hw_ecc_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 	return 0;
 }
 
-static int nand_hw_write_page(struct mtd_info *mtd, struct nand_chip *chip,
-			   const uint8_t *buf, int oob_required, int page, int cached, int raw)
+int nand_hw_write_page(struct mtd_info *mtd, struct nand_chip *chip,
+			uint32_t offset, int data_len, const uint8_t *buf,
+			int oob_required, int page, int cached, int raw)
 {
 	struct nxp_nand *nxp = chip->priv;
 #ifdef CONFIG_MTD_NAND_VERIFY_WRITE
 	int ret = 0;
 #endif
-	int status;
+	int status, subpage;
 	uint8_t *p = (uint8_t *)buf;
 
 #ifdef CONFIG_NAND_RANDOMIZER
@@ -561,14 +563,22 @@ static int nand_hw_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 	DBGOUT("%s page %d, raw=%d\n", __func__, page, raw);
 	chip->cmdfunc(mtd, NAND_CMD_SEQIN, 0x00, page);
 
-	/* for hynix H27UBG8T2BTR */
-	//ndelay(200);
-
-	/* not verify */
-	if (raw)
-		chip->ecc.write_page_raw(mtd, chip, buf, oob_required);
+	if (!(chip->options & NAND_NO_SUBPAGE_WRITE) &&
+		chip->ecc.write_subpage)
+		subpage = offset || (data_len < mtd->writesize);
 	else
-		chip->ecc.write_page(mtd, chip, p, oob_required);
+		subpage = 0;
+
+	if (unlikely(raw))
+		chip->ecc.write_page_raw(mtd, chip, buf, oob_required);
+	else if (subpage)
+		status = chip->ecc.write_subpage(mtd, chip, offset, data_len,
+							 buf, oob_required);
+	else
+		status = chip->ecc.write_page(mtd, chip, p, oob_required);
+
+	if (status < 0)
+		return status;
 
 	/*
 	 * Cached progamming disabled for now, Not sure if its worth the
@@ -711,6 +721,7 @@ int nand_hw_ecc_init_device(struct mtd_info *mtd)
 	uint32_t eccsize = nxp->cfg.ecc_unit_size;
 	uint32_t ecc_hw_bits = nxp->cfg.ecc_hw_bits;
 
+	_pNCTRL = (struct NX_MCUS_RegisterSet *)__io_address(PHY_BASEADDR_MCUSTOP_MODULE);
 
 	/* must be resume */
 	if (nxp->eccmode)
