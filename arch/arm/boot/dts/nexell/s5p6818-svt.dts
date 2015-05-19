@@ -79,4 +79,53 @@
 			status = "okay";
 		};
 	};
+
+    nxp-ion {
+        compatible = "nexell,nxp-ion";
+        nr = <3>;
+        names = "ion_noncontig_heap", "ion_contig_heap", "nxp_contig_heap";
+        types = <0 1 6>;
+    };
+
+    nxp-v4l2 {
+        compatible = "nexell,nxp-v4l2";
+
+        capture {
+            nr = <1>;
+
+            capture0 {
+                module = <2>;
+                type = <0>;
+
+                port = <0>;
+                external_sync = <0>;
+
+                h_frontporch = <7>;
+                h_syncwidth = <1>;
+                h_backporch = <10>;
+                v_frontporch = <0>;
+                v_syncwidth = <2>;
+                v_backporch = <3>;
+
+                data_order = <0>;
+                vid = <0>;
+
+                interlace = <0>;
+                late_power_down = <0>;
+
+                sensor {
+                    type = <0>;
+                    sensor_name = "MT9D111";
+                    i2c_adapter = <2>;
+                    addr = <0x5d>;
+                };
+
+                power {
+                    reset_io = <(PAD_GPIO_C+30)>;
+                    reset_invert = <1>;
+                    reset_delay_ms = <10>;
+                };
+            };
+        };
+    };
 };
