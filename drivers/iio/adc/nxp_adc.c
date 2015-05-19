@@ -79,6 +79,7 @@ struct nxp_adc_info {
 	struct completion completion;
 	int support_interrupt;
 	int irq;
+	struct clk *clk;
 	struct iio_map *map;
 #if defined(CONFIG_ARM_NXP_CPUFREQ_BY_RESOURCE)
 	struct iio_dev *iio;
@@ -242,18 +243,17 @@ static int setup_adc_con(struct nxp_adc_info *adc)
 
 static int nxp_adc_setup(struct nxp_adc_info *adc, struct platform_device *pdev)
 {
-	struct clk *clk = NULL;
 	ulong sample_rate, clk_rate, min_rate;
 	int irq = 0, interrupt = 0, prescale = 0;
 	int ret = 0;
 
-	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		pr_err("Fail: getting clock ADC !!!\n");
+	adc->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(adc->clk)) {
+		pr_err("Fail: getting clock for ADC !!!\n");
 		return -EINVAL;
 	}
- 	clk_rate = clk_get_rate(clk);
-	clk_prepare_enable(clk);
+ 	clk_rate = clk_get_rate(adc->clk);
+	clk_prepare_enable(adc->clk);
 
 	of_property_read_u32(pdev->dev.of_node, "sample_rate", &sample_rate);
 
@@ -264,7 +264,7 @@ static int nxp_adc_setup(struct nxp_adc_info *adc, struct platform_device *pdev)
 		min_rate > sample_rate) {
 		pr_err("ADC: not suport %lu(%d ~ %lu) sample rate\n",
 			sample_rate, ADC_MAX_SAMPLE_RATE, min_rate);
-		clk_disable_unprepare(clk);
+		clk_disable_unprepare(adc->clk);
 		return -EINVAL;
 	}
 
@@ -719,12 +719,14 @@ static int nxp_adc_probe(struct platform_device *pdev)
 err_of_populate:
 	device_for_each_child(&pdev->dev, NULL,
 				nxp_adc_remove_devices);
+	clk_disable_unprepare(adc->clk);
 err_iio_register:
 	iio_device_unregister(iio);
 err_iio_release:
 	nxp_adc_release(adc);
 err_iio_free:
 	iio_device_free(iio);
+err_clk:
 	pr_err("Fail: load ADC driver ...\n");
 	return ret;
 }
@@ -736,6 +738,7 @@ static int nxp_adc_remove(struct platform_device *pdev)
 
 	device_for_each_child(&pdev->dev, NULL,
 				nxp_adc_remove_devices);
+	clk_disable_unprepare(adc->clk);
 	iio_device_unregister(iio);
 	nxp_adc_release(adc);
 	platform_set_drvdata(pdev, NULL);
