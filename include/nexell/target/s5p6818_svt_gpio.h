@@ -2,7 +2,7 @@
 #ifndef __BOARD_GPIO_H__
 #define __BOARD_GPIO_H__
 
-#include "../io_type.h"
+#include "../arch_type.h"
 
 /*------------------------------------------------------------------------------
  *

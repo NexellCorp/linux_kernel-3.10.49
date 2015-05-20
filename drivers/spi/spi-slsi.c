@@ -1564,7 +1564,7 @@ static int __init s3c64xx_spi_probe(struct platform_device *pdev)
 	struct s3c64xx_spi_info *sci=pdev->dev.platform_data;
 	struct spi_master *master;
 	int ret, irq;
-	int id;
+	//int id;
 
 	if (!sci && pdev->dev.of_node) {
     	sci = nexell_spi_parse_dt(&pdev->dev);
@@ -1575,23 +1575,23 @@ static int __init s3c64xx_spi_probe(struct platform_device *pdev)
 	if (!sci) {
         dev_err(&pdev->dev, "platform_data missing!!!!\n");
         return -ENODEV;
-  }
+  	}
 	pdev->id = sci->bus_id;
 	
-  mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-  if (mem_res == NULL) {
-      dev_err(&pdev->dev, "Unable to get SPI MEM resource\n");
-      return -ENXIO;
-  }
+	  mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	  if (mem_res == NULL) {
+	      dev_err(&pdev->dev, "Unable to get SPI MEM resource\n");
+    	  return -ENXIO;
+	  }
 
-  irq = platform_get_irq(pdev, 0);
-  if (irq < 0) {
-      dev_warn(&pdev->dev, "Failed to get IRQ: %d\n", irq);
-      return irq;
-  }
+	  irq = platform_get_irq(pdev, 0);
+	  if (irq < 0) {
+	      dev_warn(&pdev->dev, "Failed to get IRQ: %d\n", irq);
+    	  return irq;
+  	}
 		
 	/* Check for availability of necessary resource */
-  if (!pdev->dev.of_node) {
+	if (!pdev->dev.of_node) {
 		dmatx_res = platform_get_resource(pdev, IORESOURCE_DMA, 0);
 		if (dmatx_res == NULL) {
 			dev_err(&pdev->dev, "Unable to get SPI-Tx dma resource\n");
@@ -1678,7 +1678,7 @@ static int __init s3c64xx_spi_probe(struct platform_device *pdev)
 	sdd->src_clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(sdd->src_clk)) {
 		dev_err(&pdev->dev,
-			"Unable to acquire clock '%s'\n", NULL);
+			"Unable to acquire clock ''\n");
 		ret = PTR_ERR(sdd->src_clk);
 		goto err4;
 	}
@@ -1741,8 +1741,8 @@ err5:
 	clk_put(sdd->src_clk);
 err4:
 	clk_put(sdd->clk);
-err3:
-err2:
+//err3:
+//err2:
 	iounmap((void *) sdd->regs);
 err1:
 	release_mem_region(mem_res->start, resource_size(mem_res));
@@ -1877,7 +1877,7 @@ static struct s3c64xx_spi_port_config nexell_spi_port_config = {
     .high_speed = true,
     .clk_from_cmu   = true,
 };
-
+#if 0
 static struct platform_device_id nexell_spi_driver_ids[] = {
 	{
 		.name       = "s3c2443-spi",
@@ -1885,7 +1885,7 @@ static struct platform_device_id nexell_spi_driver_ids[] = {
 	},
 	{ },
 };
-
+#endif
 #ifdef CONFIG_OF
 static const struct of_device_id nexell_spi_dt_match[] = {
 	{ .compatible = "nexell,nxp-spi",
