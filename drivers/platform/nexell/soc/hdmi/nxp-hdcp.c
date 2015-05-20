@@ -9,13 +9,13 @@
 #include <linux/slab.h>
 #include <linux/mutex.h>
 
-#include <mach/nxp-v4l2-platformdata.h>
+#include <nexell/nxp-v4l2-platformdata.h>
 
 #include "nxp-v4l2-common.h"
 
-#include <mach/hdmi/regs-hdmi.h>
-#include <mach/hdmi/hdmi-priv.h>
-#include <mach/hdmi/nxp-hdcp.h>
+#include <nexell/hdmi/regs-hdmi.h>
+#include <nexell/hdmi/hdmi-priv.h>
+#include <nexell/hdmi/nxp-hdcp.h>
 
 /**
  * defines
@@ -1198,7 +1198,7 @@ static int nxp_hdcp_resume(struct nxp_hdcp *me)
 /**
  * i2c driver
  */
-static int __devinit _hdcp_i2c_probe(struct i2c_client *client,
+static int _hdcp_i2c_probe(struct i2c_client *client,
         const struct i2c_device_id *dev_id)
 {
     printk("%s\n", __func__);

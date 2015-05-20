@@ -48,8 +48,8 @@
 
 #ifdef CONFIG_FB_NXP_ION_MEM
 #include <linux/dma-buf.h>
-#include <linux/nxp_ion.h>
 #include <linux/ion.h>
+#include <linux/nxp_ion.h>
 extern struct ion_device *get_global_ion_device(void);
 #endif
 

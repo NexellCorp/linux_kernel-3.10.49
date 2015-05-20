@@ -1,5 +1,5 @@
-#include <mach/hdmi/hdmi-priv.h>
-#include <mach/hdmi/hdmi-preset.h>
+#include <nexell/hdmi/hdmi-priv.h>
+#include <nexell/hdmi/hdmi-preset.h>
 
 static const struct hdmi_preset_conf hdmi_conf_480p60 = {
 	.core = {

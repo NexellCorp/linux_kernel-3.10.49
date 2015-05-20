@@ -19,9 +19,11 @@
 #include "nxp-mlc.h"
 
 /* for nexell specific prototype */
-#include <mach/soc.h>
-#include <mach/platform.h>
-#include <mach/fourcc.h>
+#include <nexell/platform.h>
+#include <nexell/soc-s5pxx18.h>
+#include <nexell/fourcc.h>
+
+#define PM_DBGOUT(a...)
 
 #define	RGB_0_LAYER				0	/* 0: RGB0 layer number */
 #define	RGB_1_LAYER				1	/* 1: RGB1 layer number */

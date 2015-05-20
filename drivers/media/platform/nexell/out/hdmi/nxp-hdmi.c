@@ -14,10 +14,10 @@
 #include <media/v4l2-device.h>
 #include <media/v4l2-subdev.h>
 
-#include <mach/platform.h>
-#include <mach/nxp-v4l2-platformdata.h>
-#include <mach/soc.h>
-#include <mach/hdmi/nxp-hdmi-context.h>
+#include <nexell/platform.h>
+#include <nexell/nxp-v4l2-platformdata.h>
+#include <nexell/soc-s5pxx18.h>
+#include <nexell/hdmi/nxp-hdmi-context.h>
 
 #include "nxp-v4l2.h"
 #include "nxp-hdmi.h"

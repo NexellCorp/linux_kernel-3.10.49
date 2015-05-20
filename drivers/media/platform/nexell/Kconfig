@@ -40,8 +40,8 @@ menuconfig VIDEO_NXP_OUT
     ---help---
       Say y here to enable mlc, resolution converter, hdmi
 
-#if VIDEO_NXP_OUT
-#source "drivers/media/platform/nexell/out/Kconfig"
-#endif
+if VIDEO_NXP_OUT
+source "drivers/media/platform/nexell/out/Kconfig"
+endif
 
 endif

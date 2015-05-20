@@ -11,9 +11,9 @@
 
 #include "nxp-v4l2-common.h"
 
-#include <mach/hdmi/regs-hdmi.h>
-#include <mach/hdmi/hdmi-priv.h>
-#include <mach/hdmi/nxp-edid.h>
+#include <nexell/hdmi/regs-hdmi.h>
+#include <nexell/hdmi/hdmi-priv.h>
+#include <nexell/hdmi/nxp-edid.h>
 
 #define EDID_SEGMENT_ADDR   (0x60 >> 1)
 #define EDID_ADDR           (0xA0 >> 1)
@@ -413,7 +413,7 @@ static int nxp_edid_resume(struct nxp_edid *me)
 /**
  * i2c driver
  */
-static int __devinit _edid_i2c_probe(struct i2c_client *client,
+static int _edid_i2c_probe(struct i2c_client *client,
         const struct i2c_device_id *dev_id)
 {
     pr_debug("%s\n", __func__);

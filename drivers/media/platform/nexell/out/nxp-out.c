@@ -8,8 +8,8 @@
 #include <media/v4l2-dev.h>
 #include <media/v4l2-subdev.h>
 
-#include <mach/nxp-v4l2-platformdata.h>
-#include <mach/platform.h>
+#include <nexell/nxp-v4l2-platformdata.h>
+#include <nexell/platform.h>
 
 #include "nxp-mlc.h"
 #if defined(CONFIG_NXP_OUT_HDMI)
@@ -23,6 +23,8 @@
 #endif
 
 #include "nxp-out.h"
+
+#define PM_DBGOUT(a...)
 
 /**
  * public api

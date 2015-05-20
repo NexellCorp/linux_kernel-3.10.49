@@ -5,8 +5,8 @@
 #include <linux/wakelock.h>
 #endif
 
-#include <mach/display.h>
-#include <mach/hdmi/nxp-hdmi-context.h>
+#include <nexell/display.h>
+#include <nexell/hdmi/nxp-hdmi-context.h>
 
 struct nxp_hdmi_platformdata;
 struct media_pad;

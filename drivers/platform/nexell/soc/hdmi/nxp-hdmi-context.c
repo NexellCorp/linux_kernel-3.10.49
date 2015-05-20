@@ -12,9 +12,10 @@
 #include <media/v4l2-device.h>
 #include <media/v4l2-subdev.h>
 
-#include <mach/platform.h>
-#include <mach/nxp-v4l2-platformdata.h>
-#include <mach/soc.h>
+#include <nexell/platform.h>
+#include <nexell/nxp-v4l2-platformdata.h>
+#include <nexell/soc-s5pxx18.h>
+#include <nexell/hdmi/nxp-hdmi-context.h>
 
 /* for prototype */
 #include <nx_hdmi.h>
@@ -24,7 +25,7 @@
 #include <nx_ecid.h>
 #include <nx_tieoff.h>
 
-#include <mach/hdmi/nxp-hdmi-context.h>
+#define PM_DBGOUT(a...)
 
 extern int test_hdmi(void);
 
@@ -205,7 +206,7 @@ static inline unsigned long _get_clk_hz(int preset)
 static int _get_vsync_info(struct nxp_hdmi_context *me)
 {
     struct disp_vsync_info *vsync = &me->dpc_sync_info;
-    struct disp_syncgen_par *par = &me->dpc_sync_param;
+    struct disp_sync_par *par = &me->dpc_sync_param;
     nxp_soc_disp_device_get_sync_param(me->source_device, (void*)par);
 
     /**
@@ -806,11 +807,13 @@ static void _hdmi_hpd_work(struct work_struct *work)
     int state;
     struct nxp_hdmi_context *me = container_of(work, struct nxp_hdmi_context, hpd_work.work);
     state = hdmi_hpd_status();
+#if 0
     if (!nxp_cpu_version()) {
         /* no revision */
         /* state is invert!!! */
         state = !state;
     }
+#endif
     _hdmi_hpd_changed(me, state);
 }
 
@@ -1159,11 +1162,13 @@ int  hdmi_set_preset(struct nxp_hdmi_context *me, uint32_t preset_val)
 bool hdmi_is_connected(void)
 {
     int state = hdmi_hpd_status();
+#if 0
     if (!nxp_cpu_version()) {
         /* no revision */
         /* state is invert!!! */
         state = !state;
     }
+#endif
     if (state) return true;
     return false;
 }

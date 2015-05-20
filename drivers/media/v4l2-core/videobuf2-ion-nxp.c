@@ -62,7 +62,7 @@ EXPORT_SYMBOL(vb2_ion_set_alignment);
 void *vb2_ion_create_context(struct device *dev, size_t alignment, long flags)
 {
     struct vb2_ion_context *ctx;
-    unsigned int heapmask = ion_heapflag(flags);
+    /*unsigned int heapmask = ion_heapflag(flags);*/
     struct ion_device *ion_dev = get_global_ion_device();
 
     if (!ion_dev) {
@@ -183,7 +183,7 @@ static void vb2_ion_put(void *buf_priv)
         vb2_ion_private_free(&buf->cookie);
 }
 
-static void *vb2_ion_alloc(void *alloc_ctx, unsigned long size)
+static void *vb2_ion_alloc(void *alloc_ctx, unsigned long size, gfp_t gfp_flags)
 {
     struct vb2_ion_buf *buf;
     void *cookie;

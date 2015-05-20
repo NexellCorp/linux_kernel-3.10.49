@@ -47,6 +47,8 @@ struct device_node;
 
 #define FB_MISC_PRIM_COLOR	1
 #define FB_MISC_1ST_DETAIL	2	/* First Detailed Timing is preferred */
+#define FB_MISC_HDMI		4	/* display supports HDMI signaling */
+
 struct fb_chroma {
 	__u32 redx;	/* in fraction of 1024 */
 	__u32 greenx;
@@ -86,6 +88,8 @@ struct fb_monspecs {
 	__u8  revision;			/* ...and revision */
 	__u8  max_x;			/* Maximum horizontal size (cm) */
 	__u8  max_y;			/* Maximum vertical size (cm) */
+	struct fb_audio *audiodb;	/* audio database */
+	__u32 audiodb_len;		/* audio database length */
 };
 
 struct fb_cmap_user {
@@ -122,7 +126,7 @@ struct fb_cursor_user {
  * Register/unregister for framebuffer events
  */
 
-/*	The resolution of the passed in fb_info about to change */ 
+/*	The resolution of the passed in fb_info about to change */
 #define FB_EVENT_MODE_CHANGE		0x01
 /*	The display on this fb_info is beeing suspended, no access to the
  *	framebuffer is allowed any more after that call returns
@@ -462,12 +466,12 @@ struct fb_info {
 
 #ifdef CONFIG_FB_BACKLIGHT
 	/* assigned backlight device */
-	/* set before framebuffer registration, 
+	/* set before framebuffer registration,
 	   remove after unregister */
 	struct backlight_device *bl_dev;
 
 	/* Backlight level curve */
-	struct mutex bl_curve_mutex;	
+	struct mutex bl_curve_mutex;
 	u8 bl_curve[FB_BACKLIGHT_LEVELS];
 #endif
 #ifdef CONFIG_FB_DEFERRED_IO
@@ -483,8 +487,8 @@ struct fb_info {
 	struct fb_tile_ops *tileops;    /* Tile Blitting */
 #endif
 	char __iomem *screen_base;	/* Virtual address */
-	unsigned long screen_size;	/* Amount of ioremapped VRAM or 0 */ 
-	void *pseudo_palette;		/* Fake palette of 16 colors */ 
+	unsigned long screen_size;	/* Amount of ioremapped VRAM or 0 */
+	void *pseudo_palette;		/* Fake palette of 16 colors */
 #define FBINFO_STATE_RUNNING	0
 #define FBINFO_STATE_SUSPENDED	1
 	u32 state;			/* Hardware state i.e suspend */
@@ -592,11 +596,11 @@ static inline struct apertures_struct *alloc_apertures(unsigned int max_num) {
      *  `Generic' versions of the frame buffer device operations
      */
 
-extern int fb_set_var(struct fb_info *info, struct fb_var_screeninfo *var); 
-extern int fb_pan_display(struct fb_info *info, struct fb_var_screeninfo *var); 
+extern int fb_set_var(struct fb_info *info, struct fb_var_screeninfo *var);
+extern int fb_pan_display(struct fb_info *info, struct fb_var_screeninfo *var);
 extern int fb_blank(struct fb_info *info, int blank);
-extern void cfb_fillrect(struct fb_info *info, const struct fb_fillrect *rect); 
-extern void cfb_copyarea(struct fb_info *info, const struct fb_copyarea *area); 
+extern void cfb_fillrect(struct fb_info *info, const struct fb_fillrect *rect);
+extern void cfb_copyarea(struct fb_info *info, const struct fb_copyarea *area);
 extern void cfb_imageblit(struct fb_info *info, const struct fb_image *image);
 /*
  * Drawing operations where framebuffer is in system RAM
@@ -775,6 +779,28 @@ struct fb_videomode {
 	u32 vmode;
 	u32 flag;
 };
+
+#define FB_AUDIO_LPCM	1
+
+#define FB_AUDIO_192KHZ	(1 << 6)
+#define FB_AUDIO_176KHZ	(1 << 5)
+#define FB_AUDIO_96KHZ	(1 << 4)
+#define FB_AUDIO_88KHZ	(1 << 3)
+#define FB_AUDIO_48KHZ	(1 << 2)
+#define FB_AUDIO_44KHZ	(1 << 1)
+#define FB_AUDIO_32KHZ	(1 << 0)
+
+#define FB_AUDIO_24BIT	(1 << 2)
+#define FB_AUDIO_20BIT	(1 << 1)
+#define FB_AUDIO_16BIT	(1 << 0)
+
+struct fb_audio {
+	u8 format;
+	u8 channel_count;
+	u8 sample_rates;
+	u8 bit_rates;
+};
+
 
 extern const char *fb_mode_option;
 extern const struct fb_videomode vesa_modes[];

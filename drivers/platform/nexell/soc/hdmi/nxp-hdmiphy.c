@@ -9,9 +9,9 @@
 /* for prototype */
 #include <nx_hdmi.h>
 
-#include <mach/hdmi/regs-hdmi.h>
-#include <mach/hdmi/hdmi-priv.h>
-#include <mach/hdmi/nxp-hdmiphy.h>
+#include <nexell/hdmi/regs-hdmi.h>
+#include <nexell/hdmi/hdmi-priv.h>
+#include <nexell/hdmi/nxp-hdmiphy.h>
 
 #include <nx_rstcon.h>
 

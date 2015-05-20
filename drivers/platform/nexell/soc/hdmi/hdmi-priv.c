@@ -1,7 +1,7 @@
 #include <linux/delay.h>
-#include <mach/hdmi/regs-hdmi.h>
-#include <mach/hdmi/hdmi-priv.h>
-#include <mach/hdmi/hdmi-preset.h>
+#include <nexell/hdmi/regs-hdmi.h>
+#include <nexell/hdmi/hdmi-priv.h>
+#include <nexell/hdmi/hdmi-preset.h>
 
 void __iomem* hdmi_priv_io_base = NULL;
 
