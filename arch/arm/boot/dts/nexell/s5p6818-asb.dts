@@ -1,0 +1,134 @@
+/*
+ * s5p6818.dtsi - Device Tree Include file for SLsiAp SoC
+ *
+ * Copyright 2009 Nexell Co.
+ *		http://www.nexell.co.kr
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+#include "s5p6818.dtsi"
+
+#define	UART_CLOCK_FREQUENCY	147500000
+#define I2C_CLOCK_FREQUENCY		100000000
+#define SPI_CLOCK_FREQUENCY		100000000
+/ {
+	memory {
+		reg = <0x40000000 0x40000000>;
+	};
+
+	soc {
+
+		clocks {
+			uart0:uart@a9000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			uart1:uart@a8000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			uart2:uart@aa000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			uart3:uart@ab000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			uart4:uart@6e000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			uart5:uart@84000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
+			i2c0:i2c@ae000 { clock-frequency = <I2C_CLOCK_FREQUENCY>; };
+			i2c1:i2c@af000 { clock-frequency = <I2C_CLOCK_FREQUENCY>; };
+			i2c2:i2c@b0000 { clock-frequency = <I2C_CLOCK_FREQUENCY>; };
+			spi0:spi@ac000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
+			spi1:spi@ad000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
+			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
+		};
+
+		#include "s5p6818-asb-pin.dtsi"
+
+		serial@a1000 {
+			enable_dma = <1>;
+		};
+
+		serial@a0000 {
+			enable_dma = <1>;
+		};
+		
+		spi@5b000 {
+			num_cs = <1>;
+			clk_nr = <0>;
+			
+			
+			spidev@0 {
+				compatible = "spidev";
+				reg = <0 0>;							
+				spi-max-frequency = < 50000000 >;
+				controller-data {
+					spi-cs-gpio = <10>;
+					spi-feedback-delay = <02>;
+				};
+			};
+				
+		};
+		spi@5c000 {
+			num_cs = <1>;
+			clk_nr = <0>;
+		};
+		spi@5f000 {
+			num_cs = <1>;
+			clk_nr = <0>;
+		};
+
+		rtc@10c00 {
+			status = "okay";
+		};
+
+		wdt@19000 {
+			status = "okay";
+		};
+
+		ppm@54000 {
+			status = "okay";
+		};
+	};
+
+    nxp-ion {
+        compatible = "nexell,nxp-ion";
+        nr = <3>;
+        names = "ion_noncontig_heap", "ion_contig_heap", "nxp_contig_heap";
+        types = <0 1 6>;
+    };
+
+    nxp-v4l2 {
+        compatible = "nexell,nxp-v4l2";
+
+        capture {
+            nr = <1>;
+
+            capture0 {
+                module = <2>;
+                type = <0>;
+
+                port = <0>;
+                external_sync = <0>;
+								
+								h_active =	<720>;
+                h_frontporch = <7>;
+                h_syncwidth = <1>;
+                h_backporch = <10>;
+								v_active =	<480>;
+                v_frontporch = <0>;
+                v_syncwidth = <1>;
+                v_backporch = <0>;
+
+                data_order = <0>;
+                vid = <0>;
+
+                interlace = <0>;
+                late_power_down = <0>;
+
+                sensor {
+                    type = <2>;
+                    sensor_name = "loopback-sensor";
+                };
+
+                power {
+                    enable_io = <(PAD_GPIO_A + 21)>;
+                    enable_invert = <1>;
+										reset_io	=	<(PAD_GPIO_A + 22)>;
+										reset_enable = <1>;
+                };
+            };
+        };
+    };
+};
