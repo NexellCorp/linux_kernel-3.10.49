@@ -23,6 +23,7 @@
 #include "nxp-scaler.h"
 #include "nxp-out.h"
 #include "nxp-v4l2.h"
+#include "loopback-sensor.h"
 
 // TODO
 #if 1
@@ -172,14 +173,13 @@ static const u_int port_table[][11][2] = {
 
 static void general_setup_io(struct nxp_vin_platformdata *pdata, bool force)
 {
-    const u_int **port = (const u_int **)port_table[pdata->vid];
     u_int *pad;
     int i, len;
     u_int io, fn;
 
     printk("%s: vid %d\n", __func__, pdata->vid);
-    pad = (u_int *)port;
-    len = sizeof(port)/sizeof(port[0]);
+    pad = (u_int *)port_table[pdata->vid];
+    len = sizeof(port_table[pdata->vid])/sizeof(port_table[pdata->vid][0]);
 
     for (i = 0; i < len; i++) {
         io = *pad++;
@@ -249,6 +249,11 @@ static int nxp_v4l2_parse_capture_sensor_dt(struct device_node *node, struct nxp
             return -ENOMEM;
         }
     }
+		else if(type == NXP_CAPTURE_LOOPBACK)
+		{
+			pcapture->sensor = NULL;
+			printk(KERN_INFO "[%s] NXP_CAPTURE_LOOPBACK\n", __func__);
+		}
 
     return 0;
 }
@@ -552,6 +557,10 @@ static int nxp_v4l2_probe(struct platform_device *pdev)
 #ifdef CONFIG_NXP_M2M_SCALER
     struct nxp_scaler *scaler;
 #endif
+#ifdef CONFIG_LOOPBACK_SENSOR_DRIVER
+    struct nxp_loopback_sensor *loopback_sensor = NULL;
+#endif
+
     int ret;
 
     pr_debug("%s entered\n", __func__);
@@ -612,6 +621,23 @@ static int nxp_v4l2_probe(struct platform_device *pdev)
     }
 
     __me = nxp_v4l2;
+
+#ifdef CONFIG_LOOPBACK_SENSOR_DRIVER
+    loopback_sensor = create_nxp_loopback_sensor(pdata->captures);
+    if (!loopback_sensor) {
+        pr_err("%s: failed to create_nxp_loopback_sensor()\n", __func__);
+        ret = -EINVAL;
+        goto err_loopback_sensor_create;
+    }
+
+    ret = register_nxp_loopback_sensor(loopback_sensor);
+    if (ret < 0) {
+        pr_err("%s: failed to register_nxp_loopback_sensor()\n", __func__);
+        goto err_loopback_sensor_create;
+    }
+
+    nxp_v4l2->loopback_sensor = loopback_sensor;
+#endif
 
 #ifdef CONFIG_VIDEO_NXP_CAPTURE
     /* capture */
@@ -709,6 +735,15 @@ err_capture_create:
     }
     media_device_unregister(&nxp_v4l2->media_dev);
 #endif
+#ifdef CONFIG_LOOPBACK_SENSOR_DRIVER
+err_loopback_sensor_create:
+    if( loopback_sensor )
+    {
+      unregister_nxp_loopback_sensor(loopback_sensor);
+      release_nxp_loopback_sensor(loopback_sensor);
+    }
+#endif
+
 err_media_reg:
     v4l2_device_unregister(&nxp_v4l2->v4l2_dev);
 err_v4l2_reg:

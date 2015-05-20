@@ -1,103 +1,67 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
-#include <media/v4l2-device.h>
-#include <media/v4l2-subdev.h>
+//#include <mach/platform.h>
+#include <nexell/platform.h>
 
-#include <mach/platform.h>
-#include <mach/soc.h>
+//#include <nexell/soc.h>
 
 #include "nxp-v4l2.h"
+#include "loopback-sensor.h"
 
-struct loopback_sensor_context {
-    struct media_pad pad;
-    struct v4l2_subdev sd;
-    int width;
-    int height;
+#if 1
+extern void     nxp_soc_gpio_set_out_value(unsigned int io, int high);
+extern int 			nxp_soc_gpio_get_altnum(unsigned int io);
+extern void     nxp_soc_gpio_set_io_dir(unsigned int io, int out);
+extern void     nxp_soc_gpio_set_io_func(unsigned int io, unsigned int func);
+#endif
 
-    int dpc_module;
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-// display part
-
-enum DPC_CLKSRC
+#if 1
+#define DUMP_REGISTER 1
+void dump_register_dpc(int module)
 {
-    DPC_CLKSRC_PLL0     = 0,
-    DPC_CLKSRC_PLL1     = 1,
-    DPC_CLKSRC_PLL2     = 2,
-    DPC_CLKSRC_i_VCLK   = 3,
-    DPC_CLKSRC_HDMICLK  = 4,
-    DPC_CLKSRC_i_VCLK27 = 5,
-    DPC_CLKSRC_PLL3     = 6,
-    DPC_CLKSRC_CLK0     = 7,
-    DPC_CLKSRC_FORCE32  = 0x7fffffff
-};
+#if (DUMP_REGISTER)
+#define DBGOUT(args...)  printk(args)
 
-typedef struct tag_NX_DISPLAY_TFTLCD
+    struct NX_DPC_RegisterSet *pREG =
+        (struct NX_DPC_RegisterSet*)NX_DPC_GetBaseAddress(module);
+printk(KERN_INFO "[%s] LINE : %d\n", __func__, __LINE__);
+    DBGOUT("DPC%d BASE ADDRESS: %p\n", module, pREG);
+printk(KERN_INFO "[%s] LINE : %d\n", __func__, __LINE__);
+    DBGOUT(" DPCCTRL0     = 0x%04x\r\n", pREG->DPCCTRL0);
+printk(KERN_INFO "[%s] LINE : %d\n", __func__, __LINE__);
+#endif
+}
+#endif
+
+static void local_setup_io(void)
 {
-    // Output Format
-    U32		dwOutputMode;
-    CBOOL	bInterlace;
-    CBOOL	bInvertField;
+    u_int *pad;
+    int i, len; 
+    u_int io, fn;
 
-    // Clock Settings
-    U32		dwClockSource;
-    U32		dwClockDivider;
-    U32		dwClockDelay;
-    CBOOL	bClockRisingEdge;
-    CBOOL	bDualEdge;
+    const u_int port[][2] = {
+        /* BT565 DATA */
+        { PAD_GPIO_A +  8, NX_GPIO_PADFUNC_1 },
+        { PAD_GPIO_A +  9, NX_GPIO_PADFUNC_1 },
+        { PAD_GPIO_A + 10, NX_GPIO_PADFUNC_1 },
+        { PAD_GPIO_A + 11, NX_GPIO_PADFUNC_1 },
+        { PAD_GPIO_A + 12, NX_GPIO_PADFUNC_1 },
+        { PAD_GPIO_A + 13, NX_GPIO_PADFUNC_1 },
+        { PAD_GPIO_A + 14, NX_GPIO_PADFUNC_1 },
+        { PAD_GPIO_A + 15, NX_GPIO_PADFUNC_1 },
+    };   
 
-    // Dual View
-    CBOOL	bDualView;
+    pad = (u_int *)port;
+    len = sizeof(port)/sizeof(port[0]);
 
-    // Horizontal Sync Timing
-    U32		dwHorActive;
-    U32		dwHorFrontPorch;
-    U32		dwHorSyncWidth;
-    U32		dwHorBackPorch;
-    CBOOL	bHorSyncHighActive;
-
-    // Vertical Sync Timing
-    U32		dwVerActive;
-    U32		dwVerFrontPorch;
-    U32		dwVerSyncWidth;
-    U32		dwVerBackPorch;
-    CBOOL	bVerSyncHighActive;
-
-    U32		dwEvenVerActive;
-    U32		dwEvenVerFrontPorch;
-    U32		dwEvenVerSyncWidth;
-    U32		dwEvenVerBackPorch;
-
-    U32		dwVerSyncStartOffset;
-    U32		dwVerSyncEndOffset;
-    U32		dwEvenVerSyncStartOffset;
-    U32		dwEvenVerSyncEndOffset;
-
-} NX_DISPLAY_TFTLCD;
-
-//------------------------------------------------------------------------------
-typedef struct tag_NX_ENCODER_MODE
-{
-    U32		dwBroadcast;
-    CBOOL   bPedestal;
-    U32 	dwYBandWidth;
-    U32		dwCBandWidth;
-
-    U32		dwHorSyncStart;
-    U32		dwHorSyncEnd;
-    U32		dwVerSyncStart;
-    U32		dwVerSyncEnd;
-
-} NX_ENCODER_MODE;
-
-//------------------------------------------------------------------------------
-typedef struct tag_NX_DISPLAY_MODE
-{
-    NX_DISPLAY_TFTLCD	*pTFTLCD;
-    NX_ENCODER_MODE		*pEncoderMode;
-} NX_DISPLAY_MODE;
+    for (i = 0; i < len; i++) {
+        io = *pad++;
+        fn = *pad++;
+        nxp_soc_gpio_set_io_dir(io, 0);
+        nxp_soc_gpio_set_io_func(io, fn); 
+    }    
+}
 
 static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 {
@@ -114,6 +78,7 @@ static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 	RDither = GDither = BDither = NX_DPC_DITHER_5BIT;
 	bEmbeddedSync = bRGBMode = CFALSE;
 
+/*
 	if( g_DPCIndex )
 	{
 		//NX_DPC_SetHorizontalUpScaler( g_DPCIndex, CTRUE, 320, 720 );		// DPC1's upscale test
@@ -121,6 +86,7 @@ static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 	}
 	else
 		NX_DPC_SetHorizontalUpScaler( g_DPCIndex, CFALSE, 2, 2 );
+*/
 
 	//--------------------------------------------------------------------------
 	NX_DPC_SetDPCEnable( g_DPCIndex, CFALSE );
@@ -186,6 +152,9 @@ static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 			bEmbeddedSync = CTRUE;
 	else	bEmbeddedSync = CFALSE;
 
+	if( bEmbeddedSync )
+		printk(KERN_INFO "[%s]DPC Format 655!!\n", __func__);
+
 	// Sync Delay?
 	if( bRGBMode )
 	{
@@ -194,8 +163,6 @@ static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 		else                    dwSyncDelay = 4 * dwVCLKDivider;    // Secondary DPC
 */
 		dwSyncDelay = 7 * dwVCLKDivider;
-
-
 	}
 	else
 	{
@@ -276,6 +243,7 @@ static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 	}
 
 	//--------------------------------------------------------------------------
+/*
 	if( 1 == g_DPCIndex )
 	{
 		if( CNULL != pEncoderMode )
@@ -312,9 +280,21 @@ static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 			NX_DPC_SetENCEnable( g_DPCIndex, CFALSE );
 		}
 	}
-
+*/
 	//--------------------------------------------------------------------------
 	NX_DPC_SetClockDivisorEnable(g_DPCIndex, CTRUE);	// CLKENB : Provides internal operating clock.
+
+#if 0
+	NX_DISPLAYTOP_SetRESCONVMUX	( CFALSE, PADMUX_SecondaryMLC );   
+	NX_DISPLAYTOP_SetHDMIMUX		( CFALSE, PADMUX_SecondaryMLC );  
+	NX_DISPLAYTOP_SetMIPIMUX    ( CFALSE, PADMUX_SecondaryMLC );  
+	NX_DISPLAYTOP_SetLVDSMUX    ( CFALSE, PADMUX_SecondaryMLC ); 
+#endif
+
+	NX_DISPLAYTOP_SetPrimaryMUX(2 * g_DPCIndex); 
+	NX_DISPLAYTOP_SetPADClock(PADMUX_SecondaryMLC, PADCLK_InvCLK ); 
+//	NX_DPC_SetDPCEnable( g_DPCIndex, CTRUE );
+	NX_DPC_SetEnable( g_DPCIndex, CTRUE, CFALSE, CFALSE, CFALSE, CTRUE );
 
 	return CTRUE;
 }
@@ -339,6 +319,7 @@ static void _dpc_mode1(void)
 	{
 		// Output Format
 		(U32)NX_DPC_FORMAT_CCIR656,	    // dwOutputMode
+		//3,	    // dwOutputMode
 		/*CTRUE,		// bInterlace			: Interlace Scan mode*/
 		CFALSE,		// bInterlace			: Interlace Scan mode
 		CFALSE,		// bInvertField			: Bypass
@@ -411,24 +392,39 @@ static void _dpc_mode1(void)
 
 static void _release_reset(void)
 {
-    NX_RSTCON_SetBaseAddress((U32)IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
     NX_RSTCON_SetRST(RESETINDEX_OF_DISPLAYTOP_MODULE_i_HDMI_nRST       , 1);
     NX_RSTCON_SetRST(RESETINDEX_OF_DISPLAYTOP_MODULE_i_HDMI_VIDEO_nRST , 1);
     NX_RSTCON_SetRST(RESETINDEX_OF_DISPLAYTOP_MODULE_i_HDMI_SPDIF_nRST , 1);
     NX_RSTCON_SetRST(RESETINDEX_OF_DISPLAYTOP_MODULE_i_HDMI_TMDS_nRST  , 1);
     NX_RSTCON_SetRST(RESETINDEX_OF_DISPLAYTOP_MODULE_i_HDMI_PHY_nRST   , 1);
+
+		NX_RSTCON_SetRST(NX_DISPLAYTOP_GetResetNumber(), 0);
+		NX_RSTCON_SetRST(NX_DISPLAYTOP_GetResetNumber(), 1);
+
+		NX_RSTCON_SetRST(NX_DUALDISPLAY_GetResetNumber( 0 ), 0);
+		NX_RSTCON_SetRST(NX_DUALDISPLAY_GetResetNumber( 0 ), 1);
+}
+
+static void _set_base_address(int module)
+{
+#if 1
+	NX_DISPLAYTOP_SetBaseAddress((U32)IO_ADDRESS(NX_DISPLAYTOP_GetPhysicalAddress()));
+	NX_DPC_SetBaseAddress(module, (U32)IO_ADDRESS(NX_DPC_GetPhysicalAddress(module)));
+	NX_MLC_SetBaseAddress(module, (U32)IO_ADDRESS(NX_MLC_GetPhysicalAddress(module)));
+#endif
+
+  NX_RSTCON_SetBaseAddress((U32)IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_HDMI_SetBaseAddress(0, (U32)IO_ADDRESS(NX_HDMI_GetPhysicalAddress(0)));
+	NX_TIEOFF_SetBaseAddress((U32)IO_ADDRESS(NX_TIEOFF_GetPhysicalAddress()));
+	NX_DISPTOP_CLKGEN_SetBaseAddress(HDMI_CLKGEN, (U32)IO_ADDRESS(NX_DISPTOP_CLKGEN_GetPhysicalAddress(HDMI_CLKGEN)));
 }
 
 static void _set_hdmi_clk_27MHz(void)
 {
-    NX_HDMI_SetBaseAddress(0, (U32)IO_ADDRESS(NX_HDMI_GetPhysicalAddress(0)));
-
     NX_TIEOFF_Initialize();
-    NX_TIEOFF_SetBaseAddress((U32)IO_ADDRESS(NX_TIEOFF_GetPhysicalAddress()));
     NX_TIEOFF_Set(TIEOFFINDEX_OF_DISPLAYTOP0_i_HDMI_PHY_REFCLK_SEL, 1);
 
     // HDMI PCLK Enable
-    NX_DISPTOP_CLKGEN_SetBaseAddress(HDMI_CLKGEN, (U32)IO_ADDRESS(NX_DISPTOP_CLKGEN_GetPhysicalAddress(HDMI_CLKGEN)));
     NX_DISPTOP_CLKGEN_SetClockPClkMode(HDMI_CLKGEN, NX_PCLKMODE_ALWAYS);
 
     // Enter Reset
@@ -513,7 +509,7 @@ static void _mlc_set(int module, int width, int height)
             SECON );
 
     NX_MLC_SetScreenSize(module, width, height);
-    NX_MLC_SetBackground(module, 0xFF0000);
+    NX_MLC_SetBackground(module, 0xFFFFFF);
     NX_MLC_SetSRAMMODE(module, TOPMLC, SLEEPMODE);
     NX_MLC_SetSRAMMODE(module, TOPMLC, RUN);
 
@@ -540,19 +536,25 @@ static void _mlc_set(int module, int width, int height)
 
 static void display_out_bt656(int module, int width, int height, int on)
 {
+    printk("[%s] module : %d, width : %d, hegiht : %d, Enable : %d\n", __func__, module, width, height, on);
+
     if (on) {
+				_set_base_address(module);
         _release_reset();
         _set_hdmi_clk_27MHz();
         _dpc_clk_enable(module);
+			 	dump_register_dpc(module);
         _mlc_set(module, width, height);
         _dpc_mode1();
+        _mlc_set(module, width, height);
+				dump_register_dpc(module);
     } else {
     }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // v4l2 subdev
-static struct loopback_sensor_context _context;
+static struct nxp_loopback_sensor _context;
 
 static int loopback_sensor_s_power(struct v4l2_subdev *sd, int on)
 {
@@ -562,9 +564,13 @@ static int loopback_sensor_s_power(struct v4l2_subdev *sd, int on)
 
 static int loopback_sensor_s_stream(struct v4l2_subdev *sd, int enable)
 {
-    struct loopback_sensor_context *me = v4l2_get_subdevdata(sd);
+    struct nxp_loopback_sensor *me = v4l2_get_subdevdata(sd);
 
     printk("%s %d\n", __func__, enable);
+
+		if( enable>0 )
+			local_setup_io();
+
     display_out_bt656(me->dpc_module, me->width, me->height, enable);
 
     return 0;
@@ -573,7 +579,7 @@ static int loopback_sensor_s_stream(struct v4l2_subdev *sd, int enable)
 static int loopback_sensor_s_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
        struct v4l2_subdev_format *fmt)
 {
-    struct loopback_sensor_context *me = v4l2_get_subdevdata(sd);
+    struct nxp_loopback_sensor *me = v4l2_get_subdevdata(sd);
     me->width  = fmt->format.width;
     me->height = fmt->format.height;
     printk("%s: %dx%d\n", __func__, me->width, me->height);
@@ -592,18 +598,89 @@ static const struct v4l2_subdev_pad_ops loopback_sensor_subdev_pad_ops = {
     .set_fmt = loopback_sensor_s_fmt,
 };
 
-
 static const struct v4l2_subdev_ops loopback_sensor_ops = {
     .core  = &loopback_sensor_subdev_core_ops,
     .video = &loopback_sensor_subdev_video_ops,
     .pad   = &loopback_sensor_subdev_pad_ops,
 };
 
+static int _init_entities(struct nxp_loopback_sensor *me)
+{
+	struct v4l2_subdev *sd = &me->sd;
+  int ret;
+
+	v4l2_subdev_init(sd, &loopback_sensor_ops);
+	strlcpy(sd->name, "loopback-sensor", sizeof(sd->name));
+	v4l2_set_subdevdata(sd, me);
+
+	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
+	me->pad.flags = MEDIA_PAD_FL_SOURCE;
+	sd->entity.type = MEDIA_ENT_T_V4L2_SUBDEV_SENSOR;
+	ret = media_entity_init(&sd->entity, 1, &me->pad, 0);
+	if (ret < 0) {
+			 pr_err("%s: failed to media_entity_init()\n", __func__);
+			 return ret;
+	}
+
+	return 0;
+}
+
 extern void nxp_v4l2_capture_set_sensor_subdev(struct v4l2_subdev *sd);
+
+struct nxp_loopback_sensor *create_nxp_loopback_sensor(struct nxp_capture_platformdata *pdata)
+{
+  struct nxp_loopback_sensor *me = &_context;
+  int ret;
+
+	ret = _init_entities(me);
+
+	return me;
+}
+
+void release_nxp_loopback_sensor(struct nxp_loopback_sensor *me)
+{
+
+	// TODO:	
+}
+
+int register_nxp_loopback_sensor(struct nxp_loopback_sensor *me)
+{
+	int ret = 0;
+
+	printk("%s: start +++\n", __func__);
+
+	if( nxp_v4l2_get_v4l2_device() == NULL )
+		pr_err("%s: nxp_v4l2_get_v4l2_device() is null!!\n" , __func__);
+
+	if( &me->sd == NULL ) 
+		pr_err("%s: Subdev is null!!\n" , __func__);
+
+	ret = v4l2_device_register_subdev(nxp_v4l2_get_v4l2_device(), &me->sd);
+	if (ret < 0) {
+			pr_err("%s: failed to v4l2_device_register_subdev()\n", __func__);
+			return ret;
+	}
+
+	pr_err("%s: return : %d\n", __func__, ret);
+
+	nxp_v4l2_capture_set_sensor_subdev(&me->sd);
+
+	me->dpc_module = 1;
+
+	return ret;
+}
+
+void unregister_nxp_loopback_sensor(struct nxp_loopback_sensor *me)
+{
+	v4l2_device_unregister_subdev(&me->sd);
+}
+
+
+#if 0
 static int loopback_sensor_probe(struct platform_device *pdev)
 {
     struct v4l2_subdev *sd;
-    struct loopback_sensor_context *me = &_context;
+    struct nxp_loopback_sensor *me = &_context;
     int ret;
 
     sd = &me->sd;
@@ -620,6 +697,13 @@ static int loopback_sensor_probe(struct platform_device *pdev)
          return ret;
     }
 
+    pr_err("%s: v4l2 device check!!\n", __func__);
+
+		if( nxp_v4l2_get_v4l2_device() == NULL )
+		{
+        pr_err("%s:  error : nxp_v4l2_get_v4l2_device function is null!!\n", __func__);
+		}
+
     ret = v4l2_device_register_subdev(nxp_v4l2_get_v4l2_device(), &me->sd);
     if (ret < 0) {
         pr_err("%s: failed to v4l2_device_register_subdev()\n", __func__);
@@ -635,11 +719,15 @@ static int loopback_sensor_probe(struct platform_device *pdev)
 
 static int loopback_sensor_remove(struct platform_device *pdev)
 {
-    struct loopback_sensor_context *me = &_context;
+    struct nxp_loopback_sensor *me = &_context;
     v4l2_device_unregister_subdev(&me->sd);
     return 0;
 }
 
+#endif
+
+
+#if 0
 static struct platform_driver loopback_sensor_platform_driver = {
     .probe = loopback_sensor_probe,
     .remove = loopback_sensor_remove,
@@ -665,3 +753,5 @@ module_exit(loopback_sensor_exit);
 MODULE_DESCRIPTION("NEXELL LoopBack Sensor Driver");
 MODULE_AUTHOR("<swpark@nexell.co.kr>");
 MODULE_LICENSE("GPL");
+#endif
+
