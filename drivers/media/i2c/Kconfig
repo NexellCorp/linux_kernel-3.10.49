@@ -572,6 +572,12 @@ config VIDEO_MT9D111_CAM
 	  This is a Video4Linux2 sensor-level driver for the Micron
 	  MT9D111 1600x1200 CMOS sensor.
 
+config VIDEO_TW9900
+    tristate "TW9900 video decoder"
+    depends on I2C && VIDEO_V4L2
+    ---help---
+	  Support for the Intersil/Techwell TW9900 video decoder.
+
 source "drivers/media/i2c/smiapp/Kconfig"
 
 config VIDEO_S5C73M3
