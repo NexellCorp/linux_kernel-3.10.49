@@ -32,7 +32,7 @@
 #if defined (CONFIG_ARM64)
 #include <nexell/io_map.h>
 #endif
-#include <nexell/io_type.h>
+#include <nexell/arch_type.h>
 
 #ifndef __ASSEMBLY__
 

@@ -43,22 +43,22 @@
 		serial@a0000 {
 			enable_dma = <1>;
 		};
-		
+
 		spi@5b000 {
 			num_cs = <1>;
 			clk_nr = <0>;
-			
-			
+
+
 			spidev@0 {
 				compatible = "spidev";
-				reg = <0 0>;							
+				reg = <0 0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
 					spi-cs-gpio = <10>;
 					spi-feedback-delay = <02>;
 				};
 			};
-				
+
 		};
 		spi@5c000 {
 			num_cs = <1>;
@@ -79,6 +79,49 @@
 
 		ppm@54000 {
 			status = "okay";
+		};
+
+		framebuffer@0 {
+			status = "okay";
+			module = <0>;
+			frame_layer = <0>;
+			frame_format = <MLC_RGBFMT_A8R8G8B8>;
+			back_color = <0x0>;
+			bit_per_pixel	= <(4 * 8)>;
+			lcd_x_resol	= <1024>;
+			lcd_y_resol	= <600>;
+			#ifdef CONFIG_ANDROID
+			frame_buffers = <3>;
+			skip_pan_vsync = <1>;
+			#else
+			frame_buffers = <2>;
+			#endif
+			lcd_with_mm	= <155>;
+			lcd_height_mm = <90>;
+		};
+
+		lvds@0 {
+			status = "okay";
+			lvds_format = <LVDS_LCDFORMAT_JEIDA>; /* 0:VESA, 1:JEIDA, 2:Location */
+			vsync {
+				hor_active_size	= <1024>;
+				hor_sync_width	= <20>;
+				hor_back_porch	= <140>;
+				hor_front_porch	= <160>;
+				hor_sync_invert	= <1>;
+				ver_active_size	= <600>;
+				ver_sync_width	= <3>;
+				ver_back_porch	= <20>;
+				ver_front_porch	= <12>;
+				ver_sync_invert	= <1>;
+				pixel_clock_hz	= <(800000000/12)>;	/* PLL/div */
+			};
+			clock {
+				clock,src_div0  = <2>;
+				clock,div_val0	= <12>;
+				clock,src_div1	= <7>;
+				clock,div_val1	= <1>;
+			};
 		};
 	};
 };
