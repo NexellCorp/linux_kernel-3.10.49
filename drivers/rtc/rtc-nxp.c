@@ -29,6 +29,7 @@
 #include <linux/clk.h>
 #include <linux/log2.h>
 #include <linux/of.h>
+#include <linux/of_address.h>
 
 #include <asm/uaccess.h>
 #include <asm/io.h>
@@ -54,12 +55,13 @@ static int			alm_enable_irq = 0;
 #define	RTC_TIME_YEAR 	(1970)	/* Jan 1 1970 00:00:00 */
 static unsigned long	rtc_time_offs;
 
-static void nxp_rtc_setup(void)
+static void nxp_rtc_setup(void __iomem *base)
 {
 	pr_debug("%s\n", __func__);
 
 	NX_RTC_Initialize();
-	NX_RTC_SetBaseAddress((U32*)IO_ADDRESS(NX_RTC_GetPhysicalAddress()));
+	//NX_RTC_SetBaseAddress((U32*)IO_ADDRESS(NX_RTC_GetPhysicalAddress()));
+	NX_RTC_SetBaseAddress(base);
 	NX_RTC_OpenModule();
 
 	NX_RTC_ClearInterruptPendingAll();
@@ -324,9 +326,12 @@ static int nxp_rtc_probe(struct platform_device *pdev)
 {
 	struct rtc_device *rtc;
 	int ret;
+	void __iomem *base;
 
+    base = of_iomap(pdev->dev.of_node, 0);
+		
 	spin_lock_init(&rtc_lock);
-	nxp_rtc_setup();
+	nxp_rtc_setup(base);
 
 	/* cpu init code should really have flagged this device as
 	 * being wake-capable; if it didn't, do that here.

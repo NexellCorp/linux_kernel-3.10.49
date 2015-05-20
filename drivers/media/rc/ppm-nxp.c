@@ -7,6 +7,7 @@
 #include <linux/irq.h>
 #include <linux/clk.h>
 #include <linux/of.h>
+#include <linux/of_address.h>
 
 #include <media/rc-core.h>
 
@@ -170,6 +171,9 @@ static int nxp_ir_recv_probe(struct platform_device *pdev)
 #ifdef CONFIG_PPM_SYSFS
 	struct kobject * kobj;
 #endif
+	void __iomem *base;
+
+	base = of_iomap(pdev->dev.of_node, 0);
 
 	if (pdev->dev.platform_data){
 		pdata = pdev->dev.platform_data;
@@ -195,7 +199,8 @@ static int nxp_ir_recv_probe(struct platform_device *pdev)
 	clk_prepare_enable(clk);
 
     NX_PPM_Initialize();
-    NX_PPM_SetBaseAddress(0, (U32*)IO_ADDRESS(NX_PPM_GetPhysicalAddress(0)));
+    //NX_PPM_SetBaseAddress(0, __io_address(NX_PPM_GetPhysicalAddress(0)));
+    NX_PPM_SetBaseAddress(0, base);
 
 //	NX_PPM_OpenModule(0);
 	nxp_dev = kzalloc(sizeof(struct nxp_rc_dev), GFP_KERNEL);
