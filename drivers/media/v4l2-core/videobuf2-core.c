@@ -18,6 +18,8 @@
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
+#include <linux/sync.h>
+#include <linux/sw_sync.h>
 
 #include <media/v4l2-dev.h>
 #include <media/v4l2-fh.h>
@@ -27,11 +29,19 @@
 static int debug;
 module_param(debug, int, 0644);
 
+// psw0523 debugging
+#if 0
 #define dprintk(level, fmt, arg...)					\
 	do {								\
 		if (debug >= level)					\
 			printk(KERN_DEBUG "vb2: " fmt, ## arg);		\
 	} while (0)
+#else
+#define dprintk(level, fmt, arg...)					\
+	do {								\
+			printk("vb2: " fmt, ## arg);		\
+	} while (0)
+#endif
 
 #define call_memop(q, op, args...)					\
 	(((q)->mem_ops->op) ?						\
@@ -195,6 +205,13 @@ static int __vb2_queue_alloc(struct vb2_queue *q, enum v4l2_memory memory,
 	struct vb2_buffer *vb;
 	int ret;
 
+	q->timeline_max = 0;
+	q->timeline = sw_sync_timeline_create(q->name);
+	if (!q->timeline) {
+		dprintk(1, "Failed to create timeline\n");
+		return -ENOMEM;
+	}
+
 	for (buffer = 0; buffer < num_buffers; ++buffer) {
 		/* Allocate videobuf buffer structures */
 		vb = kzalloc(q->buf_struct_size, GFP_KERNEL);
@@ -306,6 +323,11 @@ static void __vb2_queue_free(struct vb2_queue *q, unsigned int buffers)
 	if (!q->num_buffers)
 		q->memory = 0;
 	INIT_LIST_HEAD(&q->queued_list);
+
+	if (q->timeline) {
+		sync_timeline_destroy(&q->timeline->obj);
+		q->timeline = NULL;
+	}
 }
 
 /**
@@ -871,6 +893,7 @@ void vb2_buffer_done(struct vb2_buffer *vb, enum vb2_buffer_state state)
 	vb->state = state;
 	list_add_tail(&vb->done_entry, &q->done_list);
 	atomic_dec(&q->queued_count);
+	sw_sync_timeline_inc(q->timeline, 1);
 	spin_unlock_irqrestore(&q->done_lock, flags);
 
 	/* Inform any processes that may be waiting for buffers */
@@ -879,14 +902,14 @@ void vb2_buffer_done(struct vb2_buffer *vb, enum vb2_buffer_state state)
 EXPORT_SYMBOL_GPL(vb2_buffer_done);
 
 /**
- * __fill_vb2_buffer() - fill a vb2_buffer with information provided in a
- * v4l2_buffer by the userspace. The caller has already verified that struct
- * v4l2_buffer has a valid number of planes.
+ * __fill_vb2_buffer() - fill a vb2_buffer with information provided in
+ * a v4l2_buffer by the userspace
  */
 static void __fill_vb2_buffer(struct vb2_buffer *vb, const struct v4l2_buffer *b,
 				struct v4l2_plane *v4l2_planes)
 {
 	unsigned int plane;
+	int fence_fd = (int)b->reserved;
 
 	if (V4L2_TYPE_IS_MULTIPLANAR(b->type)) {
 		/* Fill in driver-provided information for OUTPUT types */
@@ -944,6 +967,14 @@ static void __fill_vb2_buffer(struct vb2_buffer *vb, const struct v4l2_buffer *b
 			v4l2_planes[0].data_offset = 0;
 		}
 
+	}
+
+	if ((b->flags & V4L2_BUF_FLAG_USE_SYNC) && fence_fd >= 0) {
+		vb->acquire_fence = sync_fence_fdget(fence_fd);
+		if (!vb->acquire_fence) {
+			printk(KERN_ERR "failed to import fence fd %d\n", fence_fd);
+			/*return -EINVAL;*/
+		}
 	}
 
 	vb->v4l2_buf.field = b->field;
@@ -1046,6 +1077,8 @@ static int __qbuf_mmap(struct vb2_buffer *vb, const struct v4l2_buffer *b)
 /**
  * __qbuf_dmabuf() - handle qbuf of a DMABUF buffer
  */
+// psw0523 patch
+#if 0
 static int __qbuf_dmabuf(struct vb2_buffer *vb, const struct v4l2_buffer *b)
 {
 	struct v4l2_plane planes[VIDEO_MAX_PLANES];
@@ -1075,6 +1108,7 @@ static int __qbuf_dmabuf(struct vb2_buffer *vb, const struct v4l2_buffer *b)
 		if (planes[plane].length < planes[plane].data_offset +
 		    q->plane_sizes[plane]) {
 			ret = -EINVAL;
+            dprintk(1, "error line %d\n", __LINE__);
 			goto err;
 		}
 
@@ -1143,6 +1177,96 @@ err:
 
 	return ret;
 }
+#else
+static int __qbuf_dmabuf(struct vb2_buffer *vb, const struct v4l2_buffer *b)
+{
+	struct v4l2_plane planes[VIDEO_MAX_PLANES];
+	struct vb2_queue *q = vb->vb2_queue;
+	void *mem_priv;
+	unsigned int plane;
+	int ret;
+	int write = !V4L2_TYPE_IS_OUTPUT(q->type);
+
+	/* Verify and copy relevant information provided by the userspace */
+	__fill_vb2_buffer(vb, b, planes);
+
+	for (plane = 0; plane < vb->num_planes; ++plane) {
+		struct dma_buf *dbuf = dma_buf_get(planes[plane].m.fd);
+
+		if (IS_ERR_OR_NULL(dbuf)) {
+			dprintk(1, "qbuf: invalid dmabuf fd for "
+				"plane %d\n", plane);
+			ret = -EINVAL;
+			goto err;
+		}
+
+		/* Skip the plane if already verified */
+		if (dbuf == vb->planes[plane].dbuf) {
+			planes[plane].length = dbuf->size;
+			dma_buf_put(dbuf);
+			continue;
+		}
+
+		dprintk(3, "qbuf: buffer description for plane %d changed, "
+			"reattaching dma buf\n", plane);
+
+		/* Release previously acquired memory if present */
+		__vb2_plane_dmabuf_put(q, &vb->planes[plane]);
+
+		/* Acquire each plane's memory */
+		mem_priv = call_memop(q, attach_dmabuf, q->alloc_ctx[plane],
+			dbuf, q->plane_sizes[plane], write);
+		if (IS_ERR(mem_priv)) {
+			dprintk(1, "qbuf: failed acquiring dmabuf "
+				"memory for plane %d\n", plane);
+			ret = PTR_ERR(mem_priv);
+			goto err;
+		}
+
+		planes[plane].length = dbuf->size;
+		vb->planes[plane].dbuf = dbuf;
+		vb->planes[plane].mem_priv = mem_priv;
+	}
+
+	/* TODO: This pins the buffer(s) with  dma_buf_map_attachment()).. but
+	 * really we want to do this just before the DMA, not while queueing
+	 * the buffer(s)..
+	 */
+	for (plane = 0; plane < vb->num_planes; ++plane) {
+		ret = call_memop(q, map_dmabuf, vb->planes[plane].mem_priv);
+		if (ret) {
+			dprintk(1, "qbuf: failed mapping dmabuf "
+				"memory for plane %d\n", plane);
+			goto err;
+		}
+		vb->planes[plane].dbuf_mapped = 1;
+	}
+
+	/*
+	 * Call driver-specific initialization on the newly acquired buffer,
+	 * if provided.
+	 */
+	ret = call_qop(q, buf_init, vb);
+	if (ret) {
+		dprintk(1, "qbuf: buffer initialization failed\n");
+		goto err;
+	}
+
+	/*
+	 * Now that everything is in order, copy relevant information
+	 * provided by userspace.
+	 */
+	for (plane = 0; plane < vb->num_planes; ++plane)
+		vb->v4l2_planes[plane] = planes[plane];
+
+	return 0;
+err:
+	/* In case of errors, release planes that were already acquired */
+	__vb2_buf_dmabuf_put(vb);
+
+	return ret;
+}
+#endif
 
 /**
  * __enqueue_in_driver() - enqueue a vb2_buffer in driver for processing
@@ -1182,8 +1306,19 @@ static int __buf_prepare(struct vb2_buffer *vb, const struct v4l2_buffer *b)
 		ret = -EINVAL;
 	}
 
+    // psw0523 debugging
+    printk("%s: q->memory 0x%x\n", __func__, q->memory);
+    printk("%s: q->ops--> %p\n", __func__, q->ops);
+    printk("%s: q->ops->buf_prepare --> %p\n", __func__, q->ops->buf_prepare);
+    printk("%s: ret %d\n", __func__, ret);
+
+#if 0
 	if (!ret)
 		ret = call_qop(q, buf_prepare, vb);
+#else
+    if (q->ops->buf_prepare)
+        q->ops->buf_prepare(vb);
+#endif
 	if (ret)
 		dprintk(1, "qbuf: buffer preparation failed: %d\n", ret);
 	else
@@ -1356,6 +1491,24 @@ int vb2_qbuf(struct vb2_queue *q, struct v4l2_buffer *b)
 	 */
 	list_add_tail(&vb->queued_entry, &q->queued_list);
 	vb->state = VB2_BUF_STATE_QUEUED;
+
+	q->timeline_max++;
+	if (b->flags & V4L2_BUF_FLAG_USE_SYNC) {
+		struct sync_pt *pt;
+		struct sync_fence *fence;
+		int fd;
+
+		fd = get_unused_fd();
+		if (fd >= 0) {
+			pt = sw_sync_pt_create(q->timeline, q->timeline_max);
+			fence = sync_fence_create("vb2", pt);
+			sync_fence_install(fence, fd);
+			vb->v4l2_buf.reserved = fd;
+		} else {
+			dprintk(1, "qbuf: failed to get unused fd\n");
+			vb->v4l2_buf.reserved = -1;
+		}
+	}
 
 	/*
 	 * If already streaming, give the buffer to driver for processing.
@@ -1600,6 +1753,7 @@ EXPORT_SYMBOL_GPL(vb2_dqbuf);
  */
 static void __vb2_queue_cancel(struct vb2_queue *q)
 {
+	struct vb2_buffer *vb;
 	unsigned int i;
 
 	/*
@@ -1613,12 +1767,20 @@ static void __vb2_queue_cancel(struct vb2_queue *q)
 	/*
 	 * Remove all buffers from videobuf's list...
 	 */
+	list_for_each_entry(vb, &q->queued_list, queued_entry) {
+		if (vb->acquire_fence) {
+			sync_fence_put(vb->acquire_fence);
+			vb->acquire_fence = NULL;
+		}
+	}
 	INIT_LIST_HEAD(&q->queued_list);
 	/*
 	 * ...and done list; userspace will not receive any buffers it
 	 * has not already dequeued before initiating cancel.
 	 */
 	INIT_LIST_HEAD(&q->done_list);
+	if (q->timeline)
+		sw_sync_timeline_inc(q->timeline, atomic_read(&q->queued_count));
 	atomic_set(&q->queued_count, 0);
 	wake_up_all(&q->done_wq);
 
@@ -2069,6 +2231,9 @@ int vb2_queue_init(struct vb2_queue *q)
 	INIT_LIST_HEAD(&q->done_list);
 	spin_lock_init(&q->done_lock);
 	init_waitqueue_head(&q->done_wq);
+
+	if (!q->name)
+		q->name = "vb2";
 
 	if (q->buf_struct_size == 0)
 		q->buf_struct_size = sizeof(struct vb2_buffer);
