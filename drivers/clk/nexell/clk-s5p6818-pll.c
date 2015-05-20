@@ -438,7 +438,7 @@ static struct clk *clk_pll_clock_register(const char *name, const char *parent_n
 	return clk;
 }
 
-static void __init clk_pll_device_setup(struct device_node *np)
+static void __init clk_pll_sysclk_setup(struct device_node *np)
 {
 	struct clk *clk;
 	unsigned long flags = CLK_IS_ROOT; // | CLK_GET_RATE_NOCACHE;
@@ -446,8 +446,8 @@ static void __init clk_pll_device_setup(struct device_node *np)
 	int i;
 
 	for (i = 0; ID_CPU_FCLK > i; i++) {
-		clk = clk_pll_clock_register(clk_pll_dev[i].name, NULL,
-					&clk_pll_dev[i].hw, &clk_pll_ops, flags);
+		clk = clk_pll_clock_register(clk_pll_dev[i].name,
+					NULL, &clk_pll_dev[i].hw, &clk_pll_ops, flags);
 		if(NULL == clk)
 			continue;
 		rate[i] = clk_get_rate(clk);
@@ -456,7 +456,7 @@ static void __init clk_pll_device_setup(struct device_node *np)
 		rate[0], rate[1], rate[2], rate[3]);
 }
 
-static void __init clk_pll_of_dev_setup(struct device_node *node)
+static void __init clk_pll_of_clocks_setup(struct device_node *node)
 {
 	struct clk_core *clk_data = NULL;
 	struct clk *clk;
@@ -478,7 +478,7 @@ static void __init clk_pll_of_dev_setup(struct device_node *node)
 	}
 }
 
-static void __init clk_pll_of_dev_print(struct device_node *np)
+static void __init clk_pll_of_clocks_dump(struct device_node *np)
 {
 	struct clk_core *clk_data = clk_pll_dev;
 	int pll = pll_dvo(DIV_CPUG1);
@@ -532,9 +532,9 @@ static void __init clk_pll_of_setup(struct device_node *node)
    	if (0 == of_property_read_u32(node, "ref-freuecny", &pllin))
    		ref_clk = pllin;
 
-	clk_pll_device_setup(node);
-	clk_pll_of_dev_setup(node);
-	clk_pll_of_dev_print(node);
+	clk_pll_sysclk_setup(node);
+	clk_pll_of_clocks_setup(node);
+	clk_pll_of_clocks_dump(node);
 
 	pr_debug("CPU REF HZ: %lu hz\n", ref_clk);
 }

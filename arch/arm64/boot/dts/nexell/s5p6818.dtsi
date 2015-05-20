@@ -199,6 +199,11 @@
 			clock-names = "timer0", "timer1", "pclk";
 		};
 
+    	cpufreq@bb000 {
+    	    compatible = "nexell,nxp-cpufreq";
+    	    reg = <0xc00bb000 0x30000>;
+ 		};
+
 		serial0:serial@a1000 {
 			compatible = "nexell,nxp-uart";
 			reg = <PHYS_BASE_UART0 0x1000>;
@@ -304,38 +309,38 @@
 			nexell,i2c-slave-addr = <0x66>;
 			nexell,reset-id = <RESET_ID_I2C2>;
 		};
-			
+
 		gpio_a:gpio@1a000 {
-			compatible = "nexell,nxp-gpio";		
+			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_GPIOA 0x1000>;
 			nexell,gpioid = <0>;
 		};
 		gpio_b:gpio@1b000 {
-			compatible = "nexell,nxp-gpio";		
+			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_GPIOB 0x1000>;
 			nexell,gpioid = <1>;
 		};
 		gpio_c:gpio@1c000 {
-			compatible = "nexell,nxp-gpio";		
+			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_GPIOC 0x1000>;
 			nexell,gpioid = <2>;
 		};
 		gpio_d:gpio@1d000 {
-			compatible = "nexell,nxp-gpio";		
+			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_GPIOD 0x1000>;
 			nexell,gpioid = <3>;
 		};
 		gpio_e:gpio@1e000 {
-			compatible = "nexell,nxp-gpio";		
+			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_GPIOE 0x1000>;
 			nexell,gpioid = <4>;
 		};
 		gpio_alv:gpio@10800 {
-			compatible = "nexell,nxp-gpio";		
+			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_ALIVE 0x1000>;
 			nexell,gpioid = <5>;
 		};
-		
+
 		spi_0:spi@5b000 {
 			compatible = "nexell,nxp-spi";
 			reg = <PHYS_BASE_SSP0 0x1000>;
@@ -346,8 +351,8 @@
 			dmas = <&pl08xdma0 6 &pl08xdma0 7>;
 			enable_dma = <1>;
 		};
-		
-		
+
+
 		spi_1:spi@5c000 {
 			compatible = "nexell,nxp-spi";
 			reg = <PHYS_BASE_SSP1 0x1000>;
@@ -359,8 +364,8 @@
 			enable_dma = <1>;
 			status = "disabled";
 		};
-		
-		
+
+
 		spi_2:spi@5f000 {
 			compatible = "nexell,nxp-spi";
 			reg = <PHYS_BASE_SSP2 0x1000>;
@@ -408,7 +413,9 @@
 
 		lvds@0 {
 			compatible = "nexell,nxp-lvds";
+			#if defined(CONFIG_NXP_DISPLAY_LVDS)
 			display_in = <(6 + CONFIG_NXP_DISPLAY_LVDS_IN)>; /* 6: syncgen0, 7:syncgen1 */
+			#endif
 			device_id = <4>;
 			status = "disabled";
 		};

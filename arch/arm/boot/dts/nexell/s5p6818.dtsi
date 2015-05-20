@@ -187,6 +187,11 @@
 			clock-names = "timer0", "timer1", "pclk";
 		};
 
+    	cpufreq@bb000 {
+    	    compatible = "nexell,nxp-cpufreq";
+    	    reg = <0xc00bb000 0x30000>;
+ 		};
+
 		serial0:serial@a1000 {
 			compatible = "nexell,nxp-uart";
 			reg = <PHYS_BASE_UART0 0x1000>;
@@ -475,7 +480,9 @@
 
 		lvds@0 {
 			compatible = "nexell,nxp-lvds";
+			#if defined(CONFIG_NXP_DISPLAY_LVDS)
 			display_in = <(6 + CONFIG_NXP_DISPLAY_LVDS_IN)>; /* 6: syncgen0, 7:syncgen1 */
+			#endif
 			device_id = <4>;
 			status = "disabled";
 		};
