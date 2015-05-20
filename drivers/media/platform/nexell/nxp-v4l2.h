@@ -40,6 +40,9 @@ struct nxp_v4l2 {
 #ifdef CONFIG_VIDEO_NXP_OUT
     struct nxp_out *out;
 #endif
+#ifdef CONFIG_LOOPBACK_SENSOR_DRIVER
+    struct nxp_loopback_sensor *loopback_sensor;
+#endif
 
     void *alloc_ctx;
 };

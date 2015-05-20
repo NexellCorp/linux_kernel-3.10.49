@@ -32,7 +32,7 @@ obj-y += \
 		prototype/module/nx_gpio.o		\
 		prototype/module/nx_alive.o		\
 		prototype/module/nx_clkgen.o		\
-		prototype/module/nx_ecid.o
+		prototype/module/nx_ecid.o	
 
 obj-$(CONFIG_NXP_DISPLAY)				+= 	prototype/module/nx_displaytop.o		\
 								   			prototype/module/nx_disptop_clkgen.o	\
@@ -50,7 +50,14 @@ obj-$(CONFIG_RTC_DRV_NXP)				+= 	prototype/module/nx_rtc.o
 
 obj-$(CONFIG_HAVE_PWM)					+= 	prototype/module/nx_pwm.o
 obj-$(CONFIG_NXP_ADC)					+= 	prototype/module/nx_adc.o
-obj-$(CONFIG_VIDEO_NXP_CAPTURE)			+=  prototype/module/nx_vip.o
+obj-$(CONFIG_VIDEO_NXP_CAPTURE)			+=  prototype/module/nx_displaytop.o \
+																				prototype/module/nx_dualdisplay.o	\
+																				prototype/module/nx_disptop_clkgen.o	\
+																				prototype/module/nx_vip.o	\
+																				prototype/module/nx_hdmi.o	\
+								   											prototype/module/nx_mlc.o	\
+								   											prototype/module/nx_dpc.o
+
 obj-$(CONFIG_SLSIAP_BACKWARD_CAMERA)	+=  prototype/module/nx_vip.o
 obj-$(CONFIG_NXP_OUT_HDMI)				+= 	prototype/module/nx_hdmi.o
 obj-$(CONFIG_NXP_OUT_HDMI)				+= 	prototype/module/nx_ecid.o

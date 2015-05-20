@@ -653,6 +653,21 @@ static void _set_sensor_entity_name(int module, char *type, int i2c_adapter_num,
     vmsg("%s: module %d, sensor name %s\n", __func__, module, p_entity_name);
 }
 
+static void _set_sensor_entity_name_without_i2c(int module)
+{
+    char *p_entity_name;
+
+    if (module == 0)
+        p_entity_name = _sensor_info[0].name;
+    else if (module == 1)
+        p_entity_name = _sensor_info[1].name;
+    else 
+        return;
+
+    sprintf(p_entity_name, "%s", "loopback-sensor");
+    vmsg("%s: module %d, sensor name %s\n", __func__, module, p_entity_name);
+}
+
 static void _set_sensor_mipi_info(int module, int is_mipi)
 {
     if (module == 0 || module == 1)
@@ -724,8 +739,13 @@ static struct v4l2_subdev *_register_sensor(struct nxp_capture *me,
         return NULL;
     }
 
-    /* _set_sensor_entity_name(me->module, board_info->board_info->type, board_info->i2c_adapter_id, board_info->board_info->addr); */
-    _set_sensor_entity_name(sensor_index, board_info->board_info->type, board_info->i2c_adapter_id, board_info->board_info->addr);
+		if (board_info && board_info->board_info) {
+   	 /* _set_sensor_entity_name(me->module, board_info->board_info->type, board_info->i2c_adapter_id, board_info->board_info->addr); */
+    	_set_sensor_entity_name(sensor_index, board_info->board_info->type, board_info->i2c_adapter_id, board_info->board_info->addr);
+		} else {
+			_set_sensor_entity_name_without_i2c(sensor_index);
+		}
+
     sensor_index++;
 
     return sensor;
