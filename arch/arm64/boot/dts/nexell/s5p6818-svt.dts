@@ -44,6 +44,7 @@
 		serial@a0000 {
 			enable_dma = <1>;
 		};
+
 		spi@5b000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -60,8 +61,6 @@
 					spi-feedback-delay = <02>;
 				};
 			};
-
-
 		};
 		spi@5c000 {
 			num_cs = <1>;
@@ -70,6 +69,18 @@
 		spi@5f000 {
 			num_cs = <1>;
 			clk_nr = <0>;
+		};
+
+		rtc@10c00 {
+			status = "okay";
+		};
+
+		wdt@19000 {
+			status = "okay";
+		};
+
+		ppm@54000 {
+			status = "okay";
 		};
 
 		framebuffer@0 {
@@ -115,16 +126,21 @@
 			};
 		};
 
-		rtc@10c00 {
+		pdm@14000 {
 			status = "okay";
 		};
+	};
 
-		wdt@19000 {
-			status = "okay";
-		};
+	pdm-dir {
+		compatible = "nexell,pdm-dir";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
 
-		ppm@54000 {
-			status = "okay";
-		};
+	pdm_recorder {
+		compatible = "nexell,pdm-recorder";
+		sample_rate = <48000>;
+        format = "S16";
 	};
 };

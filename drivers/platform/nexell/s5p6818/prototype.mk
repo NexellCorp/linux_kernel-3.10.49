@@ -69,6 +69,7 @@ obj-$(CONFIG_NXP_MP2TS_IF)				+=  prototype/module/nx_mpegtsi.o
 obj-$(CONFIG_RTC_DRV_NXP)				+=  prototype/module/nx_rtc.o
 
 obj-$(CONFIG_PPM_NXP) 					+=  prototype/module/nx_ppm.o
+obj-$(CONFIG_SND_NXP_PDM)               +=  prototype/module/nx_pdm.o
 obj-$(CONFIG_SENSORS_NXP_TMU) 			+=  prototype/module/nx_tmu.o
 obj-$(CONFIG_NXP_DISPLAY_TVOUT)			+= 	prototype/module/nx_hdmi.o
 obj-$(CONFIG_NXP_M2M_DEINTERLACER) +=  prototype/module/nx_deinterlace.o
