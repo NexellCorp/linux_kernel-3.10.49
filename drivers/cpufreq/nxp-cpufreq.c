@@ -763,7 +763,7 @@ static int nxp_cpufreq_get_dt_data(struct platform_device *pdev)
 		for (i = 0; size/2 > i; i++) {
 			plat_tbs[i][0] = be32_to_cpu(*list++);
 			plat_tbs[i][1] = be32_to_cpu(*list++);
-			pr_debug("DT  %2d = %8ldkhz, %8ld uV \n", i, plat_tbs[i][0], plat_tbs[i][1]);
+			pr_debug("DTS %2d = %8ldkhz, %8ld uV \n", i, plat_tbs[i][0], plat_tbs[i][1]);
 		}
 		pdata->table_size = size/2;
 	}
@@ -809,7 +809,12 @@ static int nxp_cpufreq_make_table(struct platform_device *pdev,
 	if (ops->setup_table)
 		asv_size = ops->setup_table(dvfs_tables);
 
-	tb_size = (plat_tbs ? pdata->table_size : asv_size);
+	if (!pdata->table_size && !asv_size) {
+		dev_err(&pdev->dev, "%s: failed no freq table !!!\n", __func__);
+		return -EINVAL;
+	}
+
+	tb_size = (pdata->table_size ? pdata->table_size : asv_size);
 
 	ptable = kzalloc((sizeof(*ptable)*tb_size), GFP_KERNEL);
 	if (!ptable) {
@@ -838,7 +843,7 @@ static int nxp_cpufreq_make_table(struct platform_device *pdev,
 			}
 			ptable->index = id;
 			ptable->frequency = dvfs_tables[id][0];
-			pr_debug("Asv %2d = %8ldkhz, %8ld uV \n", id, dvfs_tables[id][0], dvfs_tables[id][1]);
+			printk("ASV %2d = %8ldkhz, %8ld uV \n", id, dvfs_tables[id][0], dvfs_tables[id][1]);
 			/* next */
 			id++, ptable++;
 		}
@@ -848,7 +853,7 @@ static int nxp_cpufreq_make_table(struct platform_device *pdev,
 			dvfs_tables[id][1] = plat_tbs[id][1];	/* voltage */
 			ptable->index = id;
 			ptable->frequency = dvfs_tables[id][0];
-			pr_debug("New %2d = %8ldkhz, %8ld uV \n", id, dvfs_tables[id][0], dvfs_tables[id][1]);
+			printk("DTB %2d = %8ldkhz, %8ld uV \n", id, dvfs_tables[id][0], dvfs_tables[id][1]);
 		}
 	}
 
@@ -924,10 +929,8 @@ static int nxp_cpufreq_probe(struct platform_device *pdev)
 #endif
 
 	table_len = nxp_cpufreq_make_table(pdev, &freq_table, dvfs_tables);
-	if (0 > table_len) {
-		dev_err(&pdev->dev, "%s: failed allocate DVFS table !!!\n", __func__);
+	if (0 > table_len)
 		goto err_free_table;
-	}
 
 	sprintf(name, "pll%d", pdata->pll_dev);
 	dvfs->clk = clk_get(NULL, name);
