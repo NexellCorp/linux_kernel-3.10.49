@@ -224,8 +224,8 @@ static int nxp_pdm_set_plat_param(struct nxp_pdm_snd_param *par, void *data)
 	dma->peri_addr = phy_base + PDM_DATA_OFFSET;	/* PDM DAT */
 	dma->bus_width_byte = PDM_BUS_WIDTH;
 	dma->max_burst_byte = PDM_MAX_BURST;
-	pr_debug("pdm-rec: %s, %s dma, addr 0x%x, bus %dbyte, burst %dbyte\n",
-		STREAM_STR(1), dma->dma_ch_name, dma->peri_addr,
+	pr_debug("pdm-rec: %s, %s dma, addr 0x%p, bus %dbyte, burst %dbyte\n",
+		STREAM_STR(1), dma->dma_ch_name, (void *)dma->peri_addr,
 		dma->bus_width_byte, dma->max_burst_byte);
 
 	par->clk = clk_get(&pdev->dev, NULL);

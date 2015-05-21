@@ -1129,10 +1129,10 @@ static int pl08x_fill_llis_for_desc_cyclic(struct pl08x_driver_data *pl08x,
 
 		pl08x_choose_master_bus(&bd, &mbus, &sbus, cctl);
 
-		dev_vdbg(&pl08x->adev->dev, "src=0x%08x%s/%u dst=0x%08x%s/%u len=%zu\n",
-			bd.srcbus.addr, cctl & PL080_CONTROL_SRC_INCR ? "+" : "",
+		dev_vdbg(&pl08x->adev->dev, "src=0x%p%s/%u dst=0x%p%s/%u len=%zu\n",
+			(void *)bd.srcbus.addr, cctl & PL080_CONTROL_SRC_INCR ? "+" : "",
 			bd.srcbus.buswidth,
-			bd.dstbus.addr, cctl & PL080_CONTROL_DST_INCR ? "+" : "",
+			(void *)bd.dstbus.addr, cctl & PL080_CONTROL_DST_INCR ? "+" : "",
 			bd.dstbus.buswidth,
 			bd.remainder);
 		dev_vdbg(&pl08x->adev->dev, "mbus=%s sbus=%s\n",
@@ -1201,7 +1201,7 @@ static int pl08x_fill_llis_for_desc_cyclic(struct pl08x_driver_data *pl08x,
 
 		if (early_bytes) {
 			dev_vdbg(&pl08x->adev->dev,
-				"%s byte width LLIs (remain 0x%08x)\n",
+				"%s byte width LLIs (remain 0x%08zx)\n",
 				__func__, bd.remainder);
 			prep_byte_width_lli(&bd, &cctl, early_bytes, num_llis++,
 				&total_bytes);
@@ -1831,7 +1831,7 @@ static struct dma_async_tx_descriptor *pl08x_prep_slave_sg(
 static struct dma_async_tx_descriptor *pl08x_prep_dma_cyclic(
 		struct dma_chan *chan, dma_addr_t dma_addr, size_t len,
 		size_t period_len, enum dma_transfer_direction direction,
-		unsigned long flags)
+		unsigned long flags, void *context)
 {
 	struct pl08x_dma_chan *plchan = to_pl08x_chan(chan);
 	struct pl08x_driver_data *pl08x = plchan->host;
@@ -1848,7 +1848,7 @@ static struct dma_async_tx_descriptor *pl08x_prep_dma_cyclic(
 	u32 maxburst, cctl;
 
 
-	dev_dbg(&pl08x->adev->dev, "%s prepare transaction of %d bytes (%d period len * %d periods) from %s\n",
+	dev_dbg(&pl08x->adev->dev, "%s prepare transaction of %zu bytes (%zu period len * %d periods) from %s\n",
 			__func__, len, period_len, periods, plchan->name);
 
 	txd = pl08x_get_txd(plchan);
