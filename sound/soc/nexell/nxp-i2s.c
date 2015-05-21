@@ -26,6 +26,7 @@
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/of.h>
+#include <linux/of_address.h>
 
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
@@ -166,7 +167,7 @@ struct nxp_i2s_snd_param {
 	struct nxp_pcm_dma_param play;
 	struct nxp_pcm_dma_param capt;
 	/* Register */
-	unsigned int base_addr;
+	void __iomem *base_addr;
 	struct i2s_register i2s;
 };
 
@@ -186,7 +187,7 @@ static int set_sample_rate_clock(struct clk *clk, unsigned long request,
 #endif
 	unsigned long find, rate = 0, clock = request;
 	int dio = 0, din = 0, div = 1;
-	int ret = 1, i = 0;	/* peripheral clock */
+	int ret = 1;	/* peripheral clock */
 
 #if defined(CONFIG_ARCH_S5P4418)
 	/* form peripheral clock */
@@ -212,7 +213,9 @@ static int set_sample_rate_clock(struct clk *clk, unsigned long request,
 		clk_set_rate(clk, find);
 #endif
 
+#if defined(CONFIG_ARCH_S5P4418)
 done:
+#endif
 	pr_debug("%s: req=%ld, acq=%ld, div=%2d, %s\n",
 		__func__, request, rate, div, ret==1?"periclock":"clkgen");
 
@@ -231,7 +234,7 @@ done:
 static void supply_master_clock(struct nxp_i2s_snd_param *par)
 {
 	struct i2s_register *i2s = &par->i2s;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 
 	pr_debug("%s: %s (status=0x%x)\n",
 		__func__, par->master_mode?"master":"slave", par->status);
@@ -252,7 +255,7 @@ static void supply_master_clock(struct nxp_i2s_snd_param *par)
 static void cutoff_master_clock(struct nxp_i2s_snd_param *par)
 {
 	struct i2s_register *i2s = &par->i2s;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 
 	pr_debug("%s: %s (status=0x%x)\n",
 		__func__, par->master_mode?"master":"slave", par->status);
@@ -278,7 +281,7 @@ static void inline i2s_reset(struct nxp_i2s_snd_param *par)
 static int i2s_start(struct nxp_i2s_snd_param *par, int stream)
 {
 	struct i2s_register *i2s = &par->i2s;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 	unsigned int FIC = 0;
 
 	pr_debug("%s %d\n", __func__, par->channel);
@@ -325,7 +328,7 @@ static int i2s_start(struct nxp_i2s_snd_param *par, int stream)
 static void i2s_stop(struct nxp_i2s_snd_param *par, int stream)
 {
 	struct i2s_register *i2s = &par->i2s;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 
 	pr_debug("%s %d\n", __func__, par->channel);
 
@@ -371,7 +374,7 @@ static int nxp_i2s_check_param(struct nxp_i2s_snd_param *par)
 	struct i2s_register *i2s = &par->i2s;
 	struct nxp_pcm_dma_param *dmap_play = &par->play;
 	struct nxp_pcm_dma_param *dmap_capt = &par->capt;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 	unsigned long request = 0, rate_hz = 0;
 	int divide = 0, i = 0;
 #if defined(CONFIG_ARCH_S5P4418)
@@ -534,7 +537,6 @@ done:
 static int nxp_i2s_set_plat_param(struct nxp_i2s_snd_param *par, void *data)
 {
 	struct platform_device *pdev = data;
-	struct nxp_i2s_plat_data *plat = pdev->dev.platform_data;
 	struct nxp_pcm_dma_param *dma = &par->play;
 	unsigned int phy_base = 0;
 	int i = 0, ret = 0;
@@ -557,7 +559,8 @@ static int nxp_i2s_set_plat_param(struct nxp_i2s_snd_param *par, void *data)
 		par->sample_rate = DEF_SAMPLE_RATE;
    	of_property_read_u32(pdev->dev.of_node, "pre_supply_mclk", &par->pre_supply_mclk);
  	of_property_read_u32(pdev->dev.of_node, "LR_pol_inv", &par->LR_pol_inv);
-/*	if (plat->ext_is_en) {
+#if 0 // TBD for external MCLK support
+	if (plat->ext_is_en) {
 		par->ext_is_en = plat->ext_is_en();
 		par->mclk_in = par->ext_is_en ? 1 : plat->master_clock_in;
 	} else {
@@ -565,16 +568,11 @@ static int nxp_i2s_set_plat_param(struct nxp_i2s_snd_param *par, void *data)
 	}
 	if (plat->set_ext_mclk)
 		par->set_ext_mclk = plat->set_ext_mclk;
-*/		
-	par->base_addr = IO_ADDRESS(phy_base);
+#endif
+	par->base_addr = of_iomap(pdev->dev.of_node, 0);
 	SND_I2S_LOCK_INIT(&par->lock);
 
     for (i = 0; 2 > i; i++, dma = &par->capt) {
-/*		if (! plat->dma_play_ch) {
-			dma->active = false;
-			continue;
-		}
-*/
 		dma->active = true;
 		dma->dma_filter = pl08x_filter_id;
 		switch (id) {
@@ -591,8 +589,8 @@ static int nxp_i2s_set_plat_param(struct nxp_i2s_snd_param *par, void *data)
 		dma->peri_addr = phy_base + (i == 0 ? I2S_TXD_OFFSET : I2S_RXD_OFFSET);	/* I2S TXD/RXD */
 		dma->bus_width_byte = I2S_BUS_WIDTH;
 		dma->max_burst_byte = I2S_PERI_BURST;
-		pr_debug("snd i2s: %s dma (%s, peri 0x%x, bus %dbits)\n",
-			STREAM_STR(i), dma->dma_ch_name, dma->peri_addr, dma->bus_width_byte*8);
+		pr_debug("snd i2s: %s dma (%s, peri 0x%p, bus %dbits)\n",
+			STREAM_STR(i), dma->dma_ch_name, (void *)dma->peri_addr, dma->bus_width_byte*8);
 	}
 
 	par->clk = clk_get(&pdev->dev, NULL);
@@ -608,7 +606,7 @@ static int nxp_i2s_setup(struct snd_soc_dai *dai)
 {
 	struct nxp_i2s_snd_param *par = snd_soc_dai_get_drvdata(dai);
 	struct i2s_register *i2s = &par->i2s;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 
 	SND_I2S_LOCK(&par->lock, par->flags);
 
@@ -633,7 +631,7 @@ static void nxp_i2s_release(struct snd_soc_dai *dai)
 {
 	struct nxp_i2s_snd_param *par = snd_soc_dai_get_drvdata(dai);
 	struct i2s_register *i2s = &par->i2s;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 
 	SND_I2S_LOCK(&par->lock, par->flags);
 
@@ -762,7 +760,7 @@ static int nxp_i2s_dai_resume(struct snd_soc_dai *dai)
 {
 	struct nxp_i2s_snd_param *par = snd_soc_dai_get_drvdata(dai);
 	struct i2s_register *i2s = &par->i2s;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 	unsigned int FIC = 0;
 
 	pm_dbgout("%s\n", __func__);

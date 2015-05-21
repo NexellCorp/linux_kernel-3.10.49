@@ -136,12 +136,12 @@ static struct snd_soc_card snd_null_card[] = {
 
 static int snd_card_probe(struct platform_device *pdev)
 {
-	struct nxp_snd_dai_plat_data *plat = pdev->dev.platform_data;
 	struct snd_soc_card *card = &snd_null_card[0];
 	struct snd_soc_dai_driver *cpudrv = NULL;
 	unsigned int rates = 0, format = 0;
 	int ret;
     int ch;
+    const char *format_name;
 
 	/* set I2S name */
 
@@ -155,12 +155,16 @@ static int snd_card_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "snd_soc_register_card() failed: %d\n", ret);
 		return ret;
 	}
-#if 0
-	if (plat) {
-		rates = plat->sample_rate;
-		format = plat->pcm_format;
-	}
-#endif
+
+    of_property_read_u32(pdev->dev.of_node, "sample_rate", &rates); 
+    format_name = of_get_property(pdev->dev.of_node, "format", NULL);
+    if (format_name != NULL) {
+	    if (strcmp(format_name,"S16") == 0)
+		    format = SNDRV_PCM_FMTBIT_S16_LE;
+		else if(strcmp(format_name,"S24") == 0)
+		    format = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE;
+    }
+
 	if (card->rtd) {
 		struct snd_soc_dai *cpu_dai = card->rtd->cpu_dai;
 		if (cpu_dai)
@@ -171,14 +175,14 @@ static int snd_card_probe(struct platform_device *pdev)
 
 	if (NULL == cpudrv)
 		return 0;
-#if 0
+
 	/*
 	 * Reset i2s sample rates
 	 */
 	if (rates) {
 		rates = snd_pcm_rate_to_rate_bit(rates);
 		if (SNDRV_PCM_RATE_KNOT == rates)
-			printk("%s, invalid sample rates=%d\n", __func__, plat->sample_rate);
+			printk("%s, invalid sample rates=%d\n", __func__, rates);
 		else {
 			cpudrv->playback.rates = rates;
 			cpudrv->capture.rates = rates;
@@ -192,7 +196,7 @@ static int snd_card_probe(struct platform_device *pdev)
 		cpudrv->playback.formats = format;
 		cpudrv->capture.formats = format;
 	}
-#endif
+
 	return ret;
 }
 

@@ -18,6 +18,11 @@
 		reg = <0x40000000 0x40000000>;
 	};
 
+    aliases {
+		snd_null_card0 = &snd_null_card_0;
+		snd_null_card2 = &snd_null_card_2;
+	};
+
 	soc {
 
 		clocks {
@@ -129,6 +134,35 @@
 		pdm@14000 {
 			status = "okay";
 		};
+
+		i2s_0:i2s0@55000 {
+			master_mode = <1>;
+			mclk_in = <0>;
+			trans_mode = <1>;
+			frame_bit = <48>;
+			sample_rate = <48000>;
+			pre_supply_mclk = <1>;
+			status = "okay";
+		};
+		i2s_1:i2s1@56000 {
+			master_mode = <1>;
+			mclk_in = <1>;
+			trans_mode = <0>;
+			frame_bit = <48>;
+			sample_rate = <48000>;
+			pre_supply_mclk = <0>;
+			status = "okay";
+		};
+
+		i2s_2:i2s2@57000 {
+			master_mode = <0>;
+			mclk_in = <1>;
+			trans_mode = <1>;
+			frame_bit = <48>;
+			sample_rate = <48000>;
+			pre_supply_mclk = <0>;
+			status = "okay";
+		};
 	};
 
 	pdm-dir {
@@ -142,5 +176,26 @@
 		compatible = "nexell,pdm-recorder";
 		sample_rate = <48000>;
         format = "S16";
+	};
+
+	snd-null {
+		compatible = "nexell,snd-null";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	snd_null_card_0:snd_null_card@0 {
+		compatible = "nexell,snd-null-card";
+		ch = <0>;
+	    format = "S16";
+		nexell,i2s-controller = <&i2s_0>;
+	};
+
+	snd_null_card_2:snd_null_card@2 {
+		compatible = "nexell,snd-null-card";
+		ch = <2>;
+	    format = "S16";
+		nexell,i2s-controller = <&i2s_2>;
 	};
 };
