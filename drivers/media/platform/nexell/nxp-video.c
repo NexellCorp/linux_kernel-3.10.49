@@ -842,7 +842,7 @@ static int nxp_video_reqbufs(struct file *file, void *fh,
         struct v4l2_requestbuffers *b)
 {
     struct nxp_video *me = file->private_data;
-    pr_debug("%s: %s\n", __func__, me->name);
+    vmsg("%s: %s\n", __func__, me->name);
     if (me->vbq) { /* capture, out */
         return vb2_reqbufs(me->vbq, b); /* call to queue_setup */
     } else { /* m2m */

@@ -919,8 +919,14 @@ static int check_fmt(struct file *file, enum v4l2_buf_type type)
 			return 0;
 		break;
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+        // psw0523 test
+#if 1
+		if (ops->vidioc_g_fmt_vid_out_mplane)
+			return 0;
+#else
 		if (is_vid && is_tx && ops->vidioc_g_fmt_vid_out_mplane)
 			return 0;
+#endif
 		break;
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 		if (is_vid && is_tx && ops->vidioc_g_fmt_vid_out_overlay)
@@ -1160,10 +1166,19 @@ static int v4l_s_fmt(const struct v4l2_ioctl_ops *ops,
 		CLEAR_AFTER_FIELD(p, fmt.pix);
 		return ops->vidioc_s_fmt_vid_out(file, fh, arg);
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+        // psw0523 debugging
+#if 1
+        printk("%s: V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE\n", __func__);
+		CLEAR_AFTER_FIELD(p, fmt.pix_mp);
+        /*v4l_print_pix_fmt_mplane(vfd, &f->fmt.pix_mp);*/
+        if (ops->vidioc_s_fmt_vid_out_mplane)
+            return ops->vidioc_s_fmt_vid_out_mplane(file, fh, arg);
+#else
 		if (unlikely(!is_tx || !is_vid || !ops->vidioc_s_fmt_vid_out_mplane))
 			break;
 		CLEAR_AFTER_FIELD(p, fmt.pix_mp);
 		return ops->vidioc_s_fmt_vid_out_mplane(file, fh, arg);
+#endif
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 		if (unlikely(!is_tx || !is_vid || !ops->vidioc_s_fmt_vid_out_overlay))
 			break;
