@@ -246,11 +246,12 @@ static int rt5631_probe(struct platform_device *pdev)
 	sprintf(str_dai_name, "%x%s%d", (I2S_BASEADDR + (ch * I2S_CH_OFFSET)), ".i2s", ch);
 	of_property_read_u32(pdev->dev.of_node, "sample_rate", &rates);	
 	format_name = of_get_property(pdev->dev.of_node, "format", NULL);
-	if (strcmp(format_name,"S16") == 0)
-		format = SNDRV_PCM_FMTBIT_S16_LE;
-	else if(strcmp(format_name,"S24") == 0)
-		format = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE;
-	printk("==============%s %s %d\n", __func__, format_name, format);
+    if (format_name != NULL) {
+		if (strcmp(format_name,"S16") == 0)
+			format = SNDRV_PCM_FMTBIT_S16_LE;
+		else if(strcmp(format_name,"S24") == 0)
+			format = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE;
+	}
 	of_property_read_u32(pdev->dev.of_node, "hpin_support", &hpin.support);	
 	of_property_read_u32(pdev->dev.of_node, "hpin_gpio", &hpin.detect_io);	
 	of_property_read_u32(pdev->dev.of_node, "hpin_level", &hpin.detect_level);	

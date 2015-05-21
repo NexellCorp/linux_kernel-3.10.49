@@ -163,6 +163,16 @@
 			pre_supply_mclk = <0>;
 			status = "okay";
 		};
+
+        iic0:iic@a4000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			rt5631: rt5631@1a {
+				compatible = "rt,rt5631";
+				reg = <0x1a>;
+			};
+	    };
 	};
 
 	pdm-dir {
@@ -190,6 +200,15 @@
 		ch = <0>;
 	    format = "S16";
 		nexell,i2s-controller = <&i2s_0>;
+	};
+
+	sound {
+		compatible = "nexell,nxp-rt5631";
+		ch = <1>;
+		sample_rate = <48000>;
+	    format = "S16";
+		nexell,i2s-controller = <&i2s_1>;
+		nexell,audio-codec = <&rt5631>;
 	};
 
 	snd_null_card_2:snd_null_card@2 {
