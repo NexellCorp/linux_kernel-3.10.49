@@ -103,6 +103,8 @@ struct s3c24xx_i2c {
 };
 
 const static int i2c_reset[3] = {RESET_ID_I2C0, RESET_ID_I2C1, RESET_ID_I2C2};
+
+
 /* default platform data removed, dev should always carry data. */
 
 static inline void dump_i2c_register(struct s3c24xx_i2c *i2c)
@@ -938,8 +940,7 @@ s3c24xx_i2c_parse_dt(struct device_node *np, struct s3c24xx_i2c *i2c)
 	if (!np)
 		return;
 
-	pdata->bus_num = -1; /* i2c bus number is dynamically assigned */
-	
+	pdata->bus_num =  of_alias_get_id(np, "i2c");	
 	of_property_read_u32(np, "nexell,reset-id", &pdata->reset_id);
 	of_property_read_u32(np, "nexell,i2c-sda-delay", &pdata->sda_delay);
 	of_property_read_u32(np, "nexell,i2c-slave-addr", &pdata->slave_addr);

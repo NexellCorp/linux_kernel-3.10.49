@@ -109,6 +109,9 @@
         uart3 = &serial3;
         uart4 = &serial4;
         uart5 = &serial5;
+        i2c0	= &iic0;
+        i2c1	= &iic1;
+        i2c2	= &iic2;
         spi0	= &spi_0;
         spi1	= &spi_1;
         spi2	= &spi_2;
@@ -413,6 +416,20 @@
 			compatible = "nexell,nxp-fb";
 			reg = <0xc0102400 0x100>;
 			status = "disabled";
+		};
+		tmu_0@96000 {
+			compatible = "nexell,nxp-tmu";
+			interrupt = <0 IRQ_TMU0 0>;
+			reg = <PHYS_BASE_TMU0 0>;
+			channel_id    = <0>;
+			trig_degree   = <85>;
+			trig_duration = <100>;
+			trig_cpufreq  = <800000>;
+			poll_duration = <100>;
+		};
+		mp2ts:mp2ts@5d000 {
+			compatible = "nexell,nxp-mp2ts";
+			reg = <PHYS_BASE_MPEGTSI 0x100>;
 		};
 
 		lvds@0 {
