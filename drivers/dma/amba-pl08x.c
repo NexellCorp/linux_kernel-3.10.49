@@ -2081,8 +2081,6 @@ static irqreturn_t pl08x_irq(int irq, void *dev)
 	struct pl08x_driver_data *pl08x = dev;
 	u32 mask = 0, err, tc, i;
 
-	printk(".");
-
 	/* check & clear - ERR & TC interrupts */
 	err = readl(pl08x->base + PL080_ERR_STATUS);
 	if (err) {
