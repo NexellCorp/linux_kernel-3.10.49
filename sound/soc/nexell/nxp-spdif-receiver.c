@@ -58,12 +58,12 @@ static struct snd_soc_card spdifrx_card = {
 
 static int spdifrx_probe(struct platform_device *pdev)
 {
-	struct nxp_snd_dai_plat_data *plat = pdev->dev.platform_data;
 	struct snd_soc_card *card = &spdifrx_card;
 	struct snd_soc_dai *codec_dai = NULL;
 	struct snd_soc_dai_driver *driver = NULL;
-	unsigned int sample_rate = 0;
+	unsigned int sample_rate = 0, format = 0;
 	int ret;
+	const char *format_name;
 
 	/* register card */
 	card->dev = &pdev->dev;
@@ -73,26 +73,33 @@ static int spdifrx_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+    of_property_read_u32(pdev->dev.of_node, "sample_rate", &sample_rate); 
+    format_name = of_get_property(pdev->dev.of_node, "format", NULL);
+    if (format_name != NULL) {
+        if (strcmp(format_name,"S16") == 0)
+            format = SNDRV_PCM_FMTBIT_S16_LE;
+        else if(strcmp(format_name,"S24") == 0)
+            format = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE;
+    }  
+
 	if (card->rtd) {
 		codec_dai = card->rtd->codec_dai;
 		if (codec_dai)
 			driver = codec_dai->driver;
 	}
-#if 0
-	/* Reset spdif sample rates and format */
-	if (plat && driver) {
-		if (plat->sample_rate) {
-			sample_rate = snd_pcm_rate_to_rate_bit(plat->sample_rate);
-			if (SNDRV_PCM_RATE_KNOT != sample_rate)
-				driver->capture.rates = sample_rate;
-			else
-				printk("%s, invalid sample rates=%d\n", __func__, plat->sample_rate);
-		}
 
-		if(plat->pcm_format)
-			driver->capture.formats = plat->pcm_format;
+	/* Reset spdif sample rates and format */
+	if (sample_rate) {
+		sample_rate = snd_pcm_rate_to_rate_bit(sample_rate);
+		if (SNDRV_PCM_RATE_KNOT != sample_rate)
+			driver->capture.rates = sample_rate;
+		else
+			printk("%s, invalid sample rates=%d\n", __func__, sample_rate);
 	}
-#endif
+
+	if(format)
+		driver->capture.formats = format;
+
 	pr_debug("spdif-rx-dai: register card %s -> %s\n",
 		card->dai_link->codec_dai_name, card->dai_link->cpu_dai_name);
 	return ret;

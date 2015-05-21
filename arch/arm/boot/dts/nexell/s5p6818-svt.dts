@@ -171,6 +171,14 @@
 				reg = <0x1a>;
 			};
 	    };
+
+        spdiftx@59000 {
+			status = "okay";
+		};
+
+		spdifrx@5a000 {
+			status = "okay";
+		};
 	};
 
     nxp-ion {
@@ -245,6 +253,7 @@
 	snd_null_card_0:snd_null_card@0 {
 		compatible = "nexell,snd-null-card";
 		ch = <0>;
+		sample_rate = <48000>;
 	    format = "S16";
 		nexell,i2s-controller = <&i2s_0>;
 	};
@@ -261,7 +270,34 @@
 	snd_null_card_2:snd_null_card@2 {
 		compatible = "nexell,snd-null-card";
 		ch = <2>;
+		sample_rate = <48000>;
 	    format = "S16";
 		nexell,i2s-controller = <&i2s_2>;
+	};
+
+	spdif-dit {
+		compatible = "nexell,spdif-dit";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	spdif-transciever {
+		compatible = "nexell,spdif-transciever";
+		sample_rate = <48000>;
+	    format = "S16";
+	};
+
+	spdif-dir {
+		compatible = "nexell,spdif-dir";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	spdif-receiver {
+		compatible = "nexell,spdif-receiver";
+		sample_rate = <48000>;
+	    format = "S16";
 	};
 };

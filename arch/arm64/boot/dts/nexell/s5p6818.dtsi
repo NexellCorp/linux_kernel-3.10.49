@@ -109,12 +109,12 @@
         uart3 = &serial3;
         uart4 = &serial4;
         uart5 = &serial5;
-        i2c0	= &iic0;
-        i2c1	= &iic1;
-        i2c2	= &iic2;
         spi0	= &spi_0;
         spi1	= &spi_1;
         spi2	= &spi_2;
+        i2c0	= &iic0;
+        i2c1	= &iic1;
+        i2c2	= &iic2;
 		pwmdev0 = &pwm_device0;
 		pwmdev1 = &pwm_device1;
 		pwmdev1 = &pwm_device2;
@@ -569,6 +569,33 @@
 			dma-names = "tx", "rx";
 			dmas = <&pl08xdma1 0 &pl08xdma1 1>;
 			reset-id = <RESET_ID_I2S2>;
+			status = "disabled";
+		};
+
+		spdiftx@59000 {
+			compatible = "nexell,nxp-spdif-tx";
+			reg = <PHYS_BASE_SPDIF_TX 0x1000>;
+			interrupts = <0 IRQ_SPDIFTX 0>;
+			clock-names = "spdif-tx";
+			clocks = <&spdiftx>;
+			sample_rate = <48000>;
+			hdmi_out = <1>;
+			dma-names = "tx";
+			dmas = <&pl08xdma1 6>;
+			reset-id = <RESET_ID_SPDIFTX>;
+			status = "okay";
+		};
+
+		spdifrx@5a000 {
+			compatible = "nexell,nxp-spdif-rx";
+			reg = <PHYS_BASE_SPDIF_RX 0x1000>;
+			interrupts = <0 IRQ_SPDIFRX 0>;
+			clock-names = "pclk";
+			clocks = <&pclk>;
+			sample_rate = <48000>;
+			dma-names = "rx";
+			dmas = <&pl08xdma1 5>;
+			reset-id = <RESET_ID_SPDIFRX>;
 			status = "disabled";
 		};
 	};

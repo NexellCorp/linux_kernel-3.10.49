@@ -26,6 +26,7 @@
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/of.h>
+#include <linux/of_address.h>
 
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
@@ -164,7 +165,7 @@ struct nxp_spdif_snd_param {
 	/* DMA channel */
 	struct nxp_pcm_dma_param dma;
 	/* Register */
-	unsigned int base_addr;
+    void __iomem *base_addr;
 	struct spdif_register spdif;
 	int hdmi_out;
 	int hdmi_mclk_pll;
@@ -235,7 +236,7 @@ static int calc_hdmi_master_clock(unsigned long mclk, int *pllsel, int *plldiv)
 
 static void inline spdif_reset(struct nxp_spdif_snd_param *par)
 {
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 
 	nxp_soc_peri_reset_set(RESET_ID_SPDIFTX);
 	writel((1 << CON_SW_RESET_POS), (base+SPDIF_CON_OFFSET));
@@ -244,8 +245,8 @@ static void inline spdif_reset(struct nxp_spdif_snd_param *par)
 static int spdif_start(struct nxp_spdif_snd_param *par, int stream)
 {
 	struct spdif_register *spdif = &par->spdif;
-	unsigned int base = par->base_addr;
-	unsigned int hdmi = IO_ADDRESS(SPDIF_MASTER_CLKGEN_BASE);
+	void __iomem *base = par->base_addr;
+	void __iomem *hdmi = IO_ADDRESS(SPDIF_MASTER_CLKGEN_BASE);
 	volatile u32 value;
 
 	if (par->hdmi_out) {
@@ -268,8 +269,8 @@ static int spdif_start(struct nxp_spdif_snd_param *par, int stream)
 static void spdif_stop(struct nxp_spdif_snd_param *par, int stream)
 {
 	struct spdif_register *spdif = &par->spdif;
-	unsigned int base = par->base_addr;
-	unsigned int hdmi = IO_ADDRESS(SPDIF_MASTER_CLKGEN_BASE);
+	void __iomem *base = par->base_addr;
+	void __iomem *hdmi = IO_ADDRESS(SPDIF_MASTER_CLKGEN_BASE);
 
 	spdif->clkcon &= ~(1 << CLKCON_POWER_POS);
 	writel(spdif->clkcon, (base+SPDIF_CLKCON_OFFSET));
@@ -341,30 +342,25 @@ static int nxp_spdif_check_param(struct nxp_spdif_snd_param *par)
 static int nxp_spdif_set_plat_param(struct nxp_spdif_snd_param *par, void *data)
 {
 	struct platform_device *pdev = data;
-	struct nxp_spdif_plat_data *plat = pdev->dev.platform_data;
 	struct nxp_pcm_dma_param *dma = &par->dma;
 	unsigned int phy_base = SPDIF_BASEADDR;
 	int ret = 0;
 
-    //par->sample_rate = plat->sample_rate ? plat->sample_rate : DEF_SAMPLE_RATE;
-    par->sample_rate = DEF_SAMPLE_RATE;
-	//par->hdmi_out = plat->hdmi_out ? 1 : 0;
-	par->hdmi_out = 1;
-	par->base_addr = IO_ADDRESS(phy_base);
+    of_property_read_u32(pdev->dev.of_node, "sample_rate", &par->sample_rate);
+    if (!par->sample_rate)
+	    par->sample_rate = DEF_SAMPLE_RATE;
+    of_property_read_u32(pdev->dev.of_node, "hdmi_out", &par->hdmi_out);
+    par->base_addr = of_iomap(pdev->dev.of_node, 0);
 	spin_lock_init(&par->lock);
 
-//	if (! plat->dma_ch)
-//		return -EINVAL;
-
 	dma->active = true;
-	//dma->dma_filter = plat->dma_filter;
 	dma->dma_filter = pl08x_filter_id;
 	dma->dma_ch_name = PL08X_DMA_NAME_SPDIFTX;
 	dma->peri_addr = phy_base + SPDIF_DAT_OFFSET;	/* SPDIF DAT */
 	dma->bus_width_byte = SPDIF_BUS_WIDTH;
 	dma->max_burst_byte = SPDIF_MAX_BURST;
-	pr_debug("spdif-tx: %s, %s dma, addr 0x%x, bus %dbyte, burst %dbyte\n",
-		STREAM_STR(0), dma->dma_ch_name, dma->peri_addr,
+	pr_debug("spdif-tx: %s, %s dma, addr 0x%p, bus %dbyte, burst %dbyte\n",
+		STREAM_STR(0), dma->dma_ch_name, (void *)dma->peri_addr,
 		dma->bus_width_byte, dma->max_burst_byte);
 
 	par->clk = clk_get(&pdev->dev, NULL);
@@ -382,7 +378,7 @@ static int nxp_spdif_setup(struct snd_soc_dai *dai)
 {
 	struct nxp_spdif_snd_param *par = snd_soc_dai_get_drvdata(dai);
 	struct spdif_register *spdif = &par->spdif;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 	int hdmi_out = par->hdmi_out;
 	long rate_hz = par->master_clock;
 	int  ratio = par->master_ratio;
@@ -416,7 +412,7 @@ static void nxp_spdif_release(struct snd_soc_dai *dai)
 {
 	struct nxp_spdif_snd_param *par = snd_soc_dai_get_drvdata(dai);
 	struct spdif_register *spdif = &par->spdif;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 
 	spdif->clkcon &= ~(1 << CLKCON_POWER_POS);
 	writel(spdif->clkcon, (base+SPDIF_CLKCON_OFFSET));
@@ -530,7 +526,7 @@ static int nxp_spdif_dai_resume(struct snd_soc_dai *dai)
 	struct nxp_spdif_snd_param *par = snd_soc_dai_get_drvdata(dai);
 	struct spdif_register *spdif = &par->spdif;
 	unsigned int cstas = spdif->cstas;
-	unsigned int base = par->base_addr;
+	void __iomem *base = par->base_addr;
 
 	pm_dbgout("%s\n", __func__);
 
