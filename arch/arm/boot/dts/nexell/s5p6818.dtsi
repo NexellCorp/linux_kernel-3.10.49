@@ -96,10 +96,13 @@
         spi0	= &spi_0;
         spi1	= &spi_1;
         spi2	= &spi_2;
-		pwmdev0 = &pwm_device0;
-		pwmdev1 = &pwm_device1;
-		pwmdev1 = &pwm_device2;
-		pwmdev1 = &pwm_device3;
+        i2c0	= &iic0;
+        i2c1	= &iic1;
+        i2c2	= &iic2;
+        pwmdev0 = &pwm_device0;
+				pwmdev1 = &pwm_device1;
+				pwmdev1 = &pwm_device2;
+				pwmdev1 = &pwm_device3;
     };
 
 	soc {
