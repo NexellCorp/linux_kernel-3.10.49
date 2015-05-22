@@ -49,6 +49,11 @@
 #include <asm/firmware.h>
 #endif
 
+#if defined (CONFIG_USB_EHCI_SYNOPSYS)
+#include <nexell/soc-s5pxx18.h>
+extern int hsic_en;
+extern int ehci_late_loadtime;
+#endif
 /*-------------------------------------------------------------------------*/
 
 /*
@@ -324,9 +329,27 @@ static void ehci_turn_off_all_ports(struct ehci_hcd *ehci)
 {
 	int	port = HCS_N_PORTS(ehci->hcs_params);
 
+#if defined(CONFIG_USB_EHCI_SYNOPSYS)
+	if (hsic_en) {
+		while (port--) {
+			if (port == 1) {
+				ehci_writel(ehci, PORT_RWC_BITS,
+						ehci->hsic_status_reg);
+			} else {
+				ehci_writel(ehci, PORT_RWC_BITS,
+						&ehci->regs->port_status[port]);
+			}
+		}
+	} else {
+		while (port--)
+			ehci_writel(ehci, PORT_RWC_BITS,
+					&ehci->regs->port_status[port]);
+	}
+#else
 	while (port--)
 		ehci_writel(ehci, PORT_RWC_BITS,
 				&ehci->regs->port_status[port]);
+#endif
 }
 
 /*
@@ -788,8 +811,23 @@ static irqreturn_t ehci_irq (struct usb_hcd *hcd)
 			/* leverage per-port change bits feature */
 			if (!(ppcd & (1 << i)))
 				continue;
+#if defined(CONFIG_USB_EHCI_SYNOPSYS)
+			if (hsic_en) {
+				if (i == 1) {
+					pstatus = ehci_readl(ehci,
+							ehci->hsic_status_reg);
+				} else {
+					pstatus = ehci_readl(ehci,
+							&ehci->regs->port_status[i]);
+				}
+			} else {
+				pstatus = ehci_readl(ehci,
+						 &ehci->regs->port_status[i]);
+			}
+#else
 			pstatus = ehci_readl(ehci,
 					 &ehci->regs->port_status[i]);
+#endif
 
 			if (pstatus & PORT_OWNER)
 				continue;
@@ -1281,6 +1319,11 @@ MODULE_LICENSE ("GPL");
 #ifdef CONFIG_USB_EHCI_TEGRA
 #include "ehci-tegra.c"
 #define PLATFORM_DRIVER		tegra_ehci_driver
+#endif
+
+#ifdef CONFIG_USB_EHCI_SYNOPSYS
+#include "ehci-synop.c"
+#define PLATFORM_DRIVER		nxp_ehci_driver
 #endif
 
 #ifdef CONFIG_SPARC_LEON

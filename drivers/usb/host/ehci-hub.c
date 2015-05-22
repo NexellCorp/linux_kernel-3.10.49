@@ -28,6 +28,9 @@
 
 /*-------------------------------------------------------------------------*/
 #include <linux/usb/otg.h>
+#if defined(CONFIG_USB_EHCI_SYNOPSYS)
+extern int hsic_en;
+#endif
 
 #define	PORT_WAKE_BITS	(PORT_WKOC_E|PORT_WKDISC_E|PORT_WKCONN_E)
 
@@ -713,6 +716,9 @@ static int ehci_hub_control (
 	unsigned long	flags;
 	int		retval = 0;
 	unsigned	selector;
+#if defined(CONFIG_USB_EHCI_SYNOPSYS)
+	u32		temp_hsic;
+#endif
 
 	/*
 	 * FIXME:  support SetPortFeatures USB_PORT_FEAT_INDICATOR.
@@ -793,6 +799,15 @@ static int ehci_hub_control (
 			if (HCS_PPC (ehci->hcs_params))
 				ehci_writel(ehci, temp & ~PORT_POWER,
 						status_reg);
+#if defined(CONFIG_USB_EHCI_SYNOPSYS)
+				if (hsic_en) {
+					if(status_reg == &ehci->regs->port_status[1])
+					{
+						temp_hsic = ehci_readl(ehci, ehci->hsic_status_reg);
+						ehci_writel(ehci, temp_hsic & 0x00, ehci->hsic_status_reg);
+					}	
+				}
+#endif
 			break;
 		case USB_PORT_FEAT_C_CONNECTION:
 			ehci_writel(ehci, temp | PORT_CSC, status_reg);
@@ -846,6 +861,15 @@ static int ehci_hub_control (
 					temp & ~(PORT_RWC_BITS | PORT_POWER),
 					status_reg);
 				temp = ehci_readl(ehci, status_reg);
+#if defined(CONFIG_USB_EHCI_SYNOPSYS)
+				if (hsic_en) {
+					if(status_reg == &ehci->regs->port_status[1])
+					{
+						temp_hsic = ehci_readl(ehci, ehci->hsic_status_reg);
+						ehci_writel(ehci, temp_hsic & 0x00, ehci->hsic_status_reg);
+					}	
+				}
+#endif
 			}
 		}
 
@@ -1039,6 +1063,15 @@ static int ehci_hub_control (
 			if (HCS_PPC (ehci->hcs_params))
 				ehci_writel(ehci, temp | PORT_POWER,
 						status_reg);
+#if defined(CONFIG_USB_EHCI_SYNOPSYS)
+				if (hsic_en) {
+					if(status_reg == &ehci->regs->port_status[1])
+					{
+						temp_hsic = ehci_readl(ehci, ehci->hsic_status_reg);
+						ehci_writel(ehci, temp_hsic | 0x02, ehci->hsic_status_reg);
+					}
+				}
+#endif
 			break;
 		case USB_PORT_FEAT_RESET:
 			if (temp & PORT_RESUME)

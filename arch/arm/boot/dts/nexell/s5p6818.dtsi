@@ -583,5 +583,24 @@
 			reset-id = <RESET_ID_SPDIFRX>;
 			status = "disabled";
 		};
+
+		ehci@30000 {
+			compatible = "nexell,nxp-ehci";
+			reg = <PHYS_BASE_EHCI 0x100>;
+			interrupts = <0 IRQ_USB20HOST 0>;
+			reset-id = <RESET_ID_USB20HOST>;
+			hsic_en = <0>;
+			hsic_exthub_gpio = <0>;
+			ehci_late_loadtime = <0>;
+			status = "okay";
+		};
+		
+		ohci@20000 {
+			compatible = "nexell,nxp-ohci";
+			reg = <PHYS_BASE_OHCI 0x100>;
+			interrupts = <0 IRQ_USB20HOST 0>;
+			reset-id = <RESET_ID_USB20HOST>;
+			status = "disabled";
+		};
 	};
 };
