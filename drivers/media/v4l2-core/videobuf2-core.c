@@ -30,7 +30,7 @@ static int debug;
 module_param(debug, int, 0644);
 
 // psw0523 debugging
-#if 0
+#if 1
 #define dprintk(level, fmt, arg...)					\
 	do {								\
 		if (debug >= level)					\
@@ -1305,12 +1305,6 @@ static int __buf_prepare(struct vb2_buffer *vb, const struct v4l2_buffer *b)
 		WARN(1, "Invalid queue type\n");
 		ret = -EINVAL;
 	}
-
-    // psw0523 debugging
-    printk("%s: q->memory 0x%x\n", __func__, q->memory);
-    printk("%s: q->ops--> %p\n", __func__, q->ops);
-    printk("%s: q->ops->buf_prepare --> %p\n", __func__, q->ops->buf_prepare);
-    printk("%s: ret %d\n", __func__, ret);
 
 #if 0
 	if (!ret)

@@ -538,7 +538,7 @@ static void nxp_vb2_buf_cleanup(struct vb2_buffer *vb)
 
 static int nxp_vb2_buf_prepare(struct vb2_buffer *vb)
 {
-    printk("%s\n", __func__);
+    vmsg("%s\n", __func__);
     return 0;
 }
 
