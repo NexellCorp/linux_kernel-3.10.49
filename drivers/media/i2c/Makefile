@@ -67,6 +67,7 @@ obj-$(CONFIG_VIDEO_S5K4ECGX)	+= s5k4ecgx.o
 obj-$(CONFIG_VIDEO_SP2518)		+= sp2518.o
 obj-$(CONFIG_VIDEO_MT9D111_CAM)	+= mt9d111-nx-cam.o
 obj-$(CONFIG_VIDEO_TW9900) += tw9900.o
+obj-$(CONFIG_VIDEO_THP7212_CAM)	+= thine/
 obj-$(CONFIG_VIDEO_S5C73M3)	+= s5c73m3/
 obj-$(CONFIG_VIDEO_ADP1653)	+= adp1653.o
 obj-$(CONFIG_VIDEO_AS3645A)	+= as3645a.o

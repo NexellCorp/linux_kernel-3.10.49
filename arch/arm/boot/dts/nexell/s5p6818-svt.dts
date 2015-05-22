@@ -192,7 +192,7 @@
         compatible = "nexell,nxp-v4l2";
 
         capture {
-            nr = <1>;
+            nr = <2>;
 
             capture0 {
                 module = <2>;
@@ -223,6 +223,24 @@
 
                 power {
                     reset_io = <(PAD_GPIO_C+30)>;
+                    reset_invert = <1>;
+                    reset_delay_ms = <10>;
+                };
+            };
+
+            capture1 {
+                module = <0>;
+                type = <1>;
+
+                sensor {
+                    type = <0>;
+                    sensor_name = "THP7212NX";
+                    i2c_adapter = <1>;
+                    addr = <0x60>;
+                };
+
+                power {
+                    reset_io = <(PAD_GPIO_E+16)>;
                     reset_invert = <1>;
                     reset_delay_ms = <10>;
                 };

@@ -578,6 +578,8 @@ config VIDEO_TW9900
     ---help---
 	  Support for the Intersil/Techwell TW9900 video decoder.
 
+source "drivers/media/i2c/thine/Kconfig"
+
 source "drivers/media/i2c/smiapp/Kconfig"
 
 config VIDEO_S5C73M3
