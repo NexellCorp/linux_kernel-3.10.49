@@ -26,6 +26,7 @@
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/of.h>
+#include <linux/of_address.h>
 
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
@@ -98,7 +99,7 @@ struct nxp_spdif_snd_param {
 	/* DMA channel */
 	struct nxp_pcm_dma_param dma;
 	/* Register */
-	unsigned int base_addr;
+    void __iomem *base_addr;
 	struct spdif_register spdif;
 };
 
@@ -110,8 +111,8 @@ static void inline spdif_reset(struct nxp_spdif_snd_param *par)
 static int  spdif_start(struct nxp_spdif_snd_param *par, int stream)
 {
 	struct spdif_register *spdif = &par->spdif;
-	unsigned int ctrl = par->base_addr + SPDIF_CTRL_OFFSET;
-	unsigned int pend = par->base_addr + SPDIF_INTC_OFFSET;
+	void __iomem *ctrl = par->base_addr + SPDIF_CTRL_OFFSET;
+	void __iomem *pend = par->base_addr + SPDIF_INTC_OFFSET;
 
 	/* clear fifo, pend */
 	writel(readl(ctrl) | (1<<CTRL_CLRFIFO_POS), ctrl);
@@ -130,7 +131,7 @@ static int  spdif_start(struct nxp_spdif_snd_param *par, int stream)
 static void spdif_stop(struct nxp_spdif_snd_param *par, int stream)
 {
 	struct spdif_register *spdif = &par->spdif;
-	unsigned int ctrl = par->base_addr + SPDIF_CTRL_OFFSET;
+	void __iomem *ctrl = par->base_addr + SPDIF_CTRL_OFFSET;
 
 	spdif->ctrl &= ~((1<<CTRL_DECODE_ENB_POS) | (1<<CTRL_PHASE_DET_POS));
 	writel(spdif->ctrl, ctrl);
@@ -165,28 +166,24 @@ static int nxp_spdif_check_param(struct nxp_spdif_snd_param *par)
 static int nxp_spdif_set_plat_param(struct nxp_spdif_snd_param *par, void *data)
 {
 	struct platform_device *pdev = data;
-	struct nxp_spdif_plat_data *plat = pdev->dev.platform_data;
 	struct nxp_pcm_dma_param *dma = &par->dma;
 	unsigned int phy_base = SPDIF_BASEADDR;
 
-    //par->sample_rate = plat->sample_rate ? plat->sample_rate : DEF_SAMPLE_RATE;
-    par->sample_rate = DEF_SAMPLE_RATE;
-	par->base_addr = IO_ADDRESS(phy_base);
+    of_property_read_u32(pdev->dev.of_node, "sample_rate", &par->sample_rate);
+    if (!par->sample_rate)
+	    par->sample_rate = DEF_SAMPLE_RATE;
+
+    par->base_addr = of_iomap(pdev->dev.of_node, 0);
 	spin_lock_init(&par->lock);
 
-//	if (!plat->dma_ch)
-//		return -EINVAL;
-
 	dma->active = true;
-	//dma->dma_filter = plat->dma_filter;
 	dma->dma_filter = pl08x_filter_id;
-	//dma->dma_ch_name = (char*)(plat->dma_ch);
 	dma->dma_ch_name = PL08X_DMA_NAME_SPDIFRX;
 	dma->peri_addr = phy_base + SPDIF_DAT_OFFSET;	/* SPDIF DAT */
 	dma->bus_width_byte = SPDIF_BUS_WIDTH;
 	dma->max_burst_byte = SPDIF_MAX_BURST;
-	pr_debug("spdif-rx: %s, %s dma, addr 0x%x, bus %dbyte, burst %dbyte\n",
-		STREAM_STR(1), dma->dma_ch_name, dma->peri_addr,
+	pr_debug("spdif-rx: %s, %s dma, addr 0x%p, bus %dbyte, burst %dbyte\n",
+		STREAM_STR(1), dma->dma_ch_name, (void *)dma->peri_addr,
 		dma->bus_width_byte, dma->max_burst_byte);
 
 	return nxp_spdif_check_param(par);
@@ -196,7 +193,7 @@ static int nxp_spdif_setup(struct snd_soc_dai *dai)
 {
 	struct nxp_spdif_snd_param *par = snd_soc_dai_get_drvdata(dai);
 	struct spdif_register *spdif = &par->spdif;
-	unsigned int ctrl = par->base_addr + SPDIF_CTRL_OFFSET;
+	void __iomem *ctrl = par->base_addr + SPDIF_CTRL_OFFSET;
 	struct clk *clk = NULL;
 	unsigned long pclk_hz = 0;
 
@@ -229,7 +226,7 @@ static void nxp_spdif_release(struct snd_soc_dai *dai)
 {
 	struct nxp_spdif_snd_param *par = snd_soc_dai_get_drvdata(dai);
 	struct spdif_register *spdif = &par->spdif;
-	unsigned int ctrl = par->base_addr + SPDIF_CTRL_OFFSET;
+	void __iomem *ctrl = par->base_addr + SPDIF_CTRL_OFFSET;
 
 	spdif->ctrl &= ~(1 << CTRL_DECODE_ENB_POS);
 	writel(spdif->ctrl, ctrl);
@@ -326,7 +323,7 @@ static int nxp_spdif_dai_resume(struct snd_soc_dai *dai)
 {
 	struct nxp_spdif_snd_param *par = snd_soc_dai_get_drvdata(dai);
 	struct spdif_register *spdif = &par->spdif;
-	unsigned int ctrl = par->base_addr + SPDIF_CTRL_OFFSET;
+	void __iomem *ctrl = par->base_addr + SPDIF_CTRL_OFFSET;
 
 	pm_dbgout("%s\n", __func__);
 

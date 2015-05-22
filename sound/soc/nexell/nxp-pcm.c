@@ -166,9 +166,13 @@ static void nxp_pcm_dma_clear(struct snd_pcm_substream *substream)
 {
 	struct nxp_pcm_runtime_data *prtd = substream_to_prtd(substream);
 	struct snd_pcm_runtime *runtime = substream->runtime;
+	unsigned offset = prtd->offset;
 	int length = snd_pcm_lib_period_bytes(substream);
-	unsigned offset = prtd->offset - length;
 	void *src_addr = NULL;
+
+	if (offset == 0)
+			offset = snd_pcm_lib_buffer_bytes(substream);
+	offset  -= length;
 	src_addr = (void*)(runtime->dma_area + offset);
 
 	if ((prtd->dma_chan->chan_id >= PL08X_DMA_ID_I2S0_TX) 
@@ -302,9 +306,9 @@ static int nxp_pcm_dma_slave_config(void *runtime_data, int stream)
 
 	ret = dmaengine_slave_config(prtd->dma_chan, &slave_config);
 
-	pr_debug("%s: %s %s, %s, addr=0x%x, bus=%d byte, burst=%d (%d)\n",
+	pr_debug("%s: %s %s, %s, addr=0x%p, bus=%d byte, burst=%d (%d)\n",
 		__func__, ret?"FAIL":"DONE", STREAM_STR(stream),
-		dma_param->dma_ch_name,	peri_addr, bus_width, dma_param->max_burst_byte, max_burst);
+		dma_param->dma_ch_name,	(void *)peri_addr, bus_width, dma_param->max_burst_byte, max_burst);
 	return ret;
 }
 
@@ -354,7 +358,7 @@ static int nxp_pcm_dma_prepare_and_submit(struct snd_pcm_substream *substream)
 		period_time_us = 1000;
 
 	pr_debug("%s: %s\n", __func__, STREAM_STR(substream->stream));
-	pr_debug("buffer_bytes=%6d, period_bytes=%6d, periods=%2d, rate=%6d, period_time=%3d ms\n",
+	pr_debug("buffer_bytes=%6zu, period_bytes=%6zu, periods=%2d, rate=%6d, period_time=%3d ms\n",
 		snd_pcm_lib_buffer_bytes(substream), snd_pcm_lib_period_bytes(substream),
 		runtime->periods, runtime->rate, period_time_us/1000);
 
@@ -533,7 +537,7 @@ static int nxp_pcm_preallocate_dma_buffer(struct snd_pcm *pcm, int stream)
 	struct snd_dma_buffer *buf = &substream->dma_buffer;
 	size_t size = nxp_pcm_hardware.buffer_bytes_max;
 
-	pr_debug("%s: %s, dma_alloc_coherent %d byte\n",
+	pr_debug("%s: %s, dma_alloc_coherent %zu byte\n",
 		__func__, STREAM_STR(substream->stream), size);
 
 	buf->dev.type = SNDRV_DMA_TYPE_DEV;
@@ -542,12 +546,12 @@ static int nxp_pcm_preallocate_dma_buffer(struct snd_pcm *pcm, int stream)
 	buf->bytes = size;
 	buf->area = dma_alloc_coherent(buf->dev.dev, size, &buf->addr, GFP_KERNEL);
 	if (!buf->area) {
-		printk(KERN_ERR "Fail, %s dma buffer allocate (%d)\n",
+		printk(KERN_ERR "Fail, %s dma buffer allocate (%zu)\n",
 			STREAM_STR(substream->stream), size);
 		return -ENOMEM;
 	}
 
-	pr_debug("%s: %s, dma_alloc_coherent %d byte, vir = 0x%p, phy = 0x%p\n",
+	pr_debug("%s: %s, dma_alloc_coherent %zu byte, vir = 0x%p, phy = 0x%p\n",
 		__func__, STREAM_STR(substream->stream), size, (void *)buf->area, (void *)buf->addr);
 	return 0;
 }
