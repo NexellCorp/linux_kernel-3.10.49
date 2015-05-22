@@ -42,7 +42,11 @@ struct nxp_csi {
 
 
 /* public api */
+#ifndef CONFIG_OF
 int  nxp_csi_init(struct nxp_csi *, struct nxp_mipi_csi_platformdata *);
+#else
+int  nxp_csi_init(struct nxp_csi *);
+#endif
 void nxp_csi_cleanup(struct nxp_csi *);
 int  nxp_csi_register(struct nxp_csi *);
 void nxp_csi_unregister(struct nxp_csi *);

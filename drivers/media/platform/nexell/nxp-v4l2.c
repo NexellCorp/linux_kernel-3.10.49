@@ -173,19 +173,21 @@ static const u_int port_table[][11][2] = {
 
 static void general_setup_io(struct nxp_vin_platformdata *pdata, bool force)
 {
-    u_int *pad;
-    int i, len;
-    u_int io, fn;
+    if (!pdata->is_mipi) {
+        u_int *pad;
+        int i, len;
+        u_int io, fn;
 
-    printk("%s: vid %d\n", __func__, pdata->vid);
-    pad = (u_int *)port_table[pdata->vid];
-    len = sizeof(port_table[pdata->vid])/sizeof(port_table[pdata->vid][0]);
+        printk("%s: vid %d\n", __func__, pdata->vid);
+        pad = (u_int *)port_table[pdata->vid];
+        len = sizeof(port_table[pdata->vid])/sizeof(port_table[pdata->vid][0]);
 
-    for (i = 0; i < len; i++) {
-        io = *pad++;
-        fn = *pad++;
-        nxp_soc_gpio_set_io_dir(io, 0);
-        nxp_soc_gpio_set_io_func(io, fn);
+        for (i = 0; i < len; i++) {
+            io = *pad++;
+            fn = *pad++;
+            nxp_soc_gpio_set_io_dir(io, 0);
+            nxp_soc_gpio_set_io_func(io, fn);
+        }
     }
 }
 

@@ -361,8 +361,10 @@ static int nxp_csi_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
     format = v4l2_subdev_get_try_format(fh, NXP_CSI_PAD_SINK);
     if (format) {
         format->code  = supported_formats[0].code;
+#ifndef CONFIG_OF
         format->width = me->platdata->width;
         format->height = me->platdata->height;
+#endif
         format->field = V4L2_FIELD_NONE;
         format->colorspace = V4L2_COLORSPACE_SRGB;
     }
@@ -399,11 +401,15 @@ static int nxp_csi_s_power(struct v4l2_subdev *sd, int on)
 
     if (on) {
         _hw_set_clock(me, true);
+#ifndef CONFIG_OF
         me->platdata->phy_enable(true);
+#endif
         ret = v4l2_subdev_call(remote_source, core, s_power, 1);
     } else {
         ret = v4l2_subdev_call(remote_source, core, s_power, 0);
+#ifndef CONFIG_OF
         me->platdata->phy_enable(false);
+#endif
         _hw_set_clock(me, false);
     }
 
@@ -576,6 +582,22 @@ static int _init_entities(struct nxp_csi *me)
 /*
  * public api
  */
+#ifdef CONFIG_OF
+int nxp_csi_init(struct nxp_csi *me)
+{
+    int ret = _init_entities(me);
+    if (!ret) {
+        me->module = 0;
+        me->irq = NX_MIPI_GetInterruptNumber(me->module);
+#ifdef CONFIG_ARCH_S5P6818
+        me->irq += 32;
+#endif
+        me->regs = (void __iomem *)IO_ADDRESS(NX_MIPI_GetPhysicalAddress(me->module));
+    }
+
+    return ret;
+}
+#else
 int nxp_csi_init(struct nxp_csi *me, struct nxp_mipi_csi_platformdata *platdata)
 {
     int ret = _init_entities(me);
@@ -593,6 +615,7 @@ int nxp_csi_init(struct nxp_csi *me, struct nxp_mipi_csi_platformdata *platdata)
 
     return ret;
 }
+#endif
 
 void nxp_csi_cleanup(struct nxp_csi *me)
 {

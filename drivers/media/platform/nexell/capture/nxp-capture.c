@@ -661,7 +661,7 @@ static void _set_sensor_entity_name_without_i2c(int module)
         p_entity_name = _sensor_info[0].name;
     else if (module == 1)
         p_entity_name = _sensor_info[1].name;
-    else 
+    else
         return;
 
     sprintf(p_entity_name, "%s", "loopback-sensor");
@@ -858,6 +858,7 @@ struct nxp_capture *create_nxp_capture(int index,
 #ifdef CONFIG_NXP_CAPTURE_MIPI_CSI
     /* init children */
     if (csi_enabled) {
+#ifndef CONFIG_OF
         if (!pdata->csi) {
             pr_err("%s: no csi platform data\n", __func__);
             goto error_csi;
@@ -867,6 +868,13 @@ struct nxp_capture *create_nxp_capture(int index,
             pr_err("%s: failed to nxp_csi_init()\n", __func__);
             goto error_csi;
         }
+#else
+        ret = nxp_csi_init(&me->csi);
+        if (ret < 0) {
+            pr_err("%s: failed to nxp_csi_init()\n", __func__);
+            goto error_csi;
+        }
+#endif
     }
 #endif
 
