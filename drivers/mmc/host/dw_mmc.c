@@ -893,7 +893,6 @@ static void __dw_mci_start_request(struct dw_mci *host,
 		mci_writel(host, BYTCNT, data->blksz*data->blocks);
 		mci_writel(host, BLKSIZ, data->blksz);
 		timeout = data->timeout_ns / 1000000;
-	//	printk("\e[31m  op: %d , block : %d  \e[0m \n",cmd->opcode, data->blocks);
 	} else
 		timeout = cmd->cmd_timeout_ms;
 
@@ -2549,7 +2548,6 @@ static int __dwmci_init(u32 slot_id, irq_handler_t handler, void *data)
 	int id  = 0, ret = 0;
 	
 	host->hclk = clk_get(&host->dev,NULL);
-	printk("\e[31m %p \n \e[0m\n", host->hclk);
 	clk_set_rate(host->hclk, pdata->bus_hz);
 	clk_prepare_enable(host->hclk);
 	id  = of_alias_get_id(np,"dwmmc");
@@ -2623,36 +2621,37 @@ static void __dwmci_resume(struct dw_mci *host)
 
 static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 {
-		struct dw_mci_board *pdata;
+	struct dw_mci_board *pdata;
     struct device *dev = &host->dev;
     struct device_node *np = dev->of_node;
-		int tmp=0;
-		pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-    if (!pdata) {
+	int tmp=0;
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+    
+	if (!pdata) {
 	    dev_err(dev, "could not allocate memory for pdata\n");
-	         return ERR_PTR(-ENOMEM);
+        return ERR_PTR(-ENOMEM);
 	}
 	
 	pdata->quirks           = DW_MCI_QUIRK_BROKEN_CARD_DETECTION |DW_MCI_QUIRK_HIGHSPEED;
 	pdata->caps             = MMC_CAP_CMD23;
-	pdata->num_slots				= 1;		
+	pdata->num_slots		= 1;		
 	
 	if(!(of_property_read_u32(np,"bus_speed",&tmp)))	{
-		pdata->bus_hz						= tmp * 1000* 1000;
+		pdata->bus_hz		= tmp * 1000* 1000;
 	}	else {
-		pdata->bus_hz						= 100 * 1000 * 1000;	
+		pdata->bus_hz		= 100 * 1000 * 1000;	
 	}
-	pdata->max_bus_hz				= 200 * 1000 * 1000;
-	pdata->fifo_depth				= 0x20;								
+	pdata->max_bus_hz		= 200 * 1000 * 1000;
+	pdata->fifo_depth		= 0x20;								
 	pdata->detect_delay_ms	= 200;		
 		
-	pdata->init							= __dwmci_init;						
-	pdata->get_bus_wd				= __dwmci_get_bus_wd;
-	pdata->set_io_timing		= __dwmci_set_io_timing;
-	pdata->get_ocr					= __dwmci_get_ocr;				
-	pdata->cd_type 					= DW_MCI_CD_PERMANENT;
-	pdata->suspend					= __dwmci_suspend;						
-	pdata->resume						= __dwmci_resume;
+	pdata->init				= __dwmci_init;						
+	pdata->get_bus_wd		= __dwmci_get_bus_wd;
+	pdata->set_io_timing	= __dwmci_set_io_timing;
+	pdata->get_ocr			= __dwmci_get_ocr;				
+	pdata->cd_type 			= DW_MCI_CD_PERMANENT;
+	pdata->suspend			= __dwmci_suspend;						
+	pdata->resume			= __dwmci_resume;
 	if(!(of_property_read_u32(np,"clk_dly",&tmp)))	{
 		pdata->clk_dly				= tmp ;
 	}	else {
