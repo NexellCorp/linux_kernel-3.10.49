@@ -115,6 +115,9 @@
         i2c0	= &iic0;
         i2c1	= &iic1;
         i2c2	= &iic2;
+        dwmmc0	= &dw_mmc0;
+        dwmmc1	= &dw_mmc1;
+        dwmmc2	= &dw_mmc2;
 		pwmdev0 = &pwm_device0;
 		pwmdev1 = &pwm_device1;
 		pwmdev1 = &pwm_device2;
@@ -617,5 +620,29 @@
 			reset-id = <RESET_ID_USB20HOST>;
 			status = "disabled";
 		};
+
+		dw_mmc0:dw_mmc@62000 {
+			compatible = "nexell,dw-mmc";
+			reg = <PHYS_BASE_SDMMC0 0x1000>;
+			interrupts = <0 IRQ_SDMMC0 0>;
+			clock-names = "sdhc0";
+			clocks = <&sdhc0>;
+		}	;
+		dw_mmc1:dw_mmc@68000 {
+			compatible = "nexell,dw-mmc";
+			reg = <PHYS_BASE_SDMMC1 0x1000>;
+			interrupts = <0 IRQ_SDMMC1 0>;
+			clock-names = "sdhc1";
+			clocks = <&sdhc1>;
+			status = "disabled";
+		}	;
+		
+		dw_mmc2:dw_mmc@69000 {
+			compatible = "nexell,dw-mmc";
+			reg = <PHYS_BASE_SDMMC2 0x1000>;
+			interrupts = <0 IRQ_SDMMC2 0>;
+			clock-names = "sdhc2";
+			clocks = <&sdhc2>;
+		}	;
 	};
 };
