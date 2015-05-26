@@ -574,7 +574,7 @@ int phy_start_interrupts(struct phy_device *phydev)
 	printk(">> In %d at %s (irq:%d)\n", __LINE__, __func__, phydev->irq);
 	atomic_set(&phydev->irq_disable, 0);
 	if (request_irq(phydev->irq, phy_interrupt,
-				IRQF_DISABLED|IRQF_TRIGGER_FALLING,
+				IRQF_TRIGGER_LOW | IRQF_SHARED,
 //				IRQF_SHARED,
 				"phy_interrupt",
 				phydev) < 0) {

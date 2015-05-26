@@ -166,9 +166,6 @@ static int nxpmac_probe_config_dt(struct platform_device *pdev,
 		phy_irq = 0;
 	}
 	#if 0
-	plat->mdio_bus_data->probed_phy_irq = 169;
-	#endif
-	#if 0
 	if ((irq >= 0) || (NR_IRQS > irq)) {
 		ret = request_irq(phy_irq, nxp_adc_isr, 0, dev_name(&pdev->dev), adc);
 		if (0 == ret)
