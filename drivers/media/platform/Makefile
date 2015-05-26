@@ -50,4 +50,6 @@ obj-y	+= davinci/
 
 obj-$(CONFIG_ARCH_OMAP)	+= omap/
 
+obj-$(CONFIG_V4L2_NXP) += nexell/
+
 ccflags-y += -I$(srctree)/drivers/media/i2c

@@ -449,6 +449,7 @@ struct clk *clk_dev_clock_register(const char *name, const char *parent_name,
 	init.parent_names = (parent_name ? &parent_name : NULL);
 	init.num_parents = parent_name ? 1 : 0;
 	hw->init = &init;
+	pr_debug("Register clk %8s: parent %s\n", name, parent_name);
 
 	clk = clk_register(NULL, hw);
 	if (IS_ERR(clk)) {
@@ -470,6 +471,11 @@ static void __init clk_dev_of_setup(struct device_node *node)
 	struct clk *clk;
 	int i = 0, size = (sizeof(*clk_data) + sizeof(*peri));
 	int num_clks;
+
+	#ifdef 	CONFIG_ARM_NXP_CPUFREQ
+	char pll[16];
+	sprintf(pll, "sys-pll%d", CONFIG_NXP_CPUFREQ_PLLDEV);
+	#endif
 
 	num_clks = of_get_child_count(node);
 	if (!num_clks) {
@@ -498,6 +504,10 @@ static void __init clk_dev_of_setup(struct device_node *node)
 		if (peri[i].parent_name) {
 			ops = &clk_empty_ops;
 			flags = CLK_IS_BASIC;
+		#ifdef 	CONFIG_ARM_NXP_CPUFREQ
+			if (!strcmp(pll, peri[i].parent_name))
+				flags |= CLK_SET_RATE_PARENT;
+		#endif
 		}
 
 		clk = clk_dev_clock_register(peri[i].name,

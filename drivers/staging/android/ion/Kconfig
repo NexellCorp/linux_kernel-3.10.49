@@ -33,3 +33,15 @@ config ION_TEGRA
 	help
 	  Choose this option if you wish to use ion on an nVidia Tegra.
 
+config ION_NXP
+	tristate "Ion for SLsiAP"
+	depends on PLAT_SLSIAP && ION
+    select CMA
+	help
+	  Choose this option if you wish to use ion on an Nexell Nxp.
+
+config ION_NXP_CONTIGHEAP_SIZE
+    int "Size in Kilobytes of memory pool of SLSI_CONTIG_HEAP"
+    depends on ION_NXP && CMA
+    default 40960
+

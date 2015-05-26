@@ -19,6 +19,11 @@
 		reg = <0x40000000 0x40000000>;
 	};
 
+    aliases {
+		snd_null_card0 = &snd_null_card_0;
+		snd_null_card2 = &snd_null_card_2;
+	};
+
 	soc {
 
 		clocks {
@@ -46,22 +51,21 @@
 		serial@a0000 {
 			enable_dma = <1>;
 		};
-		
+
 		spi@5b000 {
 			num_cs = <1>;
 			clk_nr = <0>;
-			
-			
+
+
 			spidev@0 {
 				compatible = "spidev";
-				reg = <0 0>;							
+				reg = <0 0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
 					spi-cs-gpio = <10>;
 					spi-feedback-delay = <02>;
 				};
 			};
-				
 		};
 		spi@5c000 {
 			num_cs = <1>;
@@ -122,5 +126,242 @@
 			};
 		};
 
+		framebuffer@0 {
+			status = "okay";
+			module = <0>;
+			frame_layer = <0>;
+			frame_format = <MLC_RGBFMT_A8R8G8B8>;
+			back_color = <0x0>;
+			bit_per_pixel	= <(4 * 8)>;
+			lcd_x_resol	= <1024>;
+			lcd_y_resol	= <600>;
+			#ifdef CONFIG_ANDROID
+			frame_buffers = <3>;
+			skip_pan_vsync = <1>;
+			#else
+			frame_buffers = <2>;
+			#endif
+			lcd_with_mm	= <155>;
+			lcd_height_mm = <90>;
+		};
+
+		lvds@0 {
+			status = "okay";
+			lvds_format = <LVDS_LCDFORMAT_JEIDA>; /* 0:VESA, 1:JEIDA, 2:Location */
+			vsync {
+				hor_active_size	= <1024>;
+				hor_sync_width	= <20>;
+				hor_back_porch	= <140>;
+				hor_front_porch	= <160>;
+				hor_sync_invert	= <1>;
+				ver_active_size	= <600>;
+				ver_sync_width	= <3>;
+				ver_back_porch	= <20>;
+				ver_front_porch	= <12>;
+				ver_sync_invert	= <1>;
+				pixel_clock_hz	= <(800000000/12)>;	/* PLL/div */
+			};
+			clock {
+				clock,src_div0  = <2>;
+				clock,div_val0	= <12>;
+				clock,src_div1	= <7>;
+				clock,div_val1	= <1>;
+			};
+		};
+
+		pdm@14000 {
+			status = "okay";
+		};
+
+		i2s_0:i2s0@55000 {
+			master_mode = <1>;
+			mclk_in = <0>;
+			trans_mode = <1>;
+			frame_bit = <48>;
+			sample_rate = <48000>;
+			pre_supply_mclk = <1>;
+			status = "okay";
+		};
+		i2s_1:i2s1@56000 {
+			master_mode = <1>;
+			mclk_in = <1>;
+			trans_mode = <0>;
+			frame_bit = <48>;
+			sample_rate = <48000>;
+			pre_supply_mclk = <0>;
+			status = "okay";
+		};
+
+		i2s_2:i2s2@57000 {
+			master_mode = <0>;
+			mclk_in = <1>;
+			trans_mode = <1>;
+			frame_bit = <48>;
+			sample_rate = <48000>;
+			pre_supply_mclk = <0>;
+			status = "okay";
+		};
+
+        iic0:iic@a4000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			rt5631: rt5631@1a {
+				compatible = "rt,rt5631";
+				reg = <0x1a>;
+			};
+	    };
+
+        spdiftx@59000 {
+			status = "okay";
+		};
+
+		spdifrx@5a000 {
+			status = "okay";
+		};
+		
+		ehci@30000 {
+			hsic_en = <1>;
+			hsic_exthub_gpio = <150>;
+			ehci_late_loadtime = <500>;
+		};
+	};
+
+    nxp-ion {
+        compatible = "nexell,nxp-ion";
+        nr = <3>;
+        names = "ion_noncontig_heap", "ion_contig_heap", "nxp_contig_heap";
+        types = <0 1 6>;
+    };
+
+    nxp-v4l2 {
+        compatible = "nexell,nxp-v4l2";
+
+        capture {
+            nr = <2>;
+
+            capture0 {
+                module = <2>;
+                type = <0>;
+
+                port = <0>;
+                external_sync = <0>;
+
+                h_frontporch = <7>;
+                h_syncwidth = <1>;
+                h_backporch = <10>;
+                v_frontporch = <0>;
+                v_syncwidth = <2>;
+                v_backporch = <3>;
+
+                data_order = <0>;
+                vid = <0>;
+
+                interlace = <0>;
+                late_power_down = <0>;
+
+                sensor {
+                    type = <0>;
+                    sensor_name = "MT9D111";
+                    i2c_adapter = <2>;
+                    addr = <0x5d>;
+                };
+
+                power {
+                    reset_io = <(PAD_GPIO_C+30)>;
+                    reset_invert = <1>;
+                    reset_delay_ms = <10>;
+                };
+            };
+
+            capture1 {
+                module = <0>;
+                type = <1>;
+
+                sensor {
+                    type = <0>;
+                    sensor_name = "THP7212NX";
+                    i2c_adapter = <1>;
+                    addr = <0x60>;
+                };
+
+                power {
+                    reset_io = <(PAD_GPIO_E+16)>;
+                    reset_invert = <1>;
+                    reset_delay_ms = <10>;
+                };
+            };
+        };
+    };
+
+	pdm-dir {
+		compatible = "nexell,pdm-dir";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	pdm_recorder {
+		compatible = "nexell,pdm-recorder";
+		sample_rate = <48000>;
+        format = "S16";
+	};
+
+	snd-null {
+		compatible = "nexell,snd-null";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	snd_null_card_0:snd_null_card@0 {
+		compatible = "nexell,snd-null-card";
+		ch = <0>;
+		sample_rate = <48000>;
+	    format = "S16";
+		nexell,i2s-controller = <&i2s_0>;
+	};
+
+	sound {
+		compatible = "nexell,nxp-rt5631";
+		ch = <1>;
+		sample_rate = <48000>;
+	    format = "S16";
+		nexell,i2s-controller = <&i2s_1>;
+		nexell,audio-codec = <&rt5631>;
+	};
+
+	snd_null_card_2:snd_null_card@2 {
+		compatible = "nexell,snd-null-card";
+		ch = <2>;
+		sample_rate = <48000>;
+	    format = "S16";
+		nexell,i2s-controller = <&i2s_2>;
+	};
+
+	spdif-dit {
+		compatible = "nexell,spdif-dit";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	spdif-transciever {
+		compatible = "nexell,spdif-transciever";
+		sample_rate = <48000>;
+	    format = "S16";
+	};
+
+	spdif-dir {
+		compatible = "nexell,spdif-dir";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	spdif-receiver {
+		compatible = "nexell,spdif-receiver";
+		sample_rate = <48000>;
+	    format = "S16";
 	};
 };

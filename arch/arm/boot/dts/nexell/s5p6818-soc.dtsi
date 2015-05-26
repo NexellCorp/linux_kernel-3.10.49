@@ -8,6 +8,7 @@
  */
 
 	pin_config {
+		reg = <0xc001a000 0x4000>;
 	  	#address-cells = <1>;
         #size-cells = <1>;
 		ranges;
@@ -22,6 +23,7 @@
 
 	clocks {
 		compatible = "nexell,s5pxx18,clocks";
+		reg = <0xc00bb000 0x30000>;
 	  	#address-cells = <1>;
         #size-cells = <1>;
 		ranges;

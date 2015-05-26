@@ -347,7 +347,7 @@ struct snd_pcm_runtime {
 	int tstamp_type;		/* timestamp type */
 
 	/* -- DMA -- */           
-	unsigned char *dma_area;	/* DMA area */
+	void *dma_area;	/* DMA area */
 	dma_addr_t dma_addr;		/* physical bus address (not accessible from main CPU) */
 	size_t dma_bytes;		/* size of DMA area */
 

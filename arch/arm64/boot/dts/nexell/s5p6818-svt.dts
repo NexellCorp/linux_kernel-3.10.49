@@ -14,9 +14,27 @@
 #define SPI_CLOCK_FREQUENCY		100000000
 #define GMAC_CLOCK_FREQUENCY	200000000
 
+#define PMIC_PDATA_INIT(_id, _rname, _minuv, _maxuv, _always_on, _boot_on,	\
+						_init_uv, _init_enable, _slp_slots)					\
+		regulator-name = _rname;				\
+		regulator-min-microvolt = <_minuv>;		\
+		regulator-max-microvolt = <_maxuv>;		\
+		nx,id = <_id>;							\
+		nx,always_on = <_always_on>;			\
+		nx,boot_on = <_boot_on>;				\
+		nx,init_enable = <_init_enable>;		\
+		nx,init_uV = <_init_uv>;				\
+		nx,sleep_slots = <_slp_slots>;
+
+
 / {
 	memory {
 		reg = <0x40000000 0x40000000>;
+	};
+
+    aliases {
+		snd_null_card0 = &snd_null_card_0;
+		snd_null_card2 = &snd_null_card_2;
 	};
 
 	soc {
@@ -46,25 +64,39 @@
 		serial@a0000 {
 			enable_dma = <1>;
 		};
-
+		dw_mmc@62000 {
+			bus_speed = <100>;
+			cd_gpio = <(PAD_GPIO_ALV + 1)>;	
+			clk_dly = <0x01020000>;
+		};
+		dw_mmc@68000 {
+			bus_speed = <100>;
+			clk_dly = <0x01020000>;
+		};
+		dw_mmc@69000 {
+			bus_speed = <200>;
+			bus_wd = <8>;
+			non-removable;
+			ddr-mode;
+			clk_dly = <0x02030000>;
+		};	
+		
 		spi@5b000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
-			
+
 
 			spidev@0 {
 				compatible = "spidev";
-				reg = <0>;							
+				reg = <0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
 				  spi-cs-gpio = <10>;
 					spi-feedback-delay = <02>;
 				};
 			};
-
-				
 		};
 		spi@5c000 {
 			num_cs = <1>;
@@ -113,5 +145,254 @@
 			};
 		};
 
+		rtc@10c00 {
+			status = "okay";
+		};
+
+		wdt@19000 {
+			status = "okay";
+		};
+
+		ppm@54000 {
+			status = "okay";
+		};
+
+		framebuffer@0 {
+			status = "okay";
+			module = <0>;
+			frame_layer = <0>;
+			frame_format = <MLC_RGBFMT_A8R8G8B8>;
+			back_color = <0x0>;
+			bit_per_pixel	= <(4 * 8)>;
+			lcd_x_resol	= <1024>;
+			lcd_y_resol	= <600>;
+			#ifdef CONFIG_ANDROID
+			frame_buffers = <3>;
+			skip_pan_vsync = <1>;
+			#else
+			frame_buffers = <2>;
+			#endif
+			lcd_with_mm	= <155>;
+			lcd_height_mm = <90>;
+		};
+
+		lvds@0 {
+			status = "okay";
+			lvds_format = <LVDS_LCDFORMAT_JEIDA>; /* 0:VESA, 1:JEIDA, 2:Location */
+			vsync {
+				hor_active_size	= <1024>;
+				hor_sync_width	= <20>;
+				hor_back_porch	= <140>;
+				hor_front_porch	= <160>;
+				hor_sync_invert	= <1>;
+				ver_active_size	= <600>;
+				ver_sync_width	= <3>;
+				ver_back_porch	= <20>;
+				ver_front_porch	= <12>;
+				ver_sync_invert	= <1>;
+				pixel_clock_hz	= <(800000000/12)>;	/* PLL/div */
+			};
+			clock {
+				clock,src_div0  = <2>;
+				clock,div_val0	= <12>;
+				clock,src_div1	= <7>;
+				clock,div_val1	= <1>;
+			};
+		};
+
+		pdm@14000 {
+			status = "okay";
+		};
+
+		i2s_0:i2s0@55000 {
+			master_mode = <1>;
+			mclk_in = <0>;
+			trans_mode = <1>;
+			frame_bit = <48>;
+			sample_rate = <48000>;
+			pre_supply_mclk = <1>;
+			status = "okay";
+		};
+		i2s_1:i2s1@56000 {
+			master_mode = <1>;
+			mclk_in = <1>;
+			trans_mode = <0>;
+			frame_bit = <48>;
+			sample_rate = <48000>;
+			pre_supply_mclk = <0>;
+			status = "okay";
+		};
+
+		i2s_2:i2s2@57000 {
+			master_mode = <0>;
+			mclk_in = <1>;
+			trans_mode = <1>;
+			frame_bit = <48>;
+			sample_rate = <48000>;
+			pre_supply_mclk = <0>;
+			status = "okay";
+		};
+
+        iic0:iic@a4000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			rt5631: rt5631@1a {
+				compatible = "rt,rt5631";
+				reg = <0x1a>;
+			};
+	    };
+
+        spdiftx@59000 {
+			status = "okay";
+		};
+
+		spdifrx@5a000 {
+			status = "okay";
+		};
+		
+		ehci@30000 {
+			hsic_en = <1>;
+			hsic_exthub_gpio = <150>;
+			ehci_late_loadtime = <500>;
+		};
+
+		#ifdef CONFIG_REGULATOR_MP8845C
+		iic0:iic@a4000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mp8845c@1c {
+				compatible = "nx,mp8845c";
+				reg = <0x1c>;
+				nx,id = <0>;
+				regulators {
+					vcc1p1_arm_pmic: vout1 { PMIC_PDATA_INIT(0, "mp8845c_vout0", 600000, 1500000, 1, 1, 1300000, 1, 0xF) };
+				};
+			};
+		};
+
+		iic2:iic@a6000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mp8845c@1c {
+				compatible = "nx,mp8845c";
+				reg = <0x1c>;
+				nx,id = <1>;
+				regulators {
+					vcc1p0_core_pmic: vout2 { PMIC_PDATA_INIT(1, "mp8845c_vout1", 600000, 1500000, 1, 1, 1200000, 1, 0xF) };
+				};
+			};
+		};
+		#endif // CONFIG_REGULATOR_MP8845C
+
+		#ifdef CONFIG_REGULATOR_NXE2000
+		iic0:iic@a4000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			nxe2000@32 {
+				compatible = "nx,nxe2000";
+				reg = <0x32>;
+				nx,id = <0>;
+				vdd_arm-supply		= <&vcc1p1_arm_pmic>;
+				vdd_core-supply		= <&vcc1p0_core_pmic>;
+				regulators {
+					#ifndef CONFIG_REGULATOR_MP8845C
+					vcc1p1_arm_pmic:	dcdc1	{ PMIC_PDATA_INIT( 0, "nxe2000_dcdc1",	 900000, 1500000, 1, 1, 1200000, 1, 0x4) };
+					vcc1p0_core_pmic:	dcdc2	{ PMIC_PDATA_INIT( 1, "nxe2000_dcdc2",	1000000, 1500000, 1, 1, 1100000, 1, 0x4) };
+					#endif
+					vdd_sys_3p3: 		dcdc3	{ PMIC_PDATA_INIT( 2, "nxe2000_dcdc3",	1000000, 3500000, 1, 1, 3300000, 1, 0x0) };
+					vdd_ddr_1p5p:		dcdc4	{ PMIC_PDATA_INIT( 3, "nxe2000_dcdc4",	1000000, 2000000, 1, 1, 1500000, 1, 0xF) };
+					vdd_sys_1p5p:		dcdc5	{ PMIC_PDATA_INIT( 4, "nxe2000_dcdc5",	1000000, 2000000, 1, 1, 1500000, 1, 0x4) };
+					vcc_ldo1:			ldo1	{ PMIC_PDATA_INIT( 5, "nxe2000_ldo1",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
+					vcc_ldo2:			ldo2	{ PMIC_PDATA_INIT( 6, "nxe2000_ldo2",	1000000, 3500000, 0, 0, 1800000, 0, 0x0) };
+					vcc1p8_core_pmic:	ldo3	{ PMIC_PDATA_INIT( 7, "nxe2000_ldo3",	1000000, 3500000, 1, 1, 1800000, 1, 0x2) };
+					vcc1p8_device_pmic:	ldo4	{ PMIC_PDATA_INIT( 8, "nxe2000_ldo4",	1000000, 3500000, 1, 1, 1800000, 1, 0x2) };
+					vcc_ldo5:			ldo5	{ PMIC_PDATA_INIT( 9, "nxe2000_ldo5",	1000000, 3500000, 0, 0, 2800000, 0, 0x0) };
+					vcc3p3_alv:			ldo6	{ PMIC_PDATA_INIT(10, "nxe2000_ldo6",	1000000, 3500000, 1, 1, 3300000, 1, 0xF) };
+					vcc2p8_pmic:		ldo7	{ PMIC_PDATA_INIT(11, "nxe2000_ldo7",	1000000, 3500000, 1, 1, 2800000, 1, 0x1) };
+					vcc_ldo8:			ldo8	{ PMIC_PDATA_INIT(12, "nxe2000_ldo8",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
+					vcc_ldo9:			ldo9	{ PMIC_PDATA_INIT(13, "nxe2000_ldo9",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
+					vcc1p2_pmic:		ldo10	{ PMIC_PDATA_INIT(14, "nxe2000_ldo10",	1000000, 3500000, 1, 1, 1200000, 1, 0x0) };
+					vcc1p0_alv:			ldortc1	{ PMIC_PDATA_INIT(15, "nxe2000_rtc1",	1700000, 3500000, 1, 1, 1800000, 1, 0xF) };
+					vcc1p8_alv:			ldortc2	{ PMIC_PDATA_INIT(16, "nxe2000_rtc2",	1000000, 3500000, 1, 1, 1000000, 1, 0xF) };
+				};
+			};
+		};
+		#endif // CONFIG_REGULATOR_NXE2000
+
+	};	// soc
+
+	pdm-dir {
+		compatible = "nexell,pdm-dir";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	pdm_recorder {
+		compatible = "nexell,pdm-recorder";
+		sample_rate = <48000>;
+        format = "S16";
+	};
+
+	snd-null {
+		compatible = "nexell,snd-null";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	snd_null_card_0:snd_null_card@0 {
+		compatible = "nexell,snd-null-card";
+		ch = <0>;
+		sample_rate = <48000>;
+	    format = "S16";
+		nexell,i2s-controller = <&i2s_0>;
+	};
+
+	sound {
+		compatible = "nexell,nxp-rt5631";
+		ch = <1>;
+		sample_rate = <48000>;
+	    format = "S16";
+		nexell,i2s-controller = <&i2s_1>;
+		nexell,audio-codec = <&rt5631>;
+	};
+
+	snd_null_card_2:snd_null_card@2 {
+		compatible = "nexell,snd-null-card";
+		ch = <2>;
+		sample_rate = <48000>;
+	    format = "S16";
+		nexell,i2s-controller = <&i2s_2>;
+	};
+
+	spdif-dit {
+		compatible = "nexell,spdif-dit";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	spdif-transciever {
+		compatible = "nexell,spdif-transciever";
+		sample_rate = <48000>;
+	    format = "S16";
+	};
+
+	spdif-dir {
+		compatible = "nexell,spdif-dir";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0 0>;
+	};
+
+	spdif-receiver {
+		compatible = "nexell,spdif-receiver";
+		sample_rate = <48000>;
+	    format = "S16";
 	};
 };

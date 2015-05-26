@@ -179,6 +179,8 @@ struct vb2_queue;
  * @vb2_queue:		the queue to which this driver belongs
  * @num_planes:		number of planes in the buffer
  *			on an internal driver queue
+ * @acquire_fence:	sync fence that will be signaled when the buffer's
+ *			contents are available.
  * @state:		current buffer state; do not change
  * @queued_entry:	entry on the queued buffers list, which holds all
  *			buffers queued from userspace
@@ -193,6 +195,8 @@ struct vb2_buffer {
 	struct vb2_queue	*vb2_queue;
 
 	unsigned int		num_planes;
+
+	struct sync_fence	*acquire_fence;
 
 /* Private: internal use only */
 	enum vb2_buffer_state	state;
@@ -321,6 +325,7 @@ struct v4l2_fh;
  * @fileio:	file io emulator internal data, used only if emulator is active
  */
 struct vb2_queue {
+	const char			*name;
 	enum v4l2_buf_type		type;
 	unsigned int			io_modes;
 	unsigned int			io_flags;
@@ -352,6 +357,9 @@ struct vb2_queue {
 	unsigned int			streaming:1;
 
 	struct vb2_fileio_data		*fileio;
+
+	struct sw_sync_timeline		*timeline;
+	u32				timeline_max;
 };
 
 void *vb2_plane_vaddr(struct vb2_buffer *vb, unsigned int plane_no);

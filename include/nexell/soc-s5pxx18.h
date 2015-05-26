@@ -23,32 +23,6 @@
 #ifndef __SOC_S5PXX18_H__
 #define __SOC_S5PXX18_H__
 
-/*
- * ASSERT
- */
-#define RET_ASSERT_VAL(_expr_, _ret_)	{			\
-	if (!(_expr_)) {								\
-		printk(KERN_ERR "%s(%d) : %s %s \n",		\
-			__func__, __LINE__, "ASSERT", #_expr_);	\
-		if ( _ret_) return _ret_; else return 0;	\
-	}											\
-}
-
-#define RET_ASSERT(_expr_)	{			\
-	if (!(_expr_)) {								\
-		printk(KERN_ERR "%s(%d) : %s %s \n",		\
-			__func__, __LINE__, "ASSERT", #_expr_);	\
-		return;										\
-	}											\
-}
-
-#define RET_ASSERT_NULL(_expr_)	{			\
-	if (!(_expr_)) {								\
-		printk(KERN_ERR "%s(%d) : %s %s \n",		\
-			__func__, __LINE__, "ASSERT", #_expr_);	\
-		return NULL;										\
-	}											\
-}
 
 /*
  * 	Gpio control interface functions for nexell cpu
@@ -91,18 +65,15 @@ extern void 		nxp_soc_alive_clr_int_pend(unsigned int io);
  * 	PWM interface functions for nexell cpu
  *
  */
-#if 0
-unsigned long	nxp_soc_pwm_set_frequency(int ch, unsigned int request, unsigned int duty);
-void 			nxp_soc_pwm_get_frequency(int ch, unsigned int *freq, unsigned int *duty);
-#endif
+extern unsigned long	nxp_soc_pwm_set_frequency(int ch, unsigned int request, unsigned int duty);
+extern void 			nxp_soc_pwm_get_frequency(int ch, unsigned int *freq, unsigned int *duty);
 
 /*
  *
  * 	Display control interface functions for nexell cpu
  *
  */
-#if 0
-#include <plat/display.h>
+#include "display.h"
 
 /* rgb layer control on multi layer */
 int  		 nxp_soc_disp_rgb_set_fblayer	(int module, int layer);
@@ -171,39 +142,56 @@ void 		 nxp_soc_disp_register_proc_ops(enum disp_dev_type device, struct disp_pr
 void         nxp_soc_disp_register_priv(enum disp_dev_type device, void *priv);
 int			 nxp_soc_disp_device_connect_to(enum disp_dev_type device, enum disp_dev_type to, struct disp_vsync_info *vsync);
 void	     nxp_soc_disp_device_disconnect(enum disp_dev_type device, enum disp_dev_type to);
-
-int			 nxp_soc_disp_device_set_sync_param	(enum disp_dev_type device, struct disp_syncgen_par *sync_par);
-int			 nxp_soc_disp_device_get_sync_param	(enum disp_dev_type device, struct disp_syncgen_par *sync_par);
+int			 nxp_soc_disp_device_set_sync_param	(enum disp_dev_type device, struct disp_sync_par *spar);
+int			 nxp_soc_disp_device_get_sync_param	(enum disp_dev_type device, struct disp_sync_par *spar);
 int			 nxp_soc_disp_device_set_vsync_info	(enum disp_dev_type device, struct disp_vsync_info *vsync);
 int			 nxp_soc_disp_device_get_vsync_info	(enum disp_dev_type device, struct disp_vsync_info *vsync);
-
 int			 nxp_soc_disp_device_set_dev_param  (enum disp_dev_type device, void *param);
-
 int 		 nxp_soc_disp_device_enable		(enum disp_dev_type device, int enable);
 int 		 nxp_soc_disp_device_stat_enable(enum disp_dev_type device);
-
 int 		 nxp_soc_disp_device_suspend	(enum disp_dev_type device);
 void 		 nxp_soc_disp_device_resume 	(enum disp_dev_type device);
-
 void		 nxp_soc_disp_device_framebuffer(int module, int fb);
 int 		 nxp_soc_disp_device_enable_all	(int module, int enable);
 int 		 nxp_soc_disp_device_suspend_all(int module);
 void 		 nxp_soc_disp_device_resume_all	(int module);
 void 		 nxp_soc_disp_device_reset_top	(void);
 int 		 nxp_soc_disp_device_enable_all_saved(int module, int enable);
-
 void 		 nxp_soc_disp_register_lcd_ops(int module, struct lcd_operation *pops);
-#endif
 
 /*
- *
  * 	Reset interface functions for nexell cpu
- *
  */
 void		nxp_soc_peri_reset_enter(int id);
 void		nxp_soc_peri_reset_exit(int id);
 void		nxp_soc_peri_reset_set(int id);
 int			nxp_soc_peri_reset_status(int id);	/* 1: power on, 0: power down */
 
+/*
+ * ASSERT
+ */
+#define RET_ASSERT_VAL(_expr_, _ret_)	{			\
+	if (!(_expr_)) {								\
+		printk(KERN_ERR "%s(%d) : %s %s \n",		\
+			__func__, __LINE__, "ASSERT", #_expr_);	\
+		if ( _ret_) return _ret_; else return 0;	\
+	}											\
+}
+
+#define RET_ASSERT(_expr_)	{			\
+	if (!(_expr_)) {								\
+		printk(KERN_ERR "%s(%d) : %s %s \n",		\
+			__func__, __LINE__, "ASSERT", #_expr_);	\
+		return;										\
+	}											\
+}
+
+#define RET_ASSERT_NULL(_expr_)	{			\
+	if (!(_expr_)) {								\
+		printk(KERN_ERR "%s(%d) : %s %s \n",		\
+			__func__, __LINE__, "ASSERT", #_expr_);	\
+		return NULL;										\
+	}											\
+}
 #endif
 

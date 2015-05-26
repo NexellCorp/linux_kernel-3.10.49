@@ -58,7 +58,7 @@ struct snd_dma_device {
  */
 struct snd_dma_buffer {
 	struct snd_dma_device dev;	/* device type */
-	unsigned char *area;	/* virtual pointer */
+	void *area;	/* virtual pointer */
 	dma_addr_t addr;	/* physical address */
 	size_t bytes;		/* buffer size in bytes */
 	void *private_data;	/* private for allocator; don't touch */

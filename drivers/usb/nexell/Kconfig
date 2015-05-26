@@ -1,0 +1,12 @@
+#
+# Copyright 2010 Nexell.
+#
+# Configuration options for the S5Pxxx USB
+
+comment "S5PXX18 USB devices support"
+
+config USB_NXP
+	bool
+	depends on PLAT_SLSIAP
+	help
+	  Say Y or M if you want to add support for s5pxx18 USB
