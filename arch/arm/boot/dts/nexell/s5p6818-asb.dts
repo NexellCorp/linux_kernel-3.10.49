@@ -207,9 +207,9 @@
 			mp8845c@1c {
 				compatible = "nx,mp8845c";
 				reg = <0x1c>;
-				nx,id = <1>;
+				nx,id = <0>;
 				regulators {
-					VCC1P0_CORE_PMIC: vout2 { PMIC_PDATA_INIT(1, "mp8845c_vout1", 600000, 1500000, 1, 1, 1100000, 1, 0xF) };
+					VCC1P1_ARM_PMIC: vout1 { PMIC_PDATA_INIT(0, "mp8845c_vout0", 600000, 1500000, 1, 1, 1200000, 1, 0xF) };
 				};
 			};
 		};
@@ -221,16 +221,16 @@
 			mp8845c@1c {
 				compatible = "nx,mp8845c";
 				reg = <0x1c>;
-				nx,id = <0>;
+				nx,id = <1>;
 				regulators {
-					VCC1P1_ARM_PMIC: vout1 { PMIC_PDATA_INIT(0, "mp8845c_vout0", 600000, 1500000, 1, 1, 1200000, 1, 0xF) };
+					VCC1P0_CORE_PMIC: vout2 { PMIC_PDATA_INIT(1, "mp8845c_vout1", 600000, 1500000, 1, 1, 1100000, 1, 0xF) };
 				};
 			};
 		};
 		#endif // CONFIG_REGULATOR_MP8845C
 
 		#ifdef CONFIG_REGULATOR_NXE2000
-		iic2:iic@a6000 {
+		iic0:iic@a4000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
