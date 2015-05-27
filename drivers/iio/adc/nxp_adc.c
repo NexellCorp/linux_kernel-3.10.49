@@ -207,6 +207,32 @@ static void nxp_adc_dump_regs(struct nxp_adc_info *adc) { }
 
 #define	ADC_HW_RESET()		do { nxp_soc_peri_reset_set(RESET_ID_ADC); } while (0)
 
+
+static int __turn_around_invalid_first_read(struct nxp_adc_info *adc)
+{
+	unsigned int adcon = 0;
+	struct adc_register *reg = adc->adc_base;
+	volatile int value = 0;
+	unsigned long wait = loops_per_jiffy * (HZ/10);
+
+	adcon  = __raw_readl(&reg->ADCCON) & ~(0x07 << ASEL_BITP) & ~(0x01 << ADEN_BITP);
+	adcon |= 0 << ASEL_BITP;	// channel
+	__raw_writel(adcon, &reg->ADCCON);
+	adcon  = __raw_readl(&reg->ADCCON);
+	adcon |=  1 << ADEN_BITP;	// start
+	__raw_writel(adcon, &reg->ADCCON);
+
+	while (wait > 0) {
+		if (__raw_readl(&reg->ADCINTCLR) & (1<<AICL_BITP)) {
+			__raw_writel(0x1, &reg->ADCINTCLR);	/* pending clear */
+			value = __raw_readl(&reg->ADCDAT);	/* get value */
+			break;
+		}
+		wait--;
+	}
+	return 0;
+}
+
 #ifdef ADC_USING_PROTOTYPE
 #else
 static int setup_adc_con(struct nxp_adc_info *adc)
@@ -231,6 +257,12 @@ static int setup_adc_con(struct nxp_adc_info *adc)
 	pres |= (1 << APEN_BITP);
 	__raw_writel(pres, &reg->ADCPRESCON);
 #endif
+
+	/* *****************************************************
+	 * Turn-around invalid value after Power On
+	 * *****************************************************/
+	__turn_around_invalid_first_read(adc);
+
 
 	if (adc->support_interrupt) {
 		__raw_writel(1, &reg->ADCINTCLR);
