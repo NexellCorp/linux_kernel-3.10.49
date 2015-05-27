@@ -2549,7 +2549,6 @@ static int __dwmci_init(u32 slot_id, irq_handler_t handler, void *data)
 	
 	host->hclk = clk_get(&host->dev,NULL);
 	clk_set_rate(host->hclk, pdata->bus_hz);
-	printk("\e[31m clk_get : %d \n\e[0m ", clk_get_rate(host->hclk));
 	clk_prepare_enable(host->hclk);
 	id  = of_alias_get_id(np,"dwmmc");
 	ret = of_property_read_u32(np,"cd_gpio",&io);
