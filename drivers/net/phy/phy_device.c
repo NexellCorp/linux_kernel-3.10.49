@@ -157,7 +157,6 @@ struct phy_device *phy_device_create(struct mii_bus *bus, int addr, int phy_id,
 {
 	struct phy_device *dev;
 
-	printk("%s: %d\n", __func__, __LINE__);
 	/* We allocate the device, and initialize the
 	 * default values */
 	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
@@ -335,7 +334,6 @@ struct phy_device *get_phy_device(struct mii_bus *bus, int addr, bool is_c45)
 	u32 phy_id = 0;
 	int r;
 
-	printk("%s: %d\n", __func__, __LINE__);
 	r = get_phy_id(bus, addr, &phy_id, is_c45, &c45_ids);
 	if (r)
 		return ERR_PTR(r);
@@ -358,7 +356,6 @@ int phy_device_register(struct phy_device *phydev)
 {
 	int err;
 
-	printk("%s: %d\n", __func__, __LINE__);
 	/* Don't register a phy if one is already registered at this
 	 * address */
 	if (phydev->bus->phy_map[phydev->addr])
@@ -413,7 +410,6 @@ EXPORT_SYMBOL(phy_find_first);
 static void phy_prepare_link(struct phy_device *phydev,
 		void (*handler)(struct net_device *))
 {
-	printk("%s: %d - handler:%p\n", __func__, __LINE__, handler);
 	phydev->adjust_link = handler;
 }
 
@@ -430,7 +426,6 @@ int phy_connect_direct(struct net_device *dev, struct phy_device *phydev,
 {
 	int rc;
 
-	printk("%s: %d\n", __func__, __LINE__);
 	rc = phy_attach_direct(dev, phydev, phydev->dev_flags, interface);
 	if (rc)
 		return rc;
@@ -476,7 +471,6 @@ struct phy_device * phy_connect(struct net_device *dev, const char *bus_id,
 	}
 	phydev = to_phy_device(d);
 
-	printk("%s: %d\n", __func__, __LINE__);
 	rc = phy_connect_direct(dev, phydev, handler, interface);
 	if (rc)
 		return ERR_PTR(rc);
@@ -509,7 +503,6 @@ int phy_init_hw(struct phy_device *phydev)
 	if (!phydev->drv || !phydev->drv->config_init)
 		return 0;
 
-	printk("%s: %d\n", __func__, __LINE__);
 	ret = phy_scan_fixups(phydev);
 	if (ret < 0)
 		return ret;
@@ -545,7 +538,6 @@ static int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
 			return -ENODEV;
 		}
 
-		printk("%s: %d\n", __func__, __LINE__);
 		d->driver = &genphy_driver.driver;
 
 		err = d->driver->probe(d);

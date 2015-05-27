@@ -312,6 +312,7 @@ bool stmmac_eee_init(struct stmmac_priv *priv)
 	    (priv->pcs == STMMAC_PCS_RTBI))
 		goto out;
 
+#if 0
 	/* MAC core supports the EEE feature. */
 	if (priv->dma_cap.eee) {
 		/* Check if the PHY supports EEE */
@@ -338,6 +339,7 @@ bool stmmac_eee_init(struct stmmac_priv *priv)
 
 		ret = true;
 	}
+#endif
 out:
 	mutex_unlock(&priv->eee_init_lock);
 	return ret;
@@ -837,7 +839,6 @@ static int stmmac_init_phy(struct net_device *dev)
 		 priv->plat->phy_addr);
 	pr_debug("stmmac_init_phy:  trying to attach to %s\n", phy_id_fmt);
 
-	printk("%s: %d\n", __func__, __LINE__);
 	phydev = phy_connect(dev, phy_id_fmt, &stmmac_adjust_link, interface);
 
 	if (IS_ERR(phydev)) {

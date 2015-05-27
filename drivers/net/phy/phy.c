@@ -437,7 +437,6 @@ static void phy_change(struct work_struct *work);
 void phy_start_machine(struct phy_device *phydev,
 		void (*handler)(struct net_device *))
 {
-	printk("%s: %d\n", __func__, __LINE__);
 	phydev->adjust_state = handler;
 
 	queue_delayed_work(system_power_efficient_wq, &phydev->state_queue, HZ);
@@ -571,11 +570,10 @@ int phy_start_interrupts(struct phy_device *phydev)
 
 	INIT_WORK(&phydev->phy_queue, phy_change);
 
-	printk(">> In %d at %s (irq:%d)\n", __LINE__, __func__, phydev->irq);
 	atomic_set(&phydev->irq_disable, 0);
 	if (request_irq(phydev->irq, phy_interrupt,
-				IRQF_TRIGGER_LOW | IRQF_SHARED,
-//				IRQF_SHARED,
+				//IRQF_TRIGGER_LOW | IRQF_SHARED,
+				IRQF_SHARED,
 				"phy_interrupt",
 				phydev) < 0) {
 		pr_warn("%s: Can't get IRQ %d (PHY)\n",

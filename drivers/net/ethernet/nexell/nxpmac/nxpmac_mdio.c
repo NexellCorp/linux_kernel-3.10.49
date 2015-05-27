@@ -134,7 +134,6 @@ static int stmmac_mdio_reset(struct mii_bus *bus)
 
 	if (priv->plat->mdio_bus_data->phy_reset) {
 		pr_debug("stmmac_mdio_reset: calling phy_reset\n");
-		printk("stmmac_mdio_reset: calling phy_reset\n");
 		priv->plat->mdio_bus_data->phy_reset(priv->plat->bsp_priv);
 	}
 
@@ -173,7 +172,6 @@ int stmmac_mdio_register(struct net_device *ndev)
 	else
 		irqlist = priv->mii_irq;
 
-	printk("%s: %d\n", __func__, __LINE__);
 	new_bus->name = "stmmac";
 	new_bus->read = &stmmac_mdio_read;
 	new_bus->write = &stmmac_mdio_write;
