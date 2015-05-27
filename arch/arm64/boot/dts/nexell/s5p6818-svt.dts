@@ -470,7 +470,7 @@
         compatible = "gpio-keys";
         power {
             label = "Power";
-            gpios = <&gpio_alive 1 0 >;
+            gpios = <&gpio_alive 0 0 >;
             linux,code = <116>; /* KEY_POWER */
         };
     };

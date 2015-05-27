@@ -192,7 +192,7 @@
 		spdifrx@5a000 {
 			status = "okay";
 		};
-		
+
 		ehci@30000 {
 			hsic_en = <1>;
 			hsic_exthub_gpio = <150>;
@@ -405,4 +405,13 @@
 		sample_rate = <48000>;
 	    format = "S16";
 	};
+
+    gpio-keys {
+        compatible = "gpio-keys";
+        power {
+            label = "Power";
+            gpios = <&gpio_alive 0 0 >;
+            linux,code = <116>; /* KEY_POWER */
+        };
+    };
 };
