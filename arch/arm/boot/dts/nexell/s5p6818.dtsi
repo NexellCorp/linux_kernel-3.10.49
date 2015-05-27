@@ -281,6 +281,7 @@
 			nexell,i2c-slave-addr = <0x66>;
 			nexell,reset-id = <RESET_ID_I2C0>;
 		};
+
 	    iic1:iic@a5000 {
 			compatible = "nexell,nxp-i2c";
 			reg = <PHYS_BASE_I2C1 0x100>;
@@ -308,37 +309,6 @@
 		mp2ts:mp2ts@5d000 {
 			compatible = "nexell,nxp-mp2ts";
 			reg = <PHYS_BASE_MPEGTSI 0x100>;
-		};
-
-		gpio_a:gpio@1a000 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_GPIOA 0x1000>;
-			nexell,gpioid = <0>;
-		};
-		gpio_b:gpio@1b000 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_GPIOB 0x1000>;
-			nexell,gpioid = <1>;
-		};
-		gpio_c:gpio@1c000 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_GPIOC 0x1000>;
-			nexell,gpioid = <2>;
-		};
-		gpio_d:gpio@1d000 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_GPIOD 0x1000>;
-			nexell,gpioid = <3>;
-		};
-		gpio_e:gpio@1e000 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_GPIOE 0x1000>;
-			nexell,gpioid = <4>;
-		};
-		gpio_alv:gpio@10800 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_ALIVE 0x1000>;
-			nexell,gpioid = <5>;
 		};
 
 		spi_0:spi@5b000 {

@@ -107,7 +107,7 @@
 		};
 
 		uart0:uart@a9000 {
-      	#clock-cells = <0>;
+      		#clock-cells = <0>;
 			clock-output-names = "uart0";
 			cell-id = <CLK_ID_UART_0>;
 			reg = <PHYS_BASE_CLK_22 0x1000>;
