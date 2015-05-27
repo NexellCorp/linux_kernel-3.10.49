@@ -38,7 +38,6 @@
 
 
 #define ALLOC_ALIGN(size)   ALIGN(size, 16)
-#define CFG_MPEGTS_IDMA_MODE  1
 
 static struct ts_drv_context *s_ctx = NULL;
 static int  one_sec_ticks = 100;
@@ -183,6 +182,7 @@ error_request:
 
 	return -EINVAL;
 #endif
+	return 0;
 }
 
 static inline void _deinit_dma(u8 ch_num, struct ts_drv_context *ctx)
@@ -307,7 +307,7 @@ onemore_alloc:
     ctx->ch_info[ch_num].alloc_size     = (ctx->ch_info[ch_num].alloc_align * init_info->page_num);
 
 
-    ctx->ch_info[ch_num].dma_virt = (unsigned int)dma_alloc_writecombine(ctx->dev, ctx->ch_info[ch_num].alloc_size, &ctx->ch_info[ch_num].dma_phy, GFP_ATOMIC);
+   // ctx->ch_info[ch_num].dma_virt = (unsigned int)dma_alloc_writecombine(ctx->dev, ctx->ch_info[ch_num].alloc_size, &ctx->ch_info[ch_num].dma_phy, GFP_ATOMIC);
     if (!ctx->ch_info[ch_num].dma_virt)
     {
         printk(KERN_ERR "can't alloc packet buffer...\n");
@@ -351,7 +351,7 @@ static inline void _deinit_buf(u8 ch_num, struct ts_drv_context *ctx)
     {
         dma_free_coherent(ctx->dev,
                 ctx->ch_info[ch_num].alloc_size,
-                (void *)ctx->ch_info[ch_num].dma_virt,
+                (void *)(ctx->ch_info[ch_num].dma_virt),
                 ctx->ch_info[ch_num].dma_phy);
 
         ctx->ch_info[ch_num].alloc_align = 0;
@@ -428,7 +428,7 @@ static int _init_device(struct ts_drv_context *ctx)
     NX_RSTCON_Initialize();
     addr = NX_RSTCON_GetPhysicalAddress();
     printk("NX_RSTCON_GetPhysicalAddress = 0x%08x\n", addr);
-    NX_RSTCON_SetBaseAddress( (u32)IO_ADDRESS(addr) );
+    NX_RSTCON_SetBaseAddress( (void *)IO_ADDRESS(addr) );
 #if defined(CONFIG_MACH_S5P4418)
     NX_RSTCON_SetnRST(RESETINDEX_OF_MPEGTSI_MODULE_i_nRST, RSTCON_DISABLE);
     udelay(100);
@@ -445,7 +445,7 @@ static int _init_device(struct ts_drv_context *ctx)
     NX_MPEGTSI_Initialize();
     addr = NX_MPEGTSI_GetPhysicalAddress();
     printk("NX_MPEGTSI_GetPhysicalAddress = 0x%08x\n", addr);
-    NX_MPEGTSI_SetBaseAddress( (u32)IO_ADDRESS(addr) );
+    NX_MPEGTSI_SetBaseAddress( (void *)IO_ADDRESS(addr) );
 
     return 0;
 }
