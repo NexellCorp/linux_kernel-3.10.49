@@ -60,23 +60,40 @@
 		};
 
 		serial@a0000 {
+			status = "okay";
 			enable_dma = <1>;
 		};
+		
+		serial@a2000 {
+			status = "okay";
+			enable_dma = <1>;
+		};
+		serial@a3000 {
+			status = "okay";
+		};
+		serial@6d000 {
+			status = "okay";
+		};
+		serial@6f000 {
+			status = "okay";
+		};
+		
 		dw_mmc@62000 {
 			bus_speed = <100>;
-			cd_gpio = <(PAD_GPIO_ALV + 1)>;	
+			cd_gpio = <(PAD_GPIO_C + 6)>;	
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@68000 {
-			bus_speed = <100>;
+			bus_speed = <50>;
+			cd_gpio = <(PAD_GPIO_D + 21)>;	
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@69000 {
-			bus_speed = <200>;
-			bus_wd = <8>;
-			non-removable;
-			ddr-mode;
-			clk_dly = <0x02030000>;
+			bus_speed = <100>;
+			//bus_wd = <4>;
+			//non-removable;
+			//ddr-mode;
+			clk_dly = <0x01020000>;
 		};	
 		
 		spi@5b000 {
@@ -91,18 +108,44 @@
 				reg = <0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
-				  spi-cs-gpio = <10>;
+				  spi-cs-gpio = <(PAD_GPIO_C + 30)>;
 					spi-feedback-delay = <02>;
 				};
 			};
 		};
 		spi@5c000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
+			//status = "okay";
+			spidev@0 {
+				compatible = "spidev";
+				reg = <0>;
+				spi-max-frequency = < 50000000 >;
+				controller-data {
+				  spi-cs-gpio = <(PAD_GPIO_E + 15)>;
+					spi-feedback-delay = <02>;
+				};
+			};
 		};
 		spi@5f000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
+			status = "okay";
+			spidev@0 {
+				compatible = "spidev";
+				reg = <0>;
+				spi-max-frequency = < 50000000 >;
+				controller-data {
+			  	spi-cs-gpio = <(PAD_GPIO_C + 10)>;
+					spi-feedback-delay = <02>;
+					hierarchy = <1>; //0 : master, 1 : slave
+				};
+			};
+				
 		};
 
 		rtc@10c00 {
