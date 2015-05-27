@@ -332,7 +332,7 @@ struct sg_mapping_iter {
 	size_t			consumed;	/* number of consumed bytes */
 	struct sg_page_iter	piter;		/* page iterator */
 
-	 struct scatterlist  *__sg;      /* current entry */
+//	struct scatterlist  *__sg;      /* current entry */
 
 	/* these are internal states, keep away */
 	unsigned int		__offset;	/* offset within page */
