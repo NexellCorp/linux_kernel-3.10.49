@@ -60,40 +60,23 @@
 		};
 
 		serial@a0000 {
-			status = "okay";
 			enable_dma = <1>;
 		};
-		
-		serial@a2000 {
-			status = "okay";
-			enable_dma = <1>;
-		};
-		serial@a3000 {
-			status = "okay";
-		};
-		serial@6d000 {
-			status = "okay";
-		};
-		serial@6f000 {
-			status = "okay";
-		};
-		
 		dw_mmc@62000 {
 			bus_speed = <100>;
-			cd_gpio = <(PAD_GPIO_C + 6)>;	
+			cd_gpio = <(PAD_GPIO_ALV + 1)>;	
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@68000 {
-			bus_speed = <50>;
-			cd_gpio = <(PAD_GPIO_D + 21)>;	
+			bus_speed = <100>;
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@69000 {
-			bus_speed = <100>;
-			//bus_wd = <4>;
-			//non-removable;
-			//ddr-mode;
-			clk_dly = <0x01020000>;
+			bus_speed = <200>;
+			bus_wd = <8>;
+			non-removable;
+			ddr-mode;
+			clk_dly = <0x02030000>;
 		};	
 		
 		spi@5b000 {
@@ -108,44 +91,18 @@
 				reg = <0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
-				  spi-cs-gpio = <(PAD_GPIO_C + 30)>;
+				  spi-cs-gpio = <10>;
 					spi-feedback-delay = <02>;
 				};
 			};
 		};
 		spi@5c000 {
-			#address-cells = <1>;
-			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
-			//status = "okay";
-			spidev@0 {
-				compatible = "spidev";
-				reg = <0>;
-				spi-max-frequency = < 50000000 >;
-				controller-data {
-				  spi-cs-gpio = <(PAD_GPIO_E + 15)>;
-					spi-feedback-delay = <02>;
-				};
-			};
 		};
 		spi@5f000 {
-			#address-cells = <1>;
-			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
-			status = "okay";
-			spidev@0 {
-				compatible = "spidev";
-				reg = <0>;
-				spi-max-frequency = < 50000000 >;
-				controller-data {
-			  	spi-cs-gpio = <(PAD_GPIO_C + 10)>;
-					spi-feedback-delay = <02>;
-					hierarchy = <1>; //0 : master, 1 : slave
-				};
-			};
-				
 		};
 
 		rtc@10c00 {
@@ -203,74 +160,7 @@
 			};
 		};
 
-
-        nxp-ion {
-            compatible = "nexell,nxp-ion";
-            nr = <3>;
-            names = "ion_noncontig_heap", "ion_contig_heap", "nxp_contig_heap";
-            types = <0 1 6>;
-        };
-
-        /*nxp-v4l2 {*/
-            /*compatible = "nexell,nxp-v4l2";*/
-
-            /*capture {*/
-                /*nr = <2>;*/
-
-                /*capture0 {*/
-                    /*module = <2>;*/
-                    /*type = <0>;*/
-
-                    /*port = <0>;*/
-                    /*external_sync = <0>;*/
-
-                    /*h_frontporch = <7>;*/
-                    /*h_syncwidth = <1>;*/
-                    /*h_backporch = <10>;*/
-                    /*v_frontporch = <0>;*/
-                    /*v_syncwidth = <2>;*/
-                    /*v_backporch = <3>;*/
-
-                    /*data_order = <0>;*/
-                    /*vid = <0>;*/
-
-                    /*interlace = <0>;*/
-                    /*late_power_down = <0>;*/
-
-                    /*sensor {*/
-                        /*type = <0>;*/
-                        /*sensor_name = "MT9D111";*/
-                        /*i2c_adapter = <2>;*/
-                        /*addr = <0x5d>;*/
-                    /*};*/
-
-                    /*power {*/
-                        /*reset_io = <(PAD_GPIO_C+30)>;*/
-                        /*reset_invert = <1>;*/
-                        /*reset_delay_ms = <10>;*/
-                    /*};*/
-                /*};*/
-
-                /*capture1 {*/
-                    /*module = <0>;*/
-                    /*type = <1>;*/
-
-                    /*sensor {*/
-                        /*type = <0>;*/
-                        /*sensor_name = "THP7212NX";*/
-                        /*i2c_adapter = <1>;*/
-                        /*addr = <0x60>;*/
-                    /*};*/
-
-                    /*power {*/
-                        /*reset_io = <(PAD_GPIO_E+16)>;*/
-                        /*reset_invert = <1>;*/
-                        /*reset_delay_ms = <10>;*/
-                    /*};*/
-                /*};*/
-            /*};*/
-        /*};*/
-        pdm@14000 {
+		pdm@14000 {
 			status = "okay";
 		};
 
@@ -335,9 +225,9 @@
 			mp8845c@1c {
 				compatible = "nx,mp8845c";
 				reg = <0x1c>;
-				nx,id = <1>;
+				nx,id = <0>;
 				regulators {
-					VCC1P0_CORE_PMIC: vout2 { PMIC_PDATA_INIT(1, "mp8845c_vout1", 600000, 1500000, 1, 1, 1100000, 1, 0xF) };
+					VCC1P1_ARM_PMIC: vout1 { PMIC_PDATA_INIT(0, "mp8845c_vout0", 600000, 1500000, 1, 1, 1200000, 1, 0xF) };
 				};
 			};
 		};
@@ -349,16 +239,16 @@
 			mp8845c@1c {
 				compatible = "nx,mp8845c";
 				reg = <0x1c>;
-				nx,id = <0>;
+				nx,id = <1>;
 				regulators {
-					VCC1P1_ARM_PMIC: vout1 { PMIC_PDATA_INIT(0, "mp8845c_vout0", 600000, 1500000, 1, 1, 1200000, 1, 0xF) };
+					VCC1P0_CORE_PMIC: vout2 { PMIC_PDATA_INIT(1, "mp8845c_vout1", 600000, 1500000, 1, 1, 1100000, 1, 0xF) };
 				};
 			};
 		};
 		#endif // CONFIG_REGULATOR_MP8845C
 
 		#ifdef CONFIG_REGULATOR_NXE2000
-		iic2:iic@a6000 {
+		iic0:iic@a4000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 

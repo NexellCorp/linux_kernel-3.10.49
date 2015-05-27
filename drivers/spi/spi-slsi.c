@@ -29,12 +29,14 @@
 #include <linux/spi/spi.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>
+#include <linux/amba/pl08x.h>
 
 #include <nexell/slsi-spi.h>
 #include <linux/dmaengine.h>
+#include <nexell/platform.h>
+#include <nexell/soc-s5pxx18.h>
 
 #define MAX_SPI_PORTS       3
-
 /*
  * The type of reading going on on this chip
  */
@@ -1195,7 +1197,7 @@ static int s3c64xx_spi_transfer_one_message(struct spi_master *master,
 
 		enable_datapath(sdd, spi, xfer, use_dma);
 		/* Slave Select */
-		//if(cs->hierarchy == SSP_MASTER)
+		if(cs->hierarchy == SSP_MASTER)
 		enable_cs(sdd, spi);
 
 		/* Start the signals */
@@ -1318,7 +1320,7 @@ static struct s3c64xx_spi_csinfo *s3c64xx_get_slave_ctrldata(
     cs->fb_delay = fb_delay;
     of_node_put(data_np);
 
-    of_property_read_u32(data_np, "spi_cs_gpio", &spi_cs_gpio);
+    of_property_read_u32(data_np, "spi-cs-gpio", &spi_cs_gpio);
     cs->line = spi_cs_gpio;
     of_node_put(data_np);
     
@@ -1506,8 +1508,14 @@ static struct s3c64xx_spi_info *nexell_spi_parse_dt(struct device *dev)
 	if (!sci) {
 		dev_err(dev, "memory allocation for spi_info failed\n");
 	    return ERR_PTR(-ENOMEM);
-	  }    
-	
+	 }    
+#if 0
+	sci->enable_dma = 1;
+
+	sci->dma_filter     = pl08x_filter_id;
+	sci->dma_rx_param   = (void *)PL08X_DMA_NAME_SSP0_RX;
+	sci->dma_tx_param   = (void *)PL08X_DMA_NAME_SSP0_TX;
+#endif
 	if (of_property_read_u32(dev->of_node, "clk_nr", &temp)) {
 	  dev_warn(dev, "spi bus clock parent not specified, using clock at index 0 as parent\n");
 	  sci->src_clk_nr = 0; 

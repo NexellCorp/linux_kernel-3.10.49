@@ -27,7 +27,7 @@
 #endif /* __IOC_MAGIC_H__ */
 
 #define DEV_NAME_MPEGTSI        "nxp-mpegtsi"
-#define CFG_MPEGTS_IDMA_MODE	(0)
+#define CFG_MPEGTS_IDMA_MODE	(1)
 
 
 #define DMA_DOUBLE_BUFFER   (1)

@@ -115,6 +115,9 @@
         i2c0	= &iic0;
         i2c1	= &iic1;
         i2c2	= &iic2;
+        dwmmc0	= &dw_mmc0;
+        dwmmc1	= &dw_mmc1;
+        dwmmc2	= &dw_mmc2;
 		pwmdev0 = &pwm_device0;
 		pwmdev1 = &pwm_device1;
 		pwmdev1 = &pwm_device2;
@@ -220,71 +223,69 @@
 			interrupts = <0 IRQ_UART0 0>;
 			clock-names = "uart0";
 			clocks = <&uart0>;
-			#if !defined(CONFIG_SERIAL_NXP_UART0)
-			#if  defined(CONFIG_SERIAL_NXP_UART0_DMA)
 			dma-names = "tx", "rx";
 			dmas = <&pl08xdma0 2 &pl08xdma0 3>;
-			#endif
-			status = "disabled";
-			#endif
 			reset-id = <RESET_ID_UART0>;
 			tieoff-id = <TIEOFF_UART0_USESMC TIEOFF_UART0_SMCTXENB TIEOFF_UART0_SMCRXENB>;
 		};
-
 		serial1:serial@a0000 {
 			compatible = "nexell,nxp-uart";
 			reg = <PHYS_BASE_UART1 0x1000>;
 			interrupts = <0 IRQ_UART1 0>;
 			clock-names = "uart1";
 			clocks = <&uart1>;
-			#if !defined(CONFIG_SERIAL_NXP_UART1)
-			#if  defined(CONFIG_SERIAL_NXP_UART1_DMA)
 			dma-names = "tx", "rx";
-			dmas = <&pl08xdma0 0 &pl08xdma0 1>;
-			#endif
+			dmas = <&pl08xdma0 4 &pl08xdma0 4>;
+			reset-id = <RESET_ID_UART0>;
+			tieoff-id = <TIEOFF_UART0_USESMC TIEOFF_UART0_SMCTXENB TIEOFF_UART0_SMCRXENB>;
 			status = "disabled";
-			#endif
 		};
 
 		serial2:serial@a2000 {
 			compatible = "nexell,nxp-uart";
 			reg = <PHYS_BASE_UART2 0x1000>;
-			interrupts = <IRQ_UART2>;
+			interrupts = <0 IRQ_UART2 0>;
 			clock-names = "uart2";
-			#if !defined(CONFIG_SERIAL_NXP_UART2)
+			clocks = <&uart2>;
+			dmas = <&pl08xdma0 2 &pl08xdma0 3>;
+			reset-id = <RESET_ID_UART2>;
+			tieoff-id = <TIEOFF_UART2_USESMC TIEOFF_UART2_SMCTXENB TIEOFF_UART2_SMCRXENB>;
 			status = "disabled";
-			#endif
 		};
 
 		serial3:serial@a3000 {
 			compatible = "nexell,nxp-uart";
 			reg = <PHYS_BASE_UART3 0x1000>;
-			interrupts = <IRQ_UART3>;
+			interrupts = <0 IRQ_UART3 0>;
 			clock-names = "uart3";
-			#if !defined(CONFIG_SERIAL_NXP_UART3)
+			clocks = <&uart3>;
+			reset-id = <RESET_ID_UART3>;
+			tieoff-id = <TIEOFF_UART3_USESMC TIEOFF_UART3_SMCTXENB TIEOFF_UART3_SMCRXENB>;
 			status = "disabled";
-			#endif
 		};
 
 		serial4:serial@6d000 {
 			compatible = "nexell,nxp-uart";
 			reg = <PHYS_BASE_UART4 0x1000>;
-			interrupts = <IRQ_UART4>;
+			interrupts = <0 IRQ_UART4 0>;
 			clock-names = "uart4";
-			#if !defined(CONFIG_SERIAL_NXP_UART4)
+			clocks = <&uart4>;
+			reset-id = <RESET_ID_UART4>;
+			tieoff-id = <TIEOFF_UART4_USESMC TIEOFF_UART4_SMCTXENB TIEOFF_UART4_SMCRXENB>;
 			status = "disabled";
-			#endif
 		};
 
 		serial5:serial@6f000 {
 			compatible = "nexell,nxp-uart";
 			reg = <PHYS_BASE_UART5 0x1000>;
-			interrupts = <IRQ_UART5>;
+			interrupts = <0 IRQ_UART5 0>;
 			clock-names = "uart5";
-			#if !defined(CONFIG_SERIAL_NXP_UART5)
+			clocks = <&uart5>;
+			reset-id = <RESET_ID_UART5>;
+			tieoff-id = <TIEOFF_UART5_USESMC TIEOFF_UART5_SMCTXENB TIEOFF_UART5_SMCRXENB>;
 			status = "disabled";
-			#endif
 		};
+
 		iic0:iic@a4000 {
 			compatible = "nexell,nxp-i2c";
 			reg = <PHYS_BASE_I2C0 0x100>;
@@ -320,32 +321,32 @@
 			nexell,reset-id = <RESET_ID_I2C2>;
 		};
 
-		gpio_a:gpio@1a000 {
+		gpio@1a000 {
 			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_GPIOA 0x1000>;
 			nexell,gpioid = <0>;
 		};
-		gpio_b:gpio@1b000 {
+		gpio@1b000 {
 			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_GPIOB 0x1000>;
 			nexell,gpioid = <1>;
 		};
-		gpio_c:gpio@1c000 {
+		gpio@1c000 {
 			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_GPIOC 0x1000>;
 			nexell,gpioid = <2>;
 		};
-		gpio_d:gpio@1d000 {
+		gpio@1d000 {
 			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_GPIOD 0x1000>;
 			nexell,gpioid = <3>;
 		};
-		gpio_e:gpio@1e000 {
+		gpio@1e000 {
 			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_GPIOE 0x1000>;
 			nexell,gpioid = <4>;
 		};
-		gpio_alv:gpio@10800 {
+			gpio@10800 {
 			compatible = "nexell,nxp-gpio";
 			reg = <PHYS_BASE_ALIVE 0x1000>;
 			nexell,gpioid = <5>;
@@ -616,6 +617,30 @@
 			interrupts = <0 IRQ_USB20HOST 0>;
 			reset-id = <RESET_ID_USB20HOST>;
 			status = "disabled";
+		};
+
+		dw_mmc0:dw_mmc@62000 {
+			compatible = "nexell,dw-mmc";
+			reg = <PHYS_BASE_SDMMC0 0x1000>;
+			interrupts = <0 IRQ_SDMMC0 0>;
+			clock-names = "sdhc0";
+			clocks = <&sdhc0>;
+		};
+		dw_mmc1:dw_mmc@68000 {
+			compatible = "nexell,dw-mmc";
+			reg = <PHYS_BASE_SDMMC1 0x1000>;
+			interrupts = <0 IRQ_SDMMC1 0>;
+			clock-names = "sdhc1";
+			clocks = <&sdhc1>;
+			status = "okay";
+		};
+		
+		dw_mmc2:dw_mmc@69000 {
+			compatible = "nexell,dw-mmc";
+			reg = <PHYS_BASE_SDMMC2 0x1000>;
+			interrupts = <0 IRQ_SDMMC2 0>;
+			clock-names = "sdhc2";
+			clocks = <&sdhc2>;
 		};
 	};
 };

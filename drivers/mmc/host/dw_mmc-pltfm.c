@@ -44,7 +44,7 @@ int dw_mci_pltfm_register(struct platform_device *pdev,
 		return host->irq;
 
 	host->drv_data = drv_data;
-	host->dev = &pdev->dev;
+	host->dev = pdev->dev;
 	host->irq_flags = 0;
 	host->pdata = pdev->dev.platform_data;
 	host->regs = devm_ioremap_resource(&pdev->dev, regs);
@@ -114,7 +114,8 @@ SIMPLE_DEV_PM_OPS(dw_mci_pltfm_pmops, dw_mci_pltfm_suspend, dw_mci_pltfm_resume)
 EXPORT_SYMBOL_GPL(dw_mci_pltfm_pmops);
 
 static const struct of_device_id dw_mci_pltfm_match[] = {
-	{ .compatible = "snps,dw-mshc", },
+//	{ .compatible = "snps,dw-mshc" },
+	{ .compatible = "nexell,dw-mmc" },
 	{},
 };
 MODULE_DEVICE_TABLE(of, dw_mci_pltfm_match);

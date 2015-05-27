@@ -8,6 +8,8 @@ menuconfig POWER_SUPPLY
 
 if POWER_SUPPLY
 
+source "drivers/power/axp_power/Kconfig"
+
 config POWER_SUPPLY_DEBUG
 	bool "Power supply debug"
 	help
@@ -136,6 +138,14 @@ config BATTERY_COLLIE
 	help
 	  Say Y to enable support for the battery on the Sharp Zaurus
 	  SL-5500 (collie) models.
+
+config BATTERY_NXE2000
+	tristate "Nexell NXE2000 PMIC battery driver"
+	select MFD_NXE2000
+	select REGULATOR_NXE2000
+	help
+	  Say Y to enable support for the battery control of the Nexell NXE2000
+	  Power Management device.
 
 config BATTERY_WM97XX
 	bool "WM97xx generic battery driver"
