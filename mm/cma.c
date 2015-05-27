@@ -1077,7 +1077,7 @@ EXPORT_SYMBOL_GPL(cma_alloc_from_region);
 
 dma_addr_t __must_check
 __cma_alloc(const struct device *dev, const char *type,
-	    dma_addr_t size, dma_addr_t alignment)
+	   size_t size, dma_addr_t alignment)
 {
 	struct cma_region *reg;
 	const char *from;

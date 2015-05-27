@@ -60,7 +60,7 @@ static void __cma_bf_hole_erase_by_start(struct cma_bf_item *item);
  * Returns allocated item or NULL on error (if kmalloc() failed).
  */
 static struct cma_bf_item *__must_check
-__cma_bf_hole_take(struct cma_bf_item *hole, size_t size, dma_addr_t alignment);
+__cma_bf_hole_take(struct cma_bf_item *hole, size_t size, size_t alignment);
 
 /**
  * __cma_bf_hole_merge_maybe - tries to merge hole with neighbours.

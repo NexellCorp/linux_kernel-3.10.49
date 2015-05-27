@@ -73,7 +73,8 @@ struct cma_info;
  * Don't call it directly, use cma_alloc(), cma_alloc_from() or
  * cma_alloc_from_region().
  */
-dma_addr_t __must_check
+//dma_addr_t __must_check
+dma_addr_t
 __cma_alloc(const struct device *dev, const char *type,
 	    size_t size, dma_addr_t alignment);
 
