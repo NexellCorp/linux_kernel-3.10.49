@@ -99,6 +99,26 @@
 			status = "okay";
 		};
 
+		adc:adc@53000 {
+			status = "okay";
+		};
+
+		nand:nand@51000 {
+			nand-bus-width = <8>;
+			nand-ecc-mode = "hw";
+			/*nand-on-flash-bbt = <1>;*/
+
+			nand-tacs = <0x0>;						/* unit: bclk cycle */
+			nand-tcah = <0x0>;
+			nand-tcos = <0xf>;
+			nand-tcoh = <0xf>;
+			nand-tacc = <0x3f>;
+			nand-ecc-bytes = <1024>;
+			nand-ecc-bits = <40>;
+			wp-gpio = <91>;							/* GPIO_C27 */
+			status = "okay";
+		};
+
 		framebuffer@0 {
 			status = "okay";
 			module = <0>;
