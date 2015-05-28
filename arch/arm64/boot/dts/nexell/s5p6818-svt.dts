@@ -12,7 +12,7 @@
 #define	UART_CLOCK_FREQUENCY	147500000
 #define I2C_CLOCK_FREQUENCY		100000000
 #define SPI_CLOCK_FREQUENCY		100000000
-#define GMAC_CLOCK_FREQUENCY	200000000
+/*#define GMAC_CLOCK_FREQUENCY	200000000*/
 
 #define PMIC_PDATA_INIT(_id, _rname, _minuv, _maxuv, _always_on, _boot_on,	\
 						_init_uv, _init_enable, _slp_slots)					\
@@ -52,7 +52,7 @@
 			spi0:spi@ac000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi1:spi@ad000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
-			gmac:gmac@c8000  { clock-frequency = <GMAC_CLOCK_FREQUENCY>; };
+			/*gmac:gmac@c8000  { clock-frequency = <GMAC_CLOCK_FREQUENCY>; };*/
 		};
 
 		#include "s5p6818-svt-pin.dtsi"
@@ -170,26 +170,6 @@
 			status = "okay";
 		};
 
-		adc:adc@53000 {
-			status = "okay";
-		};
-
-		nand:nand@51000 {
-			nand-bus-width = <8>;
-			nand-ecc-mode = "hw";
-			/*nand-on-flash-bbt = <1>;*/
-
-			nand-tacs = <0x0>;						/* unit: bclk cycle */
-			nand-tcah = <0x0>;
-			nand-tcos = <0xf>;
-			nand-tcoh = <0xf>;
-			nand-tacc = <0x3f>;
-			nand-ecc-bytes = <1024>;
-			nand-ecc-bits = <40>;
-			wp-gpio = <91>;							/* GPIO_C27 */
-			status = "okay";
-		};
-
 		gmac0:ethernet@60000 {
 			phy = <&phy0>;
 			status = "okay";
@@ -197,6 +177,8 @@
 			#size-cells = <0x0>;
 			phy-addr = <3>;
 			probed-phy-irq = <(IRQ_GPIO_A_START+9)>;
+			reset_gpio = <(PAD_GPIO_A+10)>;			/* mdio reset pin */
+			loopback_mode = <0>;					/* 0: none, 1: 10M */
 			phy0:ethernet-phy@0 {
 				compatible = "ethernet-phy-ieee802.3-c22";
 				/*max-speed = <1000>;*/

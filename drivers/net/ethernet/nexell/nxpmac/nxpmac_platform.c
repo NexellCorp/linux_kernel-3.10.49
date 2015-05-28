@@ -38,46 +38,37 @@
 
 
 #ifdef CONFIG_OF
+static uint32_t CFG_ETHER_GMAC_PHY_RST_NUM = -1;
+
+static void __gmac_phy_reset(void)
+{
+	if (CFG_ETHER_GMAC_PHY_RST_NUM == -1) {
+		pr_err("GMAC PHY reset number is not initialized.\n");
+		return;
+	}
+
+	// Set GPIO nReset
+	nxp_soc_gpio_set_io_dir(CFG_ETHER_GMAC_PHY_RST_NUM, 1);
+	nxp_soc_gpio_set_out_value(CFG_ETHER_GMAC_PHY_RST_NUM, 1);
+	udelay( 100 );
+	nxp_soc_gpio_set_out_value(CFG_ETHER_GMAC_PHY_RST_NUM, 0);
+	udelay( 100 );
+	nxp_soc_gpio_set_out_value(CFG_ETHER_GMAC_PHY_RST_NUM, 1);
+	msleep( 30 );
+
+	//gpio_free(CFG_ETHER_GMAC_PHY_RST_NUM);
+	pr_debug(" MDIO phy reset !!\n");
+}
+
+int gmac_phy_reset(void *priv)
+{
+	__gmac_phy_reset();
+
+	return 0;
+}
+
 int  nxpmac_init(struct platform_device *pdev)
 {
-#if defined (CONFIG_REALTEK_PHY_RTL8201)	// 20140515
-	// 100 & 10Base-T
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+ 7, 0 );        // PAD_GPIOE7,     GMAC0_PHY_TXD[0]
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+ 8, 0 );        // PAD_GPIOE8,     GMAC0_PHY_TXD[1]
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+ 9, 0 );        // PAD_GPIOE9,     GMAC0_PHY_TXD[2]
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+10, 0 );        // PAD_GPIOE10,    GMAC0_PHY_TXD[3]
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+11, 0 );        // PAD_GPIOE11,    GMAC0_PHY_TXEN
-//  nxp_soc_gpio_set_io_drv( PAD_GPIO_E+12, 3 );        // PAD_GPIOE12,    GMAC0_PHY_TXER
-//  nxp_soc_gpio_set_io_drv( PAD_GPIO_E+13, 3 );        // PAD_GPIOE13,    GMAC0_PHY_COL
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+14, 2 );        // PAD_GPIOE14,    GMAC0_PHY_RXD[0]
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+15, 2 );        // PAD_GPIOE15,    GMAC0_PHY_RXD[1]
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+16, 2 );        // PAD_GPIOE16,    GMAC0_PHY_RXD[2]
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+17, 2 );        // PAD_GPIOE17,    GMAC0_PHY_RXD[3]
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+18, 3 );        // PAD_GPIOE18,    GMAC0_RX_CLK
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+19, 3);        // PAD_GPIOE19,    GMAC0_PHY_RX_DV
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+20, 3 );        // PAD_GPIOE20,    GMAC0_GMII_MDC
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+21, 3 );        // PAD_GPIOE21,    GMAC0_GMII_MDI
-//  nxp_soc_gpio_set_io_drv( PAD_GPIO_E+22, 3 );        // PAD_GPIOE22,    GMAC0_PHY_RXER
-//  nxp_soc_gpio_set_io_drv( PAD_GPIO_E+23, 3 );        // PAD_GPIOE23,    GMAC0_PHY_CRS
-    nxp_soc_gpio_set_io_drv( PAD_GPIO_E+24, 0 );        // PAD_GPIOE24,    GMAC0_GTX_CLK
-
-#else	// 1000Base-T
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E +  7), 3 );     // PAD_GPIOE7,     GMAC0_PHY_TXD[0]
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E +  8), 3 );     // PAD_GPIOE8,     GMAC0_PHY_TXD[1]
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E +  9), 3 );     // PAD_GPIOE9,     GMAC0_PHY_TXD[2]
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 10), 3 );     // PAD_GPIOE10,    GMAC0_PHY_TXD[3]
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 11), 3 );     // PAD_GPIOE11,    GMAC0_PHY_TXEN
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 14), 3 );     // PAD_GPIOE14,    GMAC0_PHY_RXD[0]
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 15), 3 );     // PAD_GPIOE15,    GMAC0_PHY_RXD[1]
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 16), 3 );     // PAD_GPIOE16,    GMAC0_PHY_RXD[2]
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 17), 3 );     // PAD_GPIOE17,    GMAC0_PHY_RXD[3]
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 18), 3 );     // PAD_GPIOE18,    GMAC0_RX_CLK
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 19), 3 );     // PAD_GPIOE19,    GMAC0_PHY_RX_DV
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 20), 3 );     // PAD_GPIOE20,    GMAC0_GMII_MDC
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 21), 3 );     // PAD_GPIOE21,    GMAC0_GMII_MDI
-	nxp_soc_gpio_set_io_drv( (PAD_GPIO_E + 24), 3 );     // PAD_GPIOE24,    GMAC0_GTX_CLK
-#endif
-
 	// Clock control
 	NX_CLKGEN_Initialize();
 	NX_CLKGEN_SetBaseAddress( CLOCKINDEX_OF_DWC_GMAC_MODULE, (void *)__io_address(NX_CLKGEN_GetPhysicalAddress(CLOCKINDEX_OF_DWC_GMAC_MODULE)) );
@@ -86,7 +77,6 @@ int  nxpmac_init(struct platform_device *pdev)
 	NX_CLKGEN_SetClockDivisor( CLOCKINDEX_OF_DWC_GMAC_MODULE, 0, 1);    // Sync mode for 100 & 10Base-T
 
 	NX_CLKGEN_SetClockOutInv( CLOCKINDEX_OF_DWC_GMAC_MODULE, 0, CFALSE);    // TX Clk invert off : 100 & 10Base-T
-	//	NX_CLKGEN_SetClockOutInv( CLOCKINDEX_OF_DWC_GMAC_MODULE, 0, CTRUE);     // TX clk invert on : 100 & 10Base-T
 
 	NX_CLKGEN_SetClockDivisorEnable( CLOCKINDEX_OF_DWC_GMAC_MODULE, CTRUE);
 
@@ -100,40 +90,10 @@ int  nxpmac_init(struct platform_device *pdev)
 	NX_RSTCON_SetRST(RESETINDEX_OF_DWC_GMAC_MODULE_aresetn_i, RSTCON_NEGATE);
 	udelay(100);
 
-#define	CFG_ETHER_GMAC_PHY_RST_NUM				(PAD_GPIO_A + 10)
+	// nReset MDIO PHY
+	//__gmac_phy_reset();
 
-	nxp_soc_gpio_set_io_dir(CFG_ETHER_GMAC_PHY_RST_NUM, 1);
-	udelay( 100 );
-	nxp_soc_gpio_set_out_value(CFG_ETHER_GMAC_PHY_RST_NUM, 0);
-	udelay( 100 );
-	nxp_soc_gpio_set_out_value(CFG_ETHER_GMAC_PHY_RST_NUM, 1);
-	msleep( 30 );
-
-	//gpio_free(CFG_ETHER_GMAC_PHY_RST_NUM);
-
-	printk("NXP mac init ..................\n");
-	return 0;
-}
-
-int gmac_phy_reset(void *priv)
-{
-	// Set GPIO nReset
-#if 0
-	gpio_set_value(CFG_ETHER_GMAC_PHY_RST_NUM, 1);
-	udelay( 100 );
-	gpio_set_value(CFG_ETHER_GMAC_PHY_RST_NUM, 0);
-	udelay( 100 );
-	gpio_set_value(CFG_ETHER_GMAC_PHY_RST_NUM, 1);
-	msleep( 30 );
-#endif
-
-	nxp_soc_gpio_set_out_value(CFG_ETHER_GMAC_PHY_RST_NUM, 1);
-	udelay( 100 );
-	nxp_soc_gpio_set_out_value(CFG_ETHER_GMAC_PHY_RST_NUM, 0);
-	udelay( 100 );
-	nxp_soc_gpio_set_out_value(CFG_ETHER_GMAC_PHY_RST_NUM, 1);
-	msleep( 30 );
-
+	printk("NXP mac init .................. %s\n", phy_loopback_test ? "(Loopback)" : "");
 	return 0;
 }
 
@@ -144,9 +104,15 @@ static int nxpmac_probe_config_dt(struct platform_device *pdev,
 	struct device_node *np = pdev->dev.of_node;
 	uint32_t phy_addr;
 	uint32_t phy_irq;
+	struct device *dev = &pdev->dev;
 
 	if (!np)
 		return -ENODEV;
+
+	if (dev && !dev->dma_mask) {
+		dev->dma_mask = &dev->coherent_dma_mask;
+		dev->coherent_dma_mask = DMA_BIT_MASK(32);
+	}
 
 	*mac = of_get_mac_address(np);
 	plat->interface = of_get_phy_mode(np);
@@ -162,6 +128,11 @@ static int nxpmac_probe_config_dt(struct platform_device *pdev,
 		pr_warn("incorrect phy irq\n");
 		phy_irq = 0;
 	}
+	if (of_property_read_u32(np, "reset_gpio", &CFG_ETHER_GMAC_PHY_RST_NUM)) {
+		pr_err("incorrect phy reset number\n");
+	}
+	if (of_property_read_u32(np, "loopback_mode", &phy_loopback_test))
+		phy_loopback_test = 0;
 
 	plat->mdio_bus_data->probed_phy_irq = phy_irq;
 	plat->mdio_bus_data->phy_reset = gmac_phy_reset;

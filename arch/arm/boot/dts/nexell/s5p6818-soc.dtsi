@@ -334,6 +334,7 @@
 			clock-output-names = "mipi";
 		};
 
+/*
 		gmac:gmac@c8000 {
 			#clock-cells = <0>;
 			cell-id = <CLK_ID_GMAC>;
@@ -343,6 +344,7 @@
 			clk-input1 = <CLK_INPUT_GMAC_IN1>;
 			clock-output-names = "gmac";
 		};
+*/
 
 		spdiftx:spdiftx@b8000 {
 			#clock-cells = <0>;

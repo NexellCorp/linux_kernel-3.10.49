@@ -702,9 +702,6 @@ static void stmmac_adjust_link(struct net_device *dev)
 
 	DBG(probe, DEBUG, "stmmac_adjust_link: called.  address %d link %d\n",
 	    phydev->addr, phydev->link);
-	printk("stmmac_adjust_link: called.  address %d link %d\n",
-	    phydev->addr, phydev->link);
-
 
 	spin_lock_irqsave(&priv->lock, flags);
 

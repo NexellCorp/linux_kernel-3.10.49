@@ -387,7 +387,7 @@
 
 		gmac0:ethernet@60000 {
 			compatible = "nexell,nxp-gmac";
-			clocks = <&gmac>;
+			clocks = <&pclk>;
 			clock-names = "nxpmaceth";
 
 			reg = <PHYS_BASE_GMAC 0x2000>;
