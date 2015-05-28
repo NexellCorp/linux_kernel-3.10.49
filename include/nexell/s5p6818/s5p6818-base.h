@@ -112,7 +112,8 @@
 #define PHYS_BASE_CLK_38		(0xC00AD000)	// SPI1
 #define PHYS_BASE_CLK_39		(0xC00A7000)	// SPI2
 #define PHYS_BASE_CLK_40		(0xC009A000)
-#define PHYS_BASE_CLK_DREX		(0xC00E0000)
+
+#define PHYS_BASE_DREX			(0xC00E0000)
 
 /* IP Reset ID */
 #define	RESET_ID_AC97				0
