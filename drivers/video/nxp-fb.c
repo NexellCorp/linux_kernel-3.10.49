@@ -704,8 +704,8 @@ static int nxp_fb_map_ion_handle(struct nxp_fb_device *fb_dev,
 
     dma_buf_put(ctx->dma_buf);	/* decrease file count */
 
-    printk(KERN_INFO "%s.%d: dma addr = 0x%x, buf[0x%p]\n",
-        DEV_NAME_FB, fb_dev->device_id, ctx->dma_addr, buf);
+    printk(KERN_INFO "%s.%d: dma addr = 0x%lx, buf[0x%p]\n",
+        DEV_NAME_FB, fb_dev->device_id, (unsigned long)ctx->dma_addr, buf);
     return 0;
 
 err_map_attachment:
@@ -1345,6 +1345,7 @@ static const struct of_device_id fb_dt_match[];
 static int nxp_fb_get_dt(struct platform_device *pdev)
 {
 	struct device_node *np = pdev->dev.of_node;
+	struct device *dev = NULL;
 	const struct of_device_id *match;
 	struct nxp_fb_plat_data *plat;
 	int ret = 0, module;
@@ -1371,6 +1372,12 @@ static int nxp_fb_get_dt(struct platform_device *pdev)
 	of_property_read_u32(np, "lcd_with_mm", &plat->lcd_with_mm);
 	of_property_read_u32(np, "lcd_height_mm", &plat->lcd_height_mm);
 	of_property_read_u32(np, "force_vsync", &plat->force_vsync);
+
+	dev = &pdev->dev;
+	if (!dev->dma_mask) {
+		dev->dma_mask = &dev->coherent_dma_mask;
+		dev->coherent_dma_mask = DMA_BIT_MASK(32);
+	}
 
 	pdev->dev.platform_data = plat;
 
