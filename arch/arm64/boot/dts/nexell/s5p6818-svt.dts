@@ -63,7 +63,7 @@
 			status = "okay";
 			enable_dma = <1>;
 		};
-		
+
 		serial@a2000 {
 			status = "okay";
 			enable_dma = <1>;
@@ -77,15 +77,15 @@
 		serial@6f000 {
 			status = "okay";
 		};
-		
+
 		dw_mmc@62000 {
 			bus_speed = <100>;
-			cd_gpio = <(PAD_GPIO_C + 6)>;	
+			cd_gpio = <(PAD_GPIO_C + 6)>;
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@68000 {
 			bus_speed = <50>;
-			cd_gpio = <(PAD_GPIO_D + 21)>;	
+			cd_gpio = <(PAD_GPIO_D + 21)>;
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@69000 {
@@ -94,8 +94,8 @@
 			//non-removable;
 			//ddr-mode;
 			clk_dly = <0x01020000>;
-		};	
-		
+		};
+
 		spi@5b000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -145,7 +145,27 @@
 					hierarchy = <1>; //0 : master, 1 : slave
 				};
 			};
-				
+
+		};
+
+		adc:adc@53000 {
+			status = "okay";
+		};
+
+		nand:nand@51000 {
+			nand-bus-width = <8>;
+			nand-ecc-mode = "hw";
+			/*nand-on-flash-bbt = <1>;*/
+
+			nand-tacs = <0x0>;						/* unit: bclk cycle */
+			nand-tcah = <0x0>;
+			nand-tcos = <0xf>;
+			nand-tcoh = <0xf>;
+			nand-tacc = <0x3f>;
+			nand-ecc-bytes = <1024>;
+			nand-ecc-bits = <40>;
+			wp-gpio = <91>;							/* GPIO_C27 */
+			status = "okay";
 		};
 
 		rtc@10c00 {
@@ -320,7 +340,7 @@
 		spdifrx@5a000 {
 			status = "okay";
 		};
-		
+
 		ehci@30000 {
 			hsic_en = <1>;
 			hsic_exthub_gpio = <150>;
@@ -465,4 +485,13 @@
 		sample_rate = <48000>;
 	    format = "S16";
 	};
+
+    gpio-keys {
+        compatible = "gpio-keys";
+        power {
+            label = "Power";
+            gpios = <&gpio_alive 0 0 >;
+            linux,code = <116>; /* KEY_POWER */
+        };
+    };
 };

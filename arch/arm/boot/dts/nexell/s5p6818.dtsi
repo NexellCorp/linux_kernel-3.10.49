@@ -281,6 +281,7 @@
 			nexell,i2c-slave-addr = <0x66>;
 			nexell,reset-id = <RESET_ID_I2C0>;
 		};
+
 	    iic1:iic@a5000 {
 			compatible = "nexell,nxp-i2c";
 			reg = <PHYS_BASE_I2C1 0x100>;
@@ -308,37 +309,6 @@
 		mp2ts:mp2ts@5d000 {
 			compatible = "nexell,nxp-mp2ts";
 			reg = <PHYS_BASE_MPEGTSI 0x100>;
-		};
-
-		gpio_a:gpio@1a000 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_GPIOA 0x1000>;
-			nexell,gpioid = <0>;
-		};
-		gpio_b:gpio@1b000 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_GPIOB 0x1000>;
-			nexell,gpioid = <1>;
-		};
-		gpio_c:gpio@1c000 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_GPIOC 0x1000>;
-			nexell,gpioid = <2>;
-		};
-		gpio_d:gpio@1d000 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_GPIOD 0x1000>;
-			nexell,gpioid = <3>;
-		};
-		gpio_e:gpio@1e000 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_GPIOE 0x1000>;
-			nexell,gpioid = <4>;
-		};
-		gpio_alv:gpio@10800 {
-			compatible = "nexell,nxp-gpio";
-			reg = <PHYS_BASE_ALIVE 0x1000>;
-			nexell,gpioid = <5>;
 		};
 
 		spi_0:spi@5b000 {
@@ -450,6 +420,32 @@
 			clocks = <&ppm>;
 			in_pol = "invert";
 			status = "disabled";
+		};
+
+		adc:adc@53000 {
+			compatible = "nexell,nxp-adc";
+			reg = <PHYS_BASE_ADC 0x1000>;
+			interrupts = <0 IRQ_ADC 0>;
+			clocks = <&pclk>;
+			clock-names = "sys-bpclk";
+			sample_rate = <200000>;
+			#io-channel-cells = <1>;
+			status = "disabled";
+		};
+
+		nand:nand@51000 {
+			compatible = "nexell,nxp-nand";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			reg = <PHYS_BASE_MCUS 0x1000			/* control */
+			       PHYS_BASE_MCUS_SHADOW 0x1000		/* interface */
+			      >;
+			interrupts = <0 IRQ_MCUSTOP 0>;
+			clocks = <&bclk>;
+			clock-names = "sys-bbclk";
+			chip-delay = <10>;						/* unit: us */
+			/*gpios = <&piC 27 0>;*/
+			status = "disable";
 		};
 
 		display@0 {

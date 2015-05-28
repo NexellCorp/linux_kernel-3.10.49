@@ -134,7 +134,7 @@ static inline int s3c24xx_i2c_is2440(struct s3c24xx_i2c *i2c)
 #ifdef CONFIG_OF
 	if (i2c->dev->of_node)
 		return of_device_is_compatible(i2c->dev->of_node,
-				"samsung,s3c2440-i2c");
+				"nexell,nxp-i2c");
 #endif
 
 	type = platform_get_device_id(pdev)->driver_data;

@@ -91,7 +91,7 @@ static void cpu_early_setup_alive(void __iomem *base,
 #include <linux/memblock.h>
 #include <linux/cma.h>
 
-static void __init nxp_cma_region_reserve(struct cma_region *regions, const char *map)
+static void __init cma_region_reserve(struct cma_region *regions, const char *map)
 {
     struct cma_region *reg;
     phys_addr_t paddr_last = 0xFFFFFFFF;
@@ -178,7 +178,7 @@ static void __init nxp_cma_region_reserve(struct cma_region *regions, const char
 #endif
 }
 
-static void __init nxp_reserve_mem(void)
+static void __init cpu_early_setup_mem(void)
 {
     static struct cma_region regions[] = {
         {
@@ -205,7 +205,7 @@ static void __init nxp_reserve_mem(void)
 #ifdef CONFIG_ION_NXP_CONTIGHEAP_SIZE
     printk("%s: reserve CMA: size %d\n", __func__, CONFIG_ION_NXP_CONTIGHEAP_SIZE * SZ_1K);
 #endif
-    nxp_cma_region_reserve(regions, map);
+    cma_region_reserve(regions, map);
 }
 #endif
 
@@ -218,8 +218,10 @@ static int __init cpu_early_initcall_setup(void)
 	u32 pins[32];
 	int index = 0, i = 0, size = 0;
 
-	if (!np)
+	if (!np) {
+		printk("*** WARNING: Not exist pin DTS for init gpio/alive. ***\n");
 		return -EINVAL;
+	}
 
 	for_each_child_of_node(np, child) {
 		list = of_get_property(child, "pin,functions", &size);
@@ -244,7 +246,7 @@ static int __init cpu_early_initcall_setup(void)
 	}
 
 #if defined CONFIG_CMA && defined CONFIG_ION
-	nxp_reserve_mem();
+	cpu_early_setup_mem();
 #endif
 
 	return 0;
