@@ -422,6 +422,32 @@
 			status = "disabled";
 		};
 
+		adc:adc@53000 {
+			compatible = "nexell,nxp-adc";
+			reg = <PHYS_BASE_ADC 0x1000>;
+			interrupts = <0 IRQ_ADC 0>;
+			clocks = <&pclk>;
+			clock-names = "sys-bpclk";
+			sample_rate = <200000>;
+			#io-channel-cells = <1>;
+			status = "disabled";
+		};
+
+		nand:nand@51000 {
+			compatible = "nexell,nxp-nand";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			reg = <PHYS_BASE_MCUS 0x1000			/* control */
+			       PHYS_BASE_MCUS_SHADOW 0x1000		/* interface */
+			      >;
+			interrupts = <0 IRQ_MCUSTOP 0>;
+			clocks = <&bclk>;
+			clock-names = "sys-bbclk";
+			chip-delay = <10>;						/* unit: us */
+			/*gpios = <&piC 27 0>;*/
+			status = "disable";
+		};
+
 		display@0 {
 			compatible = "nexell,nxp-display";
 			reg = <0xc0102800 0x100>;
