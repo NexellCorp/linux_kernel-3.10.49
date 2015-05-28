@@ -303,7 +303,6 @@ static long nxp_ion_custom_ioctl(struct ion_client *client,
                 pr_err("%s error: failed to copy_from_user()\n", __func__);
                 return -EFAULT;
             }
-            pr_debug("%s: request buf fd(%d)\n", __func__, data.ion_buffer_fd);
             dmabuf = dma_buf_get(data.ion_buffer_fd);
             if (IS_ERR_OR_NULL(dmabuf)) {
                 pr_err("%s: can't get dmabuf\n", __func__);
@@ -354,7 +353,7 @@ static struct ion_platform_data *nxp_ion_parse_dt(struct device *dev)
     }
     printk("%s: nr %d\n", __func__, pdata->nr);
 
-    pdata->heaps = devm_kzalloc(dev, pdata->nr & sizeof(struct ion_platform_heap), GFP_KERNEL);
+    pdata->heaps = devm_kzalloc(dev, pdata->nr * sizeof(struct ion_platform_heap), GFP_KERNEL);
     if (!pdata->heaps) {
         dev_err(dev, "failed to devm_kzalloc() for struct ion_platform_heap\n");
         kfree(pdata);
@@ -443,7 +442,7 @@ static int nxp_ion_probe(struct platform_device *pdev)
 
 #ifdef CONFIG_OF
     if (pdata)
-        kfree(pdata);
+        devm_kfree(&pdev->dev, pdata);
 #endif
 
     printk("%s success!!!\n", __func__);
@@ -459,7 +458,7 @@ err:
     ion_device_destroy(ion_dev);
 #ifdef CONFIG_OF
     if (pdata)
-        kfree(pdata);
+        devm_kfree(&pdev->dev, pdata);
 #endif
     return error;
 }
@@ -501,8 +500,7 @@ static int __init ion_init(void)
     return platform_driver_register(&ion_driver);
 }
 
-//subsys_initcall(ion_init);
-module_init(ion_init);
+subsys_initcall(ion_init);
 
 MODULE_AUTHOR("swpark <swpark@nexell.co.kr>");
 MODULE_DESCRIPTION("ION Platform Driver for Nexell");

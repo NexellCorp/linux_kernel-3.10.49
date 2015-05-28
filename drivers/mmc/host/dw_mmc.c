@@ -2535,6 +2535,21 @@ static bool mci_wait_reset(struct device *dev, struct dw_mci *host)
 }
 //static u64 dwmci_dmamask = DMA_BIT_MASK(32);
 
+static int get_id_cd[3] = { 0, };
+static int _dwmci_get_cd0(u32 slot_id)
+{
+	int ret = 0;
+	return nxp_soc_gpio_get_in_value(get_id_cd[0]);
+}
+static int _dwmci_get_cd1(u32 slot_id)
+{
+	int ret = 0;
+	return nxp_soc_gpio_get_in_value(get_id_cd[1]);
+}
+static int _dwmci_get_cd2(u32 slot_id)
+{
+	return  nxp_soc_gpio_get_in_value(get_id_cd[2]);
+}
 static int __dwmci_init(u32 slot_id, irq_handler_t handler, void *data)
 {
 	struct dw_mci *host = (struct dw_mci *)data;
@@ -2553,11 +2568,25 @@ static int __dwmci_init(u32 slot_id, irq_handler_t handler, void *data)
 	id  = of_alias_get_id(np,"dwmmc");
 	ret = of_property_read_u32(np,"cd_gpio",&io);
 			
-	if(ret < 0)
+	if(ret < 0){
+		pdata->quirks |= DW_MCI_QUIRK_BROKEN_CARD_DETECTION;
 		return 0;	
-	
-	pdata->cd_type					= DW_MCI_CD_EXTERNAL;	
-	
+	}
+	get_id_cd[id] = io;	
+	pdata->cd_type	= DW_MCI_CD_EXTERNAL;	
+#if 1
+	switch (id){
+	case 0:
+	pdata->get_cd = _dwmci_get_cd0;	
+	break;
+	case 1:
+	pdata->get_cd = _dwmci_get_cd1;	
+	break;
+	case 2:
+	pdata->get_cd = _dwmci_get_cd2;	
+	break;
+	};
+#endif
 	irq =IRQ_GPIO_START + io;
 	printk(" dw_mmc dw_mmc.%d: Using external card detect irq %3d (io %2d)\n", id, irq, io);
 	
@@ -2623,6 +2652,7 @@ static int __dwmci_get_ro(u32 slot_id)
 }
 
 
+static u64 dwmci_dmamask = DMA_BIT_MASK(32);
 
 static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 {
@@ -2636,8 +2666,10 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	    dev_err(dev, "could not allocate memory for pdata\n");
         return ERR_PTR(-ENOMEM);
 	}
-	
-	pdata->quirks           = DW_MCI_QUIRK_BROKEN_CARD_DETECTION |DW_MCI_QUIRK_HIGHSPEED;
+	dev->dma_mask = &dwmci_dmamask;	
+	dev->coherent_dma_mask=  DMA_BIT_MASK(32);
+	//pdata->quirks           = DW_MCI_QUIRK_BROKEN_CARD_DETECTION |DW_MCI_QUIRK_HIGHSPEED;
+	pdata->quirks           = DW_MCI_QUIRK_HIGHSPEED;
 	pdata->caps             = MMC_CAP_CMD23;
 	pdata->num_slots		= 1;		
 	
@@ -2649,7 +2681,7 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	pdata->max_bus_hz		= 200 * 1000 * 1000;
 	pdata->fifo_depth		= 0x20;								
 	pdata->detect_delay_ms	= 200;		
-		
+	pdata->desc_sz 			= 4;
 	pdata->init				= __dwmci_init;						
 	pdata->get_bus_wd		= __dwmci_get_bus_wd;
 	pdata->set_io_timing	= __dwmci_set_io_timing;
@@ -2668,6 +2700,10 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	if(!(of_property_read_u32(np,"bus_wd",&tmp))){
 		if(tmp == 8)
 			pdata->caps |= MMC_CAP_8_BIT_DATA;
+	}
+	if(!(of_property_read_u32(np,"reset-id",&tmp))){
+		printk("reset\n");
+		nxp_soc_peri_reset_set(tmp);
 	}
 	if(of_find_property(np,"non-removable",NULL)){
 		pdata->caps |= MMC_CAP_NONREMOVABLE;

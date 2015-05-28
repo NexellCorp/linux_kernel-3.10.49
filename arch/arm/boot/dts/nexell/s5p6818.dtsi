@@ -462,6 +462,7 @@
 			status = "disable";
 		};
 
+		#ifdef CONFIG_NXP_DISPLAY_1ST
 		display@0 {
 			compatible = "nexell,nxp-display";
 			reg = <0xc0102800 0x100>;
@@ -471,7 +472,9 @@
 			status = "disabled";
 			#endif
 		};
+		#endif
 
+		#ifdef CONFIG_NXP_DISPLAY_2ST
 		display@1 {
 			compatible = "nexell,nxp-display";
 			reg = <0xc0102c00 0x100>;
@@ -481,27 +484,32 @@
 			status = "disabled";
 			#endif
 		};
+		#endif
 
+		#ifdef CONFIG_FB0_NXP
 		framebuffer@0 {
 			compatible = "nexell,nxp-fb";
 			reg = <0xc0102000 0x100>;
 			status = "disabled";
 		};
+		#endif
 
+		#ifdef CONFIG_FB1_NXP
 		framebuffer@1 {
 			compatible = "nexell,nxp-fb";
 			reg = <0xc0102400 0x100>;
 			status = "disabled";
 		};
+		#endif
 
+		#if defined(CONFIG_NXP_DISPLAY_LVDS)
 		lvds@0 {
 			compatible = "nexell,nxp-lvds";
-			#if defined(CONFIG_NXP_DISPLAY_LVDS)
 			display_in = <(6 + CONFIG_NXP_DISPLAY_LVDS_IN)>; /* 6: syncgen0, 7:syncgen1 */
-			#endif
 			device_id = <4>;
 			status = "disabled";
 		};
+		#endif
 
   		pdm@14000 {
 			compatible = "nexell,nxp-pdm";

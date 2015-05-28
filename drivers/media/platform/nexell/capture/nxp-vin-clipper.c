@@ -182,7 +182,8 @@ static int _hw_set_clock(struct nxp_vin_clipper *me, bool on)
 #else
     if (on) {
         volatile u32 *clkgen_base = (volatile u32 *)IO_ADDRESS(NX_CLKGEN_GetPhysicalAddress(NX_VIP_GetClockNumber(module)));
-        NX_CLKGEN_SetBaseAddress(NX_VIP_GetClockNumber(module), (U32)clkgen_base);
+        /*NX_CLKGEN_SetBaseAddress(NX_VIP_GetClockNumber(module), (U32)clkgen_base);*/
+        NX_CLKGEN_SetBaseAddress(NX_VIP_GetClockNumber(module), clkgen_base);
         NX_CLKGEN_SetClockDivisorEnable(NX_VIP_GetClockNumber(module), CTRUE);
         NX_CLKGEN_SetClockBClkMode(NX_VIP_GetClockNumber(module), NX_BCLKMODE_DYNAMIC);
 #if defined(CONFIG_ARCH_S5P4418)
@@ -206,7 +207,8 @@ static int _hw_set_clock(struct nxp_vin_clipper *me, bool on)
         }
 
         vmsg("VIP CLK GEN VAL: 0x%x\n", *clkgen_base);
-        NX_VIP_SetBaseAddress(module, IO_ADDRESS(NX_VIP_GetPhysicalAddress(module)));
+        /*NX_VIP_SetBaseAddress(module, IO_ADDRESS(NX_VIP_GetPhysicalAddress(module)));*/
+        NX_VIP_SetBaseAddress(module, (volatile u32 *)IO_ADDRESS(NX_VIP_GetPhysicalAddress(module)));
     }
 #endif
 
@@ -656,6 +658,7 @@ static void _disable_all(struct nxp_vin_clipper *me)
 {
     if (NXP_ATOMIC_READ(&me->state) & NXP_VIN_STATE_RUNNING_CLIPPER) {
         vmsg("%s: clipper video stopping...\n", __func__);
+
         NXP_ATOMIC_SET_MASK(NXP_VIN_STATE_STOPPING, &me->state);
         if (!wait_for_completion_timeout(&me->stop_done, 2*HZ)) {
             struct nxp_capture *parent = nxp_vin_to_parent(me);

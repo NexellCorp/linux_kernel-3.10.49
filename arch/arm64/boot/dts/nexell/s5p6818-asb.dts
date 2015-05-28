@@ -53,30 +53,48 @@
 			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 		};
 
-		#include "s5p6818-svt-pin.dtsi"
+		#include "s5p6818-asb-pin.dtsi"
 
 		serial@a1000 {
 			enable_dma = <1>;
 		};
 
 		serial@a0000 {
+			status = "okay";
 			enable_dma = <1>;
 		};
+		
+		serial@a2000 {
+			status = "okay";
+			enable_dma = <1>;
+		};
+		serial@a3000 {
+			status = "okay";
+		};
+		serial@6d000 {
+			status = "okay";
+		};
+		serial@6f000 {
+			status = "okay";
+		};
+		
 		dw_mmc@62000 {
 			bus_speed = <100>;
 			cd_gpio = <(PAD_GPIO_ALV + 1)>;	
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@68000 {
-			bus_speed = <100>;
+			bus_speed = <50>;
+			cd_gpio = <(PAD_GPIO_C + 0)>;	
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@69000 {
-			bus_speed = <200>;
-			bus_wd = <8>;
-			non-removable;
-			ddr-mode;
-			clk_dly = <0x02030000>;
+			bus_speed = <50>;
+			cd_gpio = <(PAD_GPIO_C + 1)>;	
+			//bus_wd = <4>;
+			//non-removable;
+			//ddr-mode;
+			clk_dly = <0x01020000>;
 		};	
 		
 		spi@5b000 {
@@ -91,18 +109,45 @@
 				reg = <0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
-				  spi-cs-gpio = <10>;
+				  spi-cs-gpio = <(PAD_GPIO_C + 30)>;
 					spi-feedback-delay = <02>;
+					hierarchy = <0>; //0 : master, 1 : slave
 				};
 			};
 		};
 		spi@5c000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
+			//status = "okay";
+			spidev@0 {
+				compatible = "spidev";
+				reg = <0>;
+				spi-max-frequency = < 50000000 >;
+				controller-data {
+				  spi-cs-gpio = <(PAD_GPIO_E + 15)>;
+					spi-feedback-delay = <02>;
+				};
+			};
 		};
 		spi@5f000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
+			status = "okay";
+			spidev@0 {
+				compatible = "spidev";
+				reg = <0>;
+				spi-max-frequency = < 50000000 >;
+				controller-data {
+			  	spi-cs-gpio = <(PAD_GPIO_C + 10)>;
+					spi-feedback-delay = <02>;
+					hierarchy = <1>; //0 : master, 1 : slave
+				};
+			};
+				
 		};
 
 		rtc@10c00 {
@@ -193,15 +238,11 @@
 			status = "okay";
 		};
 
-        iic0:iic@a4000 {
+   iic0:iic@a4000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			rt5631: rt5631@1a {
-				compatible = "rt,rt5631";
-				reg = <0x1a>;
-			};
-	    };
+		};
 
         spdiftx@59000 {
 			status = "okay";
@@ -262,22 +303,22 @@
 					#ifndef CONFIG_REGULATOR_MP8845C
 					VCC1P1_ARM_PMIC:	dcdc1	{ PMIC_PDATA_INIT( 0, "nxe2000_dcdc1",	 900000, 1500000, 1, 1, 1200000, 1, 0x4) };
 					VCC1P0_CORE_PMIC:	dcdc2	{ PMIC_PDATA_INIT( 1, "nxe2000_dcdc2",	1000000, 1500000, 1, 1, 1100000, 1, 0x4) };
-					#endif
-					VCC3P3_PMIC: 		dcdc3	{ PMIC_PDATA_INIT( 2, "nxe2000_dcdc3",	1000000, 3500000, 1, 1, 3300000, 1, 0x0) };
-					VCC1P5_DDR_PMIC:	dcdc4	{ PMIC_PDATA_INIT( 3, "nxe2000_dcdc4",	1000000, 2000000, 1, 1, 1500000, 1, 0xF) };
-					VCC1P5_CORE_PMIC:	dcdc5	{ PMIC_PDATA_INIT( 4, "nxe2000_dcdc5",	1000000, 2000000, 1, 1, 1500000, 1, 0x4) };
-					VCC_LDO1:			ldo1	{ PMIC_PDATA_INIT( 5, "nxe2000_ldo1",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
-					VCC_LDO2:			ldo2	{ PMIC_PDATA_INIT( 6, "nxe2000_ldo2",	1000000, 3500000, 0, 0, 1800000, 0, 0x0) };
-					VCC1P8_CORE_PMIC:	ldo3	{ PMIC_PDATA_INIT( 7, "nxe2000_ldo3",	1000000, 3500000, 1, 1, 1800000, 1, 0x2) };
-					VCC1P8_DEVICE_PMIC:	ldo4	{ PMIC_PDATA_INIT( 8, "nxe2000_ldo4",	1000000, 3500000, 1, 1, 1800000, 1, 0x2) };
-					VCC_LDO5:			ldo5	{ PMIC_PDATA_INIT( 9, "nxe2000_ldo5",	1000000, 3500000, 0, 0, 2800000, 0, 0x0) };
-					VCC3P3_ALV:			ldo6	{ PMIC_PDATA_INIT(10, "nxe2000_ldo6",	1000000, 3500000, 1, 1, 3300000, 1, 0xF) };
-					VCC2P8_PMIC:		ldo7	{ PMIC_PDATA_INIT(11, "nxe2000_ldo7",	1000000, 3500000, 1, 1, 2800000, 1, 0x1) };
-					VCC_LDO8:			ldo8	{ PMIC_PDATA_INIT(12, "nxe2000_ldo8",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
-					VCC_LDO9:			ldo9	{ PMIC_PDATA_INIT(13, "nxe2000_ldo9",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
-					VCC1P2_PMIC:		ldo10	{ PMIC_PDATA_INIT(14, "nxe2000_ldo10",	1000000, 3500000, 1, 1, 1200000, 1, 0x0) };
-					VCC1P0_ALV:			ldortc1	{ PMIC_PDATA_INIT(15, "nxe2000_rtc1",	1700000, 3500000, 1, 1, 1800000, 1, 0xF) };
-					VCC1P8_ALV:			ldortc2	{ PMIC_PDATA_INIT(16, "nxe2000_rtc2",	1000000, 3500000, 1, 1, 1000000, 1, 0xF) };
+					#endif	
+					VCC3P3_PMIC: 		dcdc3	{ PMIC_PDATA_INIT			( 2, "nxe2000_dcdc3",	1000000, 3500000, 1, 1, 3300000, 1, 0x0) };
+					VCC1P5_DDR_PMIC:	dcdc4	{ PMIC_PDATA_INIT 	( 3, "nxe2000_dcdc4",	1000000, 2000000, 1, 1, 1500000, 1, 0xF) };
+					VCC1P5_CORE_PMIC:	dcdc5	{ PMIC_PDATA_INIT		( 4, "nxe2000_dcdc5",	1000000, 2000000, 1, 1, 1500000, 1, 0x4) };
+					VCC_LDO1:			ldo1	{ PMIC_PDATA_INIT				( 5, "nxe2000_ldo1",	1000000, 3500000, 1, 0, 3300000, 1, 0x0) };
+					VCC_LDO2:			ldo2	{ PMIC_PDATA_INIT				( 6, "nxe2000_ldo2",	1000000, 3500000, 1, 1, 1800000, 1, 0x0) };
+					VCC1P8_CORE_PMIC:	ldo3	{ PMIC_PDATA_INIT		( 7, "nxe2000_ldo3",	1000000, 3500000, 1, 1, 1800000, 1, 0x2) };
+					VCC1P8_DEVICE_PMIC:	ldo4	{ PMIC_PDATA_INIT	( 8, "nxe2000_ldo4",	1000000, 3500000, 1, 1, 1800000, 1, 0x2) };
+					VCC_LDO5:			ldo5	{ PMIC_PDATA_INIT				( 9, "nxe2000_ldo5",	1000000, 3500000, 0, 0, 2800000, 0, 0x0) };
+					VCC3P3_ALV:			ldo6	{ PMIC_PDATA_INIT			(10, "nxe2000_ldo6",	1000000, 3500000, 1, 1, 3300000, 1, 0xF) };
+					VCC2P8_PMIC:		ldo7	{ PMIC_PDATA_INIT			(11, "nxe2000_ldo7",	1000000, 3500000, 1, 1, 3300000, 1, 0x1) };
+					VCC_LDO8:			ldo8	{ PMIC_PDATA_INIT				(12, "nxe2000_ldo8",	1000000, 3500000, 1, 0, 3300000, 1, 0x0) };
+					VCC_LDO9:			ldo9	{ PMIC_PDATA_INIT				(13, "nxe2000_ldo9",	1000000, 3500000, 1, 0, 3300000, 1, 0x0) };
+					VCC1P2_PMIC:		ldo10	{ PMIC_PDATA_INIT			(14, "nxe2000_ldo10",	1000000, 3500000, 1, 0, 1200000, 0, 0x0) };
+					VCC1P0_ALV:			ldortc1	{ PMIC_PDATA_INIT		(15, "nxe2000_rtc1",	1700000, 3500000, 1, 1, 1800000, 1, 0xF) };
+					VCC1P8_ALV:			ldortc2	{ PMIC_PDATA_INIT		(16, "nxe2000_rtc2",	1000000, 3500000, 1, 1, 1000000, 1, 0xF) };
 				};
 			};
 		};
@@ -312,7 +353,7 @@
 	    format = "S16";
 		nexell,i2s-controller = <&i2s_0>;
 	};
-
+#if 0
 	sound {
 		compatible = "nexell,nxp-rt5631";
 		ch = <1>;
@@ -321,7 +362,7 @@
 		nexell,i2s-controller = <&i2s_1>;
 		nexell,audio-codec = <&rt5631>;
 	};
-
+#endif
 	snd_null_card_2:snd_null_card@2 {
 		compatible = "nexell,snd-null-card";
 		ch = <2>;

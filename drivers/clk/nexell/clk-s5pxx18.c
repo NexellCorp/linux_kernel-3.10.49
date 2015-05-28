@@ -18,6 +18,7 @@
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/clk-private.h>
+#include <linux/syscore_ops.h>
 
 #include "clk-s5pxx18.h"
 
@@ -393,6 +394,7 @@ static void __init clk_dev_parse_device_data(struct device_node *np,
 {
 	struct clk_dev_peri *peri = clk_data->peri;
 	unsigned int frequency = 0;
+	u32 value;
 
    	if (of_property_read_string(np, "clock-output-names", &peri->name)) {
    	    pr_err("clock node is missing 'clock-output-names'\n");
@@ -422,6 +424,12 @@ static void __init clk_dev_parse_device_data(struct device_node *np,
    		pr_err("clock node is missing 'clk-input1'\n");
     	return;
    	}
+
+	if (!of_property_read_u32(np, "clk-input-ext1", &value))
+		peri->in_extclk_1 = value;
+
+	if (!of_property_read_u32(np, "clk-input-ext2", &value))
+		peri->in_extclk_2 = value;
 
    	if (!of_property_read_u32(np, "clock-frequency", &frequency))
    		clk_data->rate = frequency;
