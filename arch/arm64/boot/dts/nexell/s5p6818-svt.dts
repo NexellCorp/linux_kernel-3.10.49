@@ -62,25 +62,42 @@
 		};
 
 		serial@a0000 {
+			status = "okay";
 			enable_dma = <1>;
 		};
+
+		serial@a2000 {
+			status = "okay";
+			enable_dma = <1>;
+		};
+		serial@a3000 {
+			status = "okay";
+		};
+		serial@6d000 {
+			status = "okay";
+		};
+		serial@6f000 {
+			status = "okay";
+		};
+
 		dw_mmc@62000 {
 			bus_speed = <100>;
-			cd_gpio = <(PAD_GPIO_ALV + 1)>;	
+			cd_gpio = <(PAD_GPIO_C + 6)>;
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@68000 {
-			bus_speed = <100>;
+			bus_speed = <50>;
+			cd_gpio = <(PAD_GPIO_D + 21)>;
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@69000 {
-			bus_speed = <200>;
-			bus_wd = <8>;
-			non-removable;
-			ddr-mode;
-			clk_dly = <0x02030000>;
-		};	
-		
+			bus_speed = <100>;
+			//bus_wd = <4>;
+			//non-removable;
+			//ddr-mode;
+			clk_dly = <0x01020000>;
+		};
+
 		spi@5b000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -93,18 +110,64 @@
 				reg = <0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
-				  spi-cs-gpio = <10>;
+				  spi-cs-gpio = <(PAD_GPIO_C + 30)>;
 					spi-feedback-delay = <02>;
 				};
 			};
 		};
 		spi@5c000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
+			//status = "okay";
+			spidev@0 {
+				compatible = "spidev";
+				reg = <0>;
+				spi-max-frequency = < 50000000 >;
+				controller-data {
+				  spi-cs-gpio = <(PAD_GPIO_E + 15)>;
+					spi-feedback-delay = <02>;
+				};
+			};
 		};
 		spi@5f000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
+			status = "okay";
+			spidev@0 {
+				compatible = "spidev";
+				reg = <0>;
+				spi-max-frequency = < 50000000 >;
+				controller-data {
+			  	spi-cs-gpio = <(PAD_GPIO_C + 10)>;
+					spi-feedback-delay = <02>;
+					hierarchy = <1>; //0 : master, 1 : slave
+				};
+			};
+
+		};
+
+		adc:adc@53000 {
+			status = "okay";
+		};
+
+		nand:nand@51000 {
+			nand-bus-width = <8>;
+			nand-ecc-mode = "hw";
+			/*nand-on-flash-bbt = <1>;*/
+
+			nand-tacs = <0x0>;						/* unit: bclk cycle */
+			nand-tcah = <0x0>;
+			nand-tcos = <0xf>;
+			nand-tcoh = <0xf>;
+			nand-tacc = <0x3f>;
+			nand-ecc-bytes = <1024>;
+			nand-ecc-bits = <40>;
+			wp-gpio = <91>;							/* GPIO_C27 */
+			status = "okay";
 		};
 
 		adc:adc@53000 {
@@ -200,7 +263,74 @@
 			};
 		};
 
-		pdm@14000 {
+
+        nxp-ion {
+            compatible = "nexell,nxp-ion";
+            nr = <3>;
+            names = "ion_noncontig_heap", "ion_contig_heap", "nxp_contig_heap";
+            types = <0 1 6>;
+        };
+
+        /*nxp-v4l2 {*/
+            /*compatible = "nexell,nxp-v4l2";*/
+
+            /*capture {*/
+                /*nr = <2>;*/
+
+                /*capture0 {*/
+                    /*module = <2>;*/
+                    /*type = <0>;*/
+
+                    /*port = <0>;*/
+                    /*external_sync = <0>;*/
+
+                    /*h_frontporch = <7>;*/
+                    /*h_syncwidth = <1>;*/
+                    /*h_backporch = <10>;*/
+                    /*v_frontporch = <0>;*/
+                    /*v_syncwidth = <2>;*/
+                    /*v_backporch = <3>;*/
+
+                    /*data_order = <0>;*/
+                    /*vid = <0>;*/
+
+                    /*interlace = <0>;*/
+                    /*late_power_down = <0>;*/
+
+                    /*sensor {*/
+                        /*type = <0>;*/
+                        /*sensor_name = "MT9D111";*/
+                        /*i2c_adapter = <2>;*/
+                        /*addr = <0x5d>;*/
+                    /*};*/
+
+                    /*power {*/
+                        /*reset_io = <(PAD_GPIO_C+30)>;*/
+                        /*reset_invert = <1>;*/
+                        /*reset_delay_ms = <10>;*/
+                    /*};*/
+                /*};*/
+
+                /*capture1 {*/
+                    /*module = <0>;*/
+                    /*type = <1>;*/
+
+                    /*sensor {*/
+                        /*type = <0>;*/
+                        /*sensor_name = "THP7212NX";*/
+                        /*i2c_adapter = <1>;*/
+                        /*addr = <0x60>;*/
+                    /*};*/
+
+                    /*power {*/
+                        /*reset_io = <(PAD_GPIO_E+16)>;*/
+                        /*reset_invert = <1>;*/
+                        /*reset_delay_ms = <10>;*/
+                    /*};*/
+                /*};*/
+            /*};*/
+        /*};*/
+        pdm@14000 {
 			status = "okay";
 		};
 
@@ -250,7 +380,7 @@
 		spdifrx@5a000 {
 			status = "okay";
 		};
-		
+
 		ehci@30000 {
 			hsic_en = <1>;
 			hsic_exthub_gpio = <150>;
@@ -265,9 +395,9 @@
 			mp8845c@1c {
 				compatible = "nx,mp8845c";
 				reg = <0x1c>;
-				nx,id = <0>;
+				nx,id = <1>;
 				regulators {
-					vcc1p1_arm_pmic: vout1 { PMIC_PDATA_INIT(0, "mp8845c_vout0", 600000, 1500000, 1, 1, 1300000, 1, 0xF) };
+					VCC1P0_CORE_PMIC: vout2 { PMIC_PDATA_INIT(1, "mp8845c_vout1", 600000, 1500000, 1, 1, 1100000, 1, 0xF) };
 				};
 			};
 		};
@@ -279,16 +409,16 @@
 			mp8845c@1c {
 				compatible = "nx,mp8845c";
 				reg = <0x1c>;
-				nx,id = <1>;
+				nx,id = <0>;
 				regulators {
-					vcc1p0_core_pmic: vout2 { PMIC_PDATA_INIT(1, "mp8845c_vout1", 600000, 1500000, 1, 1, 1200000, 1, 0xF) };
+					VCC1P1_ARM_PMIC: vout1 { PMIC_PDATA_INIT(0, "mp8845c_vout0", 600000, 1500000, 1, 1, 1200000, 1, 0xF) };
 				};
 			};
 		};
 		#endif // CONFIG_REGULATOR_MP8845C
 
 		#ifdef CONFIG_REGULATOR_NXE2000
-		iic0:iic@a4000 {
+		iic2:iic@a6000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
@@ -296,28 +426,28 @@
 				compatible = "nx,nxe2000";
 				reg = <0x32>;
 				nx,id = <0>;
-				vdd_arm-supply		= <&vcc1p1_arm_pmic>;
-				vdd_core-supply		= <&vcc1p0_core_pmic>;
+				vdd_arm-supply		= <&VCC1P1_ARM_PMIC>;
+				vdd_core-supply		= <&VCC1P0_CORE_PMIC>;
 				regulators {
 					#ifndef CONFIG_REGULATOR_MP8845C
-					vcc1p1_arm_pmic:	dcdc1	{ PMIC_PDATA_INIT( 0, "nxe2000_dcdc1",	 900000, 1500000, 1, 1, 1200000, 1, 0x4) };
-					vcc1p0_core_pmic:	dcdc2	{ PMIC_PDATA_INIT( 1, "nxe2000_dcdc2",	1000000, 1500000, 1, 1, 1100000, 1, 0x4) };
+					VCC1P1_ARM_PMIC:	dcdc1	{ PMIC_PDATA_INIT( 0, "nxe2000_dcdc1",	 900000, 1500000, 1, 1, 1200000, 1, 0x4) };
+					VCC1P0_CORE_PMIC:	dcdc2	{ PMIC_PDATA_INIT( 1, "nxe2000_dcdc2",	1000000, 1500000, 1, 1, 1100000, 1, 0x4) };
 					#endif
-					vdd_sys_3p3: 		dcdc3	{ PMIC_PDATA_INIT( 2, "nxe2000_dcdc3",	1000000, 3500000, 1, 1, 3300000, 1, 0x0) };
-					vdd_ddr_1p5p:		dcdc4	{ PMIC_PDATA_INIT( 3, "nxe2000_dcdc4",	1000000, 2000000, 1, 1, 1500000, 1, 0xF) };
-					vdd_sys_1p5p:		dcdc5	{ PMIC_PDATA_INIT( 4, "nxe2000_dcdc5",	1000000, 2000000, 1, 1, 1500000, 1, 0x4) };
-					vcc_ldo1:			ldo1	{ PMIC_PDATA_INIT( 5, "nxe2000_ldo1",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
-					vcc_ldo2:			ldo2	{ PMIC_PDATA_INIT( 6, "nxe2000_ldo2",	1000000, 3500000, 0, 0, 1800000, 0, 0x0) };
-					vcc1p8_core_pmic:	ldo3	{ PMIC_PDATA_INIT( 7, "nxe2000_ldo3",	1000000, 3500000, 1, 1, 1800000, 1, 0x2) };
-					vcc1p8_device_pmic:	ldo4	{ PMIC_PDATA_INIT( 8, "nxe2000_ldo4",	1000000, 3500000, 1, 1, 1800000, 1, 0x2) };
-					vcc_ldo5:			ldo5	{ PMIC_PDATA_INIT( 9, "nxe2000_ldo5",	1000000, 3500000, 0, 0, 2800000, 0, 0x0) };
-					vcc3p3_alv:			ldo6	{ PMIC_PDATA_INIT(10, "nxe2000_ldo6",	1000000, 3500000, 1, 1, 3300000, 1, 0xF) };
-					vcc2p8_pmic:		ldo7	{ PMIC_PDATA_INIT(11, "nxe2000_ldo7",	1000000, 3500000, 1, 1, 2800000, 1, 0x1) };
-					vcc_ldo8:			ldo8	{ PMIC_PDATA_INIT(12, "nxe2000_ldo8",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
-					vcc_ldo9:			ldo9	{ PMIC_PDATA_INIT(13, "nxe2000_ldo9",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
-					vcc1p2_pmic:		ldo10	{ PMIC_PDATA_INIT(14, "nxe2000_ldo10",	1000000, 3500000, 1, 1, 1200000, 1, 0x0) };
-					vcc1p0_alv:			ldortc1	{ PMIC_PDATA_INIT(15, "nxe2000_rtc1",	1700000, 3500000, 1, 1, 1800000, 1, 0xF) };
-					vcc1p8_alv:			ldortc2	{ PMIC_PDATA_INIT(16, "nxe2000_rtc2",	1000000, 3500000, 1, 1, 1000000, 1, 0xF) };
+					VCC3P3_PMIC: 		dcdc3	{ PMIC_PDATA_INIT( 2, "nxe2000_dcdc3",	1000000, 3500000, 1, 1, 3300000, 1, 0x0) };
+					VCC1P5_DDR_PMIC:	dcdc4	{ PMIC_PDATA_INIT( 3, "nxe2000_dcdc4",	1000000, 2000000, 1, 1, 1500000, 1, 0xF) };
+					VCC1P5_CORE_PMIC:	dcdc5	{ PMIC_PDATA_INIT( 4, "nxe2000_dcdc5",	1000000, 2000000, 1, 1, 1500000, 1, 0x4) };
+					VCC_LDO1:			ldo1	{ PMIC_PDATA_INIT( 5, "nxe2000_ldo1",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
+					VCC_LDO2:			ldo2	{ PMIC_PDATA_INIT( 6, "nxe2000_ldo2",	1000000, 3500000, 0, 0, 1800000, 0, 0x0) };
+					VCC1P8_CORE_PMIC:	ldo3	{ PMIC_PDATA_INIT( 7, "nxe2000_ldo3",	1000000, 3500000, 1, 1, 1800000, 1, 0x2) };
+					VCC1P8_DEVICE_PMIC:	ldo4	{ PMIC_PDATA_INIT( 8, "nxe2000_ldo4",	1000000, 3500000, 1, 1, 1800000, 1, 0x2) };
+					VCC_LDO5:			ldo5	{ PMIC_PDATA_INIT( 9, "nxe2000_ldo5",	1000000, 3500000, 0, 0, 2800000, 0, 0x0) };
+					VCC3P3_ALV:			ldo6	{ PMIC_PDATA_INIT(10, "nxe2000_ldo6",	1000000, 3500000, 1, 1, 3300000, 1, 0xF) };
+					VCC2P8_PMIC:		ldo7	{ PMIC_PDATA_INIT(11, "nxe2000_ldo7",	1000000, 3500000, 1, 1, 2800000, 1, 0x1) };
+					VCC_LDO8:			ldo8	{ PMIC_PDATA_INIT(12, "nxe2000_ldo8",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
+					VCC_LDO9:			ldo9	{ PMIC_PDATA_INIT(13, "nxe2000_ldo9",	1000000, 3500000, 0, 0, 3300000, 0, 0x0) };
+					VCC1P2_PMIC:		ldo10	{ PMIC_PDATA_INIT(14, "nxe2000_ldo10",	1000000, 3500000, 1, 1, 1200000, 1, 0x0) };
+					VCC1P0_ALV:			ldortc1	{ PMIC_PDATA_INIT(15, "nxe2000_rtc1",	1700000, 3500000, 1, 1, 1800000, 1, 0xF) };
+					VCC1P8_ALV:			ldortc2	{ PMIC_PDATA_INIT(16, "nxe2000_rtc2",	1000000, 3500000, 1, 1, 1000000, 1, 0xF) };
 				};
 			};
 		};
@@ -395,4 +525,13 @@
 		sample_rate = <48000>;
 	    format = "S16";
 	};
+
+    gpio-keys {
+        compatible = "gpio-keys";
+        power {
+            label = "Power";
+            gpios = <&gpio_alive 0 0 >;
+            linux,code = <116>; /* KEY_POWER */
+        };
+    };
 };

@@ -1787,7 +1787,10 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 	struct dma_desc *desc, *first;
 	unsigned int nopaged_len = skb_headlen(skb);
 
+	spin_lock(&priv->tx_lock);
+
 	if (unlikely(stmmac_tx_avail(priv) < nfrags + 1)) {
+		spin_unlock(&priv->tx_lock);
 		if (!netif_queue_stopped(dev)) {
 			netif_stop_queue(dev);
 			/* This is a hard error, log it. */
@@ -1795,8 +1798,6 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 		}
 		return NETDEV_TX_BUSY;
 	}
-
-	spin_lock(&priv->tx_lock);
 
 	if (priv->tx_path_in_lpi_mode)
 		stmmac_disable_eee_mode(priv);
@@ -2569,9 +2570,6 @@ static int stmmac_hw_init(struct stmmac_priv *priv)
 	/* Get and dump the chip ID */
 	priv->synopsys_id = stmmac_get_synopsys_id(priv);
 
-	/* To use alternate (extended) or normal descriptor structures */
-	stmmac_selec_desc_mode(priv);
-
 	/* To use the chained or ring mode */
 	if (chain_mode) {
 		priv->hw->chain = &chain_mode_ops;
@@ -2605,6 +2603,9 @@ static int stmmac_hw_init(struct stmmac_priv *priv)
 
 	} else
 		pr_info(" No HW DMA feature register supported");
+
+	/* To use alternate (extended) or normal descriptor structures */
+	stmmac_selec_desc_mode(priv);
 
 	ret = priv->hw->mac->rx_ipc(priv->ioaddr);
 	if (!ret) {

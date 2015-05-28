@@ -107,7 +107,7 @@
 		};
 
 		uart0:uart@a9000 {
-        	#clock-cells = <0>;
+      		#clock-cells = <0>;
 			clock-output-names = "uart0";
 			cell-id = <CLK_ID_UART_0>;
 			reg = <PHYS_BASE_CLK_22 0x1000>;
@@ -143,6 +143,7 @@
 		};
 
 		uart4:uart@6e000 {
+			#clock-cells = <0>;
 			clock-output-names = "uart4";
 			cell-id = <CLK_ID_UART_4>;
 			reg = <PHYS_BASE_CLK_26 0x1000>;
@@ -447,6 +448,7 @@
 
 	amba {
 		compatible = "arm,amba-bus";
+		reg = <0xC0000000 0x2000>;
 	  	#address-cells = <1>;
         #size-cells = <1>;
         interrupt-parent = <&gic>;
@@ -670,6 +672,54 @@
 				slave_min_signal = <PL08X_DMA_ID_PDM>;
 				slave_periph_buses = <PL08X_AHB2>;
 			};
+		};
+
+		gpio_a:gpio@1a000 {
+			compatible = "nexell,nxp-gpio";
+			reg = <PHYS_BASE_GPIOA 0x1000>;
+			#gpio-cells = <2>;	/* Fix */
+			nexell,gpioid = <0>;
+			nexell,gpionums = <32>;
+		};
+
+		gpio_b:gpio@1b000 {
+			compatible = "nexell,nxp-gpio";
+			reg = <PHYS_BASE_GPIOB 0x1000>;
+			#gpio-cells = <2>;	/* Fix */
+			nexell,gpioid = <1>;
+			nexell,gpionums = <32>;
+		};
+
+		gpio_c:gpio@1c000 {
+			compatible = "nexell,nxp-gpio";
+			reg = <PHYS_BASE_GPIOC 0x1000>;
+			#gpio-cells = <2>;	/* Fix */
+			nexell,gpioid = <2>;
+			nexell,gpionums = <32>;
+		};
+
+		gpio_d:gpio@1d000 {
+			compatible = "nexell,nxp-gpio";
+			reg = <PHYS_BASE_GPIOD 0x1000>;
+			#gpio-cells = <2>;	/* Fix */
+			nexell,gpioid = <3>;
+			nexell,gpionums = <32>;
+		};
+
+		gpio_e:gpio@1e000 {
+			compatible = "nexell,nxp-gpio";
+			reg = <PHYS_BASE_GPIOE 0x1000>;
+			#gpio-cells = <2>;	/* Fix */
+			nexell,gpioid = <4>;
+			nexell,gpionums = <32>;
+		};
+
+		gpio_alive:gpio@10800 {
+			compatible = "nexell,nxp-gpio";
+			reg = <PHYS_BASE_ALIVE 0x1000>;
+			#gpio-cells = <2>;	/* Fix */
+			nexell,gpioid = <5>;
+			nexell,gpionums = <6>;
 		};
 	};
 

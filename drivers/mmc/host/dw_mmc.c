@@ -1920,7 +1920,7 @@ static void dw_mci_read_data_pio(struct dw_mci *host)
 		if (!sg_miter_next(sg_miter))
 			goto done;
 
-		host->sg = sg_miter->__sg;
+		host->sg = sg_miter->piter.sg;
 		buf = sg_miter->addr;
 		remain = sg_miter->length;
 		offset = 0;
@@ -1987,7 +1987,7 @@ static void dw_mci_write_data_pio(struct dw_mci *host)
 		if (!sg_miter_next(sg_miter))
 			goto done;
 
-		host->sg = sg_miter->__sg;
+		host->sg = sg_miter->piter.sg;
 		buf = sg_miter->addr;
 		remain = sg_miter->length;
 		offset = 0;
@@ -2617,6 +2617,11 @@ static void __dwmci_resume(struct dw_mci *host)
 		brd->late_resume(host);
 }
 
+static int __dwmci_get_ro(u32 slot_id)
+{
+     return 0;
+}
+
 
 
 static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
@@ -2652,6 +2657,7 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	pdata->cd_type 			= DW_MCI_CD_PERMANENT;
 	pdata->suspend			= __dwmci_suspend;						
 	pdata->resume			= __dwmci_resume;
+	pdata->get_ro			= __dwmci_get_ro;
 	if(!(of_property_read_u32(np,"clk_dly",&tmp)))	{
 		pdata->clk_dly				= tmp ;
 	}	else {

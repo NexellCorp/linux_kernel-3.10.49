@@ -23,121 +23,92 @@
 #include <nexell/platform.h>
 #include <nexell/soc-s5pxx18.h>
 
-#define pr_debug(msg...)		{ printk(KERN_INFO "gpio: " msg); }
+/*
+#define pr_debug	printk
+*/
 
-#define PM_DBGOUT printk
-#if (0)
-#define CHECK_ALTFUNC_RET(_gpio, _offs, _ret)	do {		\
-		int io = (_gpio->index * GPIO_NUM_PER_BANK) + _offs;		\
-		int cn = nxp_soc_gpio_get_io_func(io);						\
-		int fn = GET_GPIO_ALTFUNC(_gpio->index, _offs);				\
-		if (cn != fn) {												\
-			printk("Fail : io used alt function %d [%s:%u=%d]\n",	\
-			cn, io_name[_gpio->index], _offs, io);					\
-			return _ret; 	\
-		}					\
-	} while(0)
-#else
-#define	CHECK_ALTFUNC_RET(_gpio, _offs, _ret)	do { } while (0)
-#endif
-
-struct nxp_gpio {
-	int 		index; 		/* Bank Index : A(0), B(1), C(2), D(3), E(4), ALIVE(5) */
+struct nxp_gpio_data {
+	int index; 		/* Bank Index : A(0), B(1), C(2), D(3), E(4), ALIVE(5) */
 	spinlock_t	lock;		/* GPIO registers */
-	struct 	gpio_chip chip;
+	struct gpio_chip chip;
 };
 
-static const char *io_name[] = { "GPIOA", "GPIOB", "GPIOC", "GPIOD", "GPIOE", "GPIOALV" };
-#define	GET_GPIO(c)	container_of(chip, struct nxp_gpio, chip)
+static const char *io_name[] = {
+	"GPIOA", "GPIOB", "GPIOC", "GPIOD", "GPIOE", "GPIOALV"
+};
+#define	chip_to_gpio(c)	container_of(c, struct nxp_gpio_data, chip)
 
 static int nxp_gpio_request(struct gpio_chip *chip, unsigned offset)
 {
-	struct nxp_gpio *gpio = GET_GPIO(chip);
-	int io, fn;
+	struct nxp_gpio_data *gpio = chip_to_gpio(chip);
+	int io = gpio->index * GPIO_NUM_PER_BANK + offset;
+	int fn = GET_GPIO_ALTFUNC(gpio->index, offset);
 
-	io = (gpio->index * GPIO_NUM_PER_BANK) + offset;
-	fn = GET_GPIO_ALTFUNC(gpio->index, offset);
-
-	CHECK_ALTFUNC_RET(gpio, offset, EINVAL);
+	pr_debug("gpio_request: %s.%02d=%3d\n",
+		io_name[gpio->index], offset, io);
 
 	nxp_soc_gpio_set_io_func(io, fn);
-	pr_debug("%s: io [%s:%d=%d]\n", __func__, io_name[gpio->index], offset, io);
 
 	return 0;
 }
 
 static int nxp_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
 {
-	struct nxp_gpio *gpio = GET_GPIO(chip);
-	int io, fn;
+	struct nxp_gpio_data *gpio = chip_to_gpio(chip);
+	int io = gpio->index * GPIO_NUM_PER_BANK + offset;
+	int fn = GET_GPIO_ALTFUNC(gpio->index, offset);
 
-	io = (gpio->index * GPIO_NUM_PER_BANK) + offset;
-	fn = GET_GPIO_ALTFUNC(gpio->index, offset);
-
-	CHECK_ALTFUNC_RET(gpio, offset, EINVAL);
+	pr_debug("direction_input: %s.%02d=%3d\n",
+		io_name[gpio->index], offset, io);
 
 	nxp_soc_gpio_set_io_func(io, fn);
 	nxp_soc_gpio_set_io_dir(io, 0);
 
-	pr_debug("%s: io [%s:%d=%d]\n", __func__, io_name[gpio->index], offset, io);
 	return 0;
 }
 
 static int nxp_gpio_direction_output(struct gpio_chip *chip,
-				unsigned offset, int value)
+						unsigned offset, int value)
 {
-	struct nxp_gpio *gpio = GET_GPIO(chip);
-	int io, fn;
+	struct nxp_gpio_data *gpio = chip_to_gpio(chip);
+	int io = gpio->index * GPIO_NUM_PER_BANK + offset;
+	int fn = GET_GPIO_ALTFUNC(gpio->index, offset);
 
-	io = (gpio->index * GPIO_NUM_PER_BANK) + offset;
-	fn = GET_GPIO_ALTFUNC(gpio->index, offset);
-
-	CHECK_ALTFUNC_RET(gpio, offset, EINVAL);
+	pr_debug("direction_output: %s.%2d=%3d, val=%d\n",
+		io_name[gpio->index], offset, io, value);
 
 	nxp_soc_gpio_set_io_func(io, fn);
 	nxp_soc_gpio_set_out_value(io, value);
 	nxp_soc_gpio_set_io_dir(io, 1);
 
-	pr_debug("%s: io [%s:%d=%d], val=%d\n",
-		__func__, io_name[gpio->index], offset, io, value);
 	return 0;
 }
 
 static int nxp_gpio_get_value(struct gpio_chip *chip, unsigned offset)
 {
-	struct nxp_gpio *gpio = GET_GPIO(chip);
+	struct nxp_gpio_data *gpio = chip_to_gpio(chip);
 	int io = gpio->index * GPIO_NUM_PER_BANK + offset;
 
-	pr_debug("%s: io [%s:%d=%d]\n", __func__, io_name[gpio->index], offset, io);
+	pr_debug("get_value: %s.%2d=%3d\n", io_name[gpio->index], offset, io);
 
 	return nxp_soc_gpio_get_in_value(io);
 }
 
 static void nxp_gpio_set_value(struct gpio_chip *chip, unsigned offset, int value)
 {
-	struct nxp_gpio *gpio = GET_GPIO(chip);
-	int io, fn, cn;
+	struct nxp_gpio_data *gpio = chip_to_gpio(chip);
+	int io = gpio->index * GPIO_NUM_PER_BANK + offset;
 
-	io = gpio->index * GPIO_NUM_PER_BANK + offset;
-	fn = GET_GPIO_ALTFUNC(gpio->index, offset);
-	cn = nxp_soc_gpio_get_io_func(io);
-#if (0)
-	if (cn != fn) {
-		printk("Fail : io used alt function %d [%s:%u=%d]\n",
-			cn, io_name[gpio->index], offset, io);
-		return;
-	}
-#endif
 	nxp_soc_gpio_set_io_dir(io, 1);
 	nxp_soc_gpio_set_out_value(io, value);
 
-	pr_debug("%s: io [%s:%d=%d], val=%d\n",
-		__func__, io_name[gpio->index], offset, io, value);
+	pr_debug("set_value: %s.%2d=%3d, val=%d\n",
+		io_name[gpio->index], offset, io, value);
 }
 
 static int nxp_gpio_to_irq( struct gpio_chip *chip , unsigned offset )
 {
-	struct nxp_gpio *gpio = GET_GPIO(chip);
+	struct nxp_gpio_data *gpio = chip_to_gpio(chip);
 	unsigned int io = gpio->index * GPIO_NUM_PER_BANK + offset;
 
 	return (io + IRQ_GPIO_START);
@@ -146,13 +117,13 @@ static int nxp_gpio_to_irq( struct gpio_chip *chip , unsigned offset )
 #ifdef CONFIG_PM
 static int nxp_gpio_suspend(struct platform_device *pdev, pm_message_t state)
 {
-	PM_DBGOUT("%s\n", __func__);
+	pm_dbgout("%s\n", __func__);
 	return 0;
 }
 
 static int nxp_gpio_resume(struct platform_device *pdev)
 {
-	PM_DBGOUT("%s\n", __func__);
+	pm_dbgout("%s\n", __func__);
 	return 0;
 }
 #else
@@ -161,24 +132,32 @@ static int nxp_gpio_resume(struct platform_device *pdev)
 #endif
 
 #ifdef CONFIG_OF
-static nxp_gpio_parse_dt(struct device_node *np,struct platform_device *pdev )
+static void nxp_gpio_parse_dt(struct device_node *np,struct platform_device *pdev)
 {
+	u32 value;
+
 	pdev->resource->start = 0;
-	pdev->resource->end = 32;
-	of_property_read_u32(np, "nexell,gpioid", &pdev->id);
+	pdev->resource->end = 0;
+
+	if (!of_property_read_u32(np, "nexell,gpionums", &value))
+		pdev->resource->end = value;
+
+	if (!of_property_read_u32(np, "nexell,gpioid", &value));
+		pdev->id = value;
+
+	pr_debug("%s.%d: %d ~ %2d\n", np->name, pdev->id,
+		(int)pdev->resource->start, (int)pdev->resource->end);
 }
 #endif
 static int nxp_gpio_probe(struct platform_device *pdev)
 {
-	//struct resource *res = pdev->resource;
+	struct nxp_gpio_data *gpio = NULL;
 	struct resource *res = NULL;
-	struct nxp_gpio *gpio = NULL;
 	int ret;
+
 	nxp_gpio_parse_dt(pdev->dev.of_node, pdev);
 
 	res = pdev->resource;
-	pr_debug("%s: %s, %d ~ %2d\n",
-		__func__, io_name[pdev->id], res->start, res->end);
 	if (!res) {
 		printk("Error: not allocated gpio resource [%d]\n", pdev->id);
 		return -EINVAL;
@@ -220,15 +199,6 @@ static int nxp_gpio_remove(struct platform_device *pdev)
 	return 0;
 }
 
-
-static struct platform_device_id nxp_gpio_ids[] = {
-	{
-		.name        = "nxp-gpio",
-		.driver_data = 0,
-	}, { },
-};
-MODULE_DEVICE_TABLE(platform, nxp_gpio_ids);
-
 #ifdef CONFIG_OF
 static const struct of_device_id nxp_gpio_match[] = {
     { .compatible = "nexell,nxp-gpio" },
@@ -236,9 +206,8 @@ static const struct of_device_id nxp_gpio_match[] = {
 };
 MODULE_DEVICE_TABLE(of, nxp_gpio_match);
 #else
-#define s3c24xx_i2c_match NULL
+#define nxp_gpio_match NULL
 #endif
-
 
 static struct platform_driver nxp_gpio_driver = {
 	.probe		= nxp_gpio_probe,

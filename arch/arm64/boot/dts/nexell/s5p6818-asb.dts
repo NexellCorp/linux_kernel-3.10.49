@@ -12,7 +12,6 @@
 #define	UART_CLOCK_FREQUENCY	147500000
 #define I2C_CLOCK_FREQUENCY		100000000
 #define SPI_CLOCK_FREQUENCY		100000000
-#define GMAC_CLOCK_FREQUENCY	200000000
 
 #define PMIC_PDATA_INIT(_id, _rname, _minuv, _maxuv, _always_on, _boot_on,	\
 						_init_uv, _init_enable, _slp_slots)					\
@@ -52,7 +51,6 @@
 			spi0:spi@ac000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi1:spi@ad000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
-			gmac:gmac@c8000  { clock-frequency = <GMAC_CLOCK_FREQUENCY>; };
 		};
 
 		#include "s5p6818-svt-pin.dtsi"
@@ -64,18 +62,36 @@
 		serial@a0000 {
 			enable_dma = <1>;
 		};
-
+		dw_mmc@62000 {
+			bus_speed = <100>;
+			cd_gpio = <(PAD_GPIO_ALV + 1)>;	
+			clk_dly = <0x01020000>;
+		};
+		dw_mmc@68000 {
+			bus_speed = <100>;
+			clk_dly = <0x01020000>;
+		};
+		dw_mmc@69000 {
+			bus_speed = <200>;
+			bus_wd = <8>;
+			non-removable;
+			ddr-mode;
+			clk_dly = <0x02030000>;
+		};	
+		
 		spi@5b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
 
 
 			spidev@0 {
 				compatible = "spidev";
-				reg = <0 0>;
+				reg = <0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
-					spi-cs-gpio = <10>;
+				  spi-cs-gpio = <10>;
 					spi-feedback-delay = <02>;
 				};
 			};
@@ -99,44 +115,6 @@
 
 		ppm@54000 {
 			status = "okay";
-		};
-
-		adc:adc@53000 {
-			status = "okay";
-		};
-
-		nand:nand@51000 {
-			nand-bus-width = <8>;
-			nand-ecc-mode = "hw";
-			/*nand-on-flash-bbt = <1>;*/
-
-			nand-tacs = <0x0>;						/* unit: bclk cycle */
-			nand-tcah = <0x0>;
-			nand-tcos = <0xf>;
-			nand-tcoh = <0xf>;
-			nand-tacc = <0x3f>;
-			nand-ecc-bytes = <1024>;
-			nand-ecc-bits = <40>;
-			wp-gpio = <91>;							/* GPIO_C27 */
-			status = "okay";
-		};
-
-		gmac0:ethernet@60000 {
-			phy = <&phy0>;
-			status = "okay";
-			#address-cells = <0x1>;
-			#size-cells = <0x0>;
-			phy-addr = <3>;
-			probed-phy-irq = <(IRQ_GPIO_A_START+9)>;
-			phy0:ethernet-phy@0 {
-				compatible = "ethernet-phy-ieee802.3-c22";
-				/*max-speed = <1000>;*/
-				/*linux,phandle = <2452000>;*/
-				/*interrupt-parent = <40000>;*/
-				/*interrupts = <(IRQ_GPIO_A_START+9) 0>;*/
-				reg = <0>;
-				device_type = "ethernet-phy";
-			};
 		};
 
 		framebuffer@0 {
@@ -232,7 +210,7 @@
 		spdifrx@5a000 {
 			status = "okay";
 		};
-
+		
 		ehci@30000 {
 			hsic_en = <1>;
 			hsic_exthub_gpio = <150>;
@@ -247,9 +225,9 @@
 			mp8845c@1c {
 				compatible = "nx,mp8845c";
 				reg = <0x1c>;
-				nx,id = <1>;
+				nx,id = <0>;
 				regulators {
-					VCC1P0_CORE_PMIC: vout2 { PMIC_PDATA_INIT(1, "mp8845c_vout1", 600000, 1500000, 1, 1, 1100000, 1, 0xF) };
+					VCC1P1_ARM_PMIC: vout1 { PMIC_PDATA_INIT(0, "mp8845c_vout0", 600000, 1500000, 1, 1, 1200000, 1, 0xF) };
 				};
 			};
 		};
@@ -261,16 +239,16 @@
 			mp8845c@1c {
 				compatible = "nx,mp8845c";
 				reg = <0x1c>;
-				nx,id = <0>;
+				nx,id = <1>;
 				regulators {
-					VCC1P1_ARM_PMIC: vout1 { PMIC_PDATA_INIT(0, "mp8845c_vout0", 600000, 1500000, 1, 1, 1200000, 1, 0xF) };
+					VCC1P0_CORE_PMIC: vout2 { PMIC_PDATA_INIT(1, "mp8845c_vout1", 600000, 1500000, 1, 1, 1100000, 1, 0xF) };
 				};
 			};
 		};
 		#endif // CONFIG_REGULATOR_MP8845C
 
 		#ifdef CONFIG_REGULATOR_NXE2000
-		iic2:iic@a6000 {
+		iic0:iic@a4000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
@@ -306,74 +284,6 @@
 		#endif // CONFIG_REGULATOR_NXE2000
 
 	};	// soc
-
-
-    nxp-ion {
-        compatible = "nexell,nxp-ion";
-        nr = <3>;
-        names = "ion_noncontig_heap", "ion_contig_heap", "nxp_contig_heap";
-        types = <0 1 6>;
-    };
-
-    nxp-v4l2 {
-        compatible = "nexell,nxp-v4l2";
-
-        capture {
-            nr = <2>;
-
-            capture0 {
-                module = <2>;
-                type = <0>;
-
-                port = <0>;
-                external_sync = <0>;
-
-                h_frontporch = <7>;
-                h_syncwidth = <1>;
-                h_backporch = <10>;
-                v_frontporch = <0>;
-                v_syncwidth = <2>;
-                v_backporch = <3>;
-
-                data_order = <0>;
-                vid = <0>;
-
-                interlace = <0>;
-                late_power_down = <0>;
-
-                sensor {
-                    type = <0>;
-                    sensor_name = "MT9D111";
-                    i2c_adapter = <2>;
-                    addr = <0x5d>;
-                };
-
-                power {
-                    reset_io = <(PAD_GPIO_C+30)>;
-                    reset_invert = <1>;
-                    reset_delay_ms = <10>;
-                };
-            };
-
-            capture1 {
-                module = <0>;
-                type = <1>;
-
-                sensor {
-                    type = <0>;
-                    sensor_name = "THP7212NX";
-                    i2c_adapter = <1>;
-                    addr = <0x60>;
-                };
-
-                power {
-                    reset_io = <(PAD_GPIO_E+16)>;
-                    reset_invert = <1>;
-                    reset_delay_ms = <10>;
-                };
-            };
-        };
-    };
 
 	pdm-dir {
 		compatible = "nexell,pdm-dir";
@@ -445,13 +355,4 @@
 		sample_rate = <48000>;
 	    format = "S16";
 	};
-
-    gpio-keys {
-        compatible = "gpio-keys";
-        power {
-            label = "Power";
-            gpios = <&gpio_alive 0 0 >;
-            linux,code = <116>; /* KEY_POWER */
-        };
-    };
 };

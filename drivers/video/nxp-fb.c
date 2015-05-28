@@ -704,8 +704,8 @@ static int nxp_fb_map_ion_handle(struct nxp_fb_device *fb_dev,
 
     dma_buf_put(ctx->dma_buf);	/* decrease file count */
 
-    printk(KERN_INFO "%s.%d: dma addr = 0x%x, buf[0x%08x]\n",
-        DEV_NAME_FB, fb_dev->device_id, ctx->dma_addr, (uint)buf);
+    printk(KERN_INFO "%s.%d: dma addr = 0x%x, buf[0x%p]\n",
+        DEV_NAME_FB, fb_dev->device_id, ctx->dma_addr, buf);
     return 0;
 
 err_map_attachment:

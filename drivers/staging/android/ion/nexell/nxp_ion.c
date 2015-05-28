@@ -501,7 +501,8 @@ static int __init ion_init(void)
     return platform_driver_register(&ion_driver);
 }
 
-subsys_initcall(ion_init);
+//subsys_initcall(ion_init);
+module_init(ion_init);
 
 MODULE_AUTHOR("swpark <swpark@nexell.co.kr>");
 MODULE_DESCRIPTION("ION Platform Driver for Nexell");
