@@ -303,7 +303,6 @@ static long nxp_ion_custom_ioctl(struct ion_client *client,
                 pr_err("%s error: failed to copy_from_user()\n", __func__);
                 return -EFAULT;
             }
-            pr_debug("%s: request buf fd(%d)\n", __func__, data.ion_buffer_fd);
             dmabuf = dma_buf_get(data.ion_buffer_fd);
             if (IS_ERR_OR_NULL(dmabuf)) {
                 pr_err("%s: can't get dmabuf\n", __func__);
@@ -501,8 +500,7 @@ static int __init ion_init(void)
     return platform_driver_register(&ion_driver);
 }
 
-//subsys_initcall(ion_init);
-module_init(ion_init);
+subsys_initcall(ion_init);
 
 MODULE_AUTHOR("swpark <swpark@nexell.co.kr>");
 MODULE_DESCRIPTION("ION Platform Driver for Nexell");
