@@ -354,7 +354,7 @@ static struct ion_platform_data *nxp_ion_parse_dt(struct device *dev)
     }
     printk("%s: nr %d\n", __func__, pdata->nr);
 
-    pdata->heaps = devm_kzalloc(dev, pdata->nr & sizeof(struct ion_platform_heap), GFP_KERNEL);
+    pdata->heaps = devm_kzalloc(dev, pdata->nr * sizeof(struct ion_platform_heap), GFP_KERNEL);
     if (!pdata->heaps) {
         dev_err(dev, "failed to devm_kzalloc() for struct ion_platform_heap\n");
         kfree(pdata);
@@ -443,7 +443,7 @@ static int nxp_ion_probe(struct platform_device *pdev)
 
 #ifdef CONFIG_OF
     if (pdata)
-        kfree(pdata);
+        devm_kfree(&pdev->dev, pdata);
 #endif
 
     printk("%s success!!!\n", __func__);
@@ -459,7 +459,7 @@ err:
     ion_device_destroy(ion_dev);
 #ifdef CONFIG_OF
     if (pdata)
-        kfree(pdata);
+        devm_kfree(&pdev->dev, pdata);
 #endif
     return error;
 }
