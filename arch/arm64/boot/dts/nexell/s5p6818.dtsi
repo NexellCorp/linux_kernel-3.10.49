@@ -388,6 +388,20 @@
 			status = "disable";
 		};
 
+		gmac0:ethernet@60000 {
+			compatible = "nexell,nxp-gmac";
+			clocks = <&pclk>;
+			clock-names = "nxpmaceth";
+
+			reg = <PHYS_BASE_GMAC 0x2000>;
+			interrupt-parent = <&gic>;
+			interrupts = <0 IRQ_GMAC 0>;
+			interrupt-names = "macirq";
+			mac-address = [000000000000]; /* Filled in by U-Boot */
+			phy-mode = "rgmii";
+			status = "disable";
+		};
+
 		#ifdef CONFIG_NXP_DISPLAY_1ST
 		display@0 {
 			compatible = "nexell,nxp-display";

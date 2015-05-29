@@ -19,6 +19,24 @@ struct nxp_v4l2_irq_entry {
  */
 
 /* for atomic operations */
+#ifdef CONFIG_ARM64
+#define NXP_ATOMIC_SET(V, I) atomic_set(V, I)
+#define NXP_ATOMIC_SET_MASK(MASK, PTR)  \
+    do { \
+        int oldval = atomic_read(PTR); \
+        int newval = oldval | MASK; \
+        atomic_cmpxchg(PTR, oldval, newval); \
+    } while (0)
+#define NXP_ATOMIC_CLEAR_MASK(MASK, PTR) \
+    do { \
+        int oldval = atomic_read(PTR); \
+        int newval = oldval & (~MASK); \
+        atomic_cmpxchg(PTR, oldval, newval); \
+    } while (0)
+#define NXP_ATOMIC_READ(PTR)    atomic_read(PTR)
+#define NXP_ATOMIC_INC(PTR)     atomic_inc(PTR)
+#define NXP_ATOMIC_DEC(PTR)     atomic_dec(PTR)
+#else
 #define NXP_ATOMIC_SET(V, I) atomic_set(V, I)
 #define NXP_ATOMIC_SET_MASK(MASK, PTR)  \
     do { \
@@ -31,6 +49,7 @@ struct nxp_v4l2_irq_entry {
 #define NXP_ATOMIC_READ(PTR)    atomic_read(PTR)
 #define NXP_ATOMIC_INC(PTR)     atomic_inc(PTR)
 #define NXP_ATOMIC_DEC(PTR)     atomic_dec(PTR)
+#endif
 
 /**
  * util functions

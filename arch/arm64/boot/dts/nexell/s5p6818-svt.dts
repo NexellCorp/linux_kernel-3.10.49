@@ -12,6 +12,7 @@
 #define	UART_CLOCK_FREQUENCY	147500000
 #define I2C_CLOCK_FREQUENCY		100000000
 #define SPI_CLOCK_FREQUENCY		100000000
+/*#define GMAC_CLOCK_FREQUENCY	200000000*/
 
 #define PMIC_PDATA_INIT(_id, _rname, _minuv, _maxuv, _always_on, _boot_on,	\
 						_init_uv, _init_enable, _slp_slots)					\
@@ -51,6 +52,7 @@
 			spi0:spi@ac000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi1:spi@ad000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
+			/*gmac:gmac@c8000  { clock-frequency = <GMAC_CLOCK_FREQUENCY>; };*/
 		};
 
 		#include "s5p6818-svt-pin.dtsi"
@@ -168,6 +170,26 @@
 			status = "okay";
 		};
 
+		gmac0:ethernet@60000 {
+			phy = <&phy0>;
+			status = "okay";
+			#address-cells = <0x1>;
+			#size-cells = <0x0>;
+			phy-addr = <3>;
+			probed-phy-irq = <(IRQ_GPIO_A_START+9)>;
+			reset_gpio = <(PAD_GPIO_A+10)>;			/* mdio reset pin */
+			loopback_mode = <0>;					/* 0: none, 1: 10M */
+			phy0:ethernet-phy@0 {
+				compatible = "ethernet-phy-ieee802.3-c22";
+				/*max-speed = <1000>;*/
+				/*linux,phandle = <2452000>;*/
+				/*interrupt-parent = <40000>;*/
+				/*interrupts = <(IRQ_GPIO_A_START+9) 0>;*/
+				reg = <0>;
+				device_type = "ethernet-phy";
+			};
+		};
+
 		rtc@10c00 {
 			status = "okay";
 		};
@@ -231,65 +253,66 @@
             types = <0 1 6>;
         };
 
-        /*nxp-v4l2 {*/
-            /*compatible = "nexell,nxp-v4l2";*/
+        nxp-v4l2 {
+            compatible = "nexell,nxp-v4l2";
 
-            /*capture {*/
-                /*nr = <2>;*/
+            capture {
+                nr = <2>;
 
-                /*capture0 {*/
-                    /*module = <2>;*/
-                    /*type = <0>;*/
+                capture0 {
+                    module = <2>;
+                    type = <0>;
 
-                    /*port = <0>;*/
-                    /*external_sync = <0>;*/
+                    port = <0>;
+                    external_sync = <0>;
 
-                    /*h_frontporch = <7>;*/
-                    /*h_syncwidth = <1>;*/
-                    /*h_backporch = <10>;*/
-                    /*v_frontporch = <0>;*/
-                    /*v_syncwidth = <2>;*/
-                    /*v_backporch = <3>;*/
+                    h_frontporch = <7>;
+                    h_syncwidth = <1>;
+                    h_backporch = <10>;
+                    v_frontporch = <0>;
+                    v_syncwidth = <2>;
+                    v_backporch = <3>;
 
-                    /*data_order = <0>;*/
-                    /*vid = <0>;*/
+                    data_order = <0>;
+                    vid = <0>;
 
-                    /*interlace = <0>;*/
-                    /*late_power_down = <0>;*/
+                    interlace = <0>;
+                    late_power_down = <0>;
 
-                    /*sensor {*/
-                        /*type = <0>;*/
-                        /*sensor_name = "MT9D111";*/
-                        /*i2c_adapter = <2>;*/
-                        /*addr = <0x5d>;*/
-                    /*};*/
+                    sensor {
+                        type = <0>;
+                        sensor_name = "MT9D111";
+                        i2c_adapter = <2>;
+                        addr = <0x5d>;
+                    };
 
-                    /*power {*/
-                        /*reset_io = <(PAD_GPIO_C+30)>;*/
-                        /*reset_invert = <1>;*/
-                        /*reset_delay_ms = <10>;*/
-                    /*};*/
-                /*};*/
+                    power {
+                        reset_io = <(PAD_GPIO_C+30)>;
+                        reset_invert = <1>;
+                        reset_delay_ms = <10>;
+                    };
+                };
 
-                /*capture1 {*/
-                    /*module = <0>;*/
-                    /*type = <1>;*/
+                capture1 {
+                    module = <0>;
+                    type = <1>;
 
-                    /*sensor {*/
-                        /*type = <0>;*/
-                        /*sensor_name = "THP7212NX";*/
-                        /*i2c_adapter = <1>;*/
-                        /*addr = <0x60>;*/
-                    /*};*/
+                    sensor {
+                        type = <0>;
+                        sensor_name = "THP7212NX";
+                        i2c_adapter = <1>;
+                        addr = <0x60>;
+                    };
 
-                    /*power {*/
-                        /*reset_io = <(PAD_GPIO_E+16)>;*/
-                        /*reset_invert = <1>;*/
-                        /*reset_delay_ms = <10>;*/
-                    /*};*/
-                /*};*/
-            /*};*/
-        /*};*/
+                    power {
+                        reset_io = <(PAD_GPIO_E+16)>;
+                        reset_invert = <1>;
+                        reset_delay_ms = <10>;
+                    };
+                };
+            };
+        };
+
         pdm@14000 {
 			status = "okay";
 		};
