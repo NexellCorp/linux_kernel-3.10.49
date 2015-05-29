@@ -447,6 +447,7 @@
 	    format = "S16";
 	};
 
+	#ifdef CONFIG_KEYBOARD_GPIO
     gpio-keys {
         compatible = "gpio-keys";
         power {
@@ -455,4 +456,13 @@
             linux,code = <116>; /* KEY_POWER */
         };
     };
+	#endif
+	#ifdef CONFIG_KEYBOARD_NXP_IO_KEY
+    io-keypad {
+        compatible = "nexell,nxp-keypad";
+        buttons  = <
+			(PAD_GPIO_ALV + 0)	116 0	/* gpio, keycode, active high */
+        >;
+    };
+    #endif
 };
