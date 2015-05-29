@@ -907,8 +907,8 @@ static int nxp_cpufreq_probe(struct platform_device *pdev)
 {
 	struct nxp_cpufreq_plat_data *pdata = pdev->dev.platform_data;
 	unsigned long (*dvfs_tables)[2] = (unsigned long(*)[2])dvfs_freq_voltage;
-	struct cpufreq_dvfs_info *dvfs;
-	struct cpufreq_frequency_table *freq_table;
+	struct cpufreq_dvfs_info *dvfs = NULL;
+	struct cpufreq_frequency_table *freq_table = NULL;
 	int cpu = raw_smp_processor_id();
 	char name[16];
 	int table_len = 0, ret = 0;
