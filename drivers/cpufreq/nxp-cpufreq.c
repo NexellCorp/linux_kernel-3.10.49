@@ -235,7 +235,10 @@ static unsigned long nxp_cpufreq_change_frequency(struct cpufreq_dvfs_info *dvfs
 
 	clk_set_rate(clk, freqs->new*1000);
 	rate_khz = clk_get_rate(clk)/1000;
-	pr_debug(" set rate %u:%lukhz\n", freqs->new, rate_khz);
+
+#ifdef CONFIG_ARM_NXP_CPUFREQ_DEBUG
+	printk(" set rate %u:%lukhz\n", freqs->new, rate_khz);
+#endif
 
 	if (test_bit(FREQ_STATE_TIME_RUN, &dvfs->check_state)) {
 		int prev = dvfs->pre_freq_id;
@@ -734,7 +737,7 @@ static const struct of_device_id dvfs_dt_match[] = {
 MODULE_DEVICE_TABLE(of, dvfs_dt_match);
 
 #define	FN_SIZE		4
-static int nxp_cpufreq_get_dt_data(struct platform_device *pdev)
+static void *nxp_cpufreq_get_dt_data(struct platform_device *pdev)
 {
 	struct device_node *node = pdev->dev.of_node;
 	const struct of_device_id *match;
@@ -746,20 +749,22 @@ static int nxp_cpufreq_get_dt_data(struct platform_device *pdev)
 
 	match = of_match_node(dvfs_dt_match, node);
 	if (!match)
-		return -EINVAL;
+		return NULL;
 
 	pdata = (struct nxp_cpufreq_plat_data *)match->data;
 	plat_tbs = (unsigned long(*)[2])pdata->dvfs_table;
 
 	if (!of_property_read_string(node, "supply_name", (const char**)&supply)) {
 		pdata->supply_name = supply;
+		if (!of_property_read_u32(node, "supply_delay_us", &value))
+			pdata->supply_delay_us = value;
 		printk("voltage supply : %s\n", pdata->supply_name);
 	}
 
 	list = of_get_property(node, "dvfs-tables", &size);
 	size /= FN_SIZE;
 
-	if (list && size) {
+	if (size) {
 		for (i = 0; size/2 > i; i++) {
 			plat_tbs[i][0] = be32_to_cpu(*list++);
 			plat_tbs[i][1] = be32_to_cpu(*list++);
@@ -780,12 +785,7 @@ static int nxp_cpufreq_get_dt_data(struct platform_device *pdev)
 	if (!of_property_read_u32(node, "rest_retention", &value))
 		pdata->rest_retention = value;
 
-	if (!of_property_read_u32(node, "supply_delay_us", &value))
-		pdata->supply_delay_us = value;
-
-	pdev->dev.platform_data = pdata;
-
-	return 0;
+	return pdata;
 }
 #else
 #define dvfs_dt_match NULL
@@ -810,7 +810,7 @@ static int nxp_cpufreq_make_table(struct platform_device *pdev,
 		asv_size = ops->setup_table(dvfs_tables);
 
 	if (!pdata->table_size && !asv_size) {
-		dev_err(&pdev->dev, "%s: failed no freq table !!!\n", __func__);
+		dev_err(&pdev->dev, "failed no freq table !!!\n");
 		return -EINVAL;
 	}
 
@@ -818,7 +818,7 @@ static int nxp_cpufreq_make_table(struct platform_device *pdev,
 
 	ptable = kzalloc((sizeof(*ptable)*tb_size), GFP_KERNEL);
 	if (!ptable) {
-		dev_err(&pdev->dev, "%s: failed allocate freq table !!!\n", __func__);
+		dev_err(&pdev->dev, "failed allocate freq table !!!\n");
 		return -ENOMEM;
 	}
 
@@ -873,8 +873,8 @@ static int nxp_cpufreq_set_supply(struct platform_device *pdev,
 	/* get voltage regulator */
 	dvfs->volt = regulator_get(NULL, pdata->supply_name);
 	if (IS_ERR(dvfs->volt)) {
-		dev_err(&pdev->dev, "%s: Cannot get regulator for DVS supply %s\n",
-				__func__, pdata->supply_name);
+		dev_err(&pdev->dev, "Cannot get regulator for DVS supply %s\n",
+				pdata->supply_name);
 		return -1;
 	}
 	dvfs->boot_voltage = regulator_get_voltage(dvfs->volt);
@@ -882,8 +882,7 @@ static int nxp_cpufreq_set_supply(struct platform_device *pdev,
 	pm_notifier = &dvfs->pm_notifier;
 	pm_notifier->notifier_call = nxp_cpufreq_pm_notify;
 	if (register_pm_notifier(pm_notifier)) {
-		dev_err(&pdev->dev, "%s: Cannot pm notifier %s\n",
-				__func__, pdata->supply_name);
+		dev_err(&pdev->dev, "Cannot pm notifier %s\n", pdata->supply_name);
 		return -1;
 	}
 
@@ -915,17 +914,17 @@ static int nxp_cpufreq_probe(struct platform_device *pdev)
 
 	dvfs = kzalloc(sizeof(*dvfs), GFP_KERNEL);
 	if (!dvfs) {
-		dev_err(&pdev->dev, "%s: failed allocate DVFS data !!!\n", __func__);
+		dev_err(&pdev->dev, "failed allocate DVFS data !!!\n");
 		return -ENOMEM;
 	}
 
 #ifdef CONFIG_OF
 	if (pdev->dev.of_node) {
-		ret = nxp_cpufreq_get_dt_data(pdev);
-		if (0 > ret)
+		pdata = nxp_cpufreq_get_dt_data(pdev);
+		if (!pdata)
 			goto err_free_table;
+		pdev->dev.platform_data = pdata;
 	}
-	pdata = pdev->dev.platform_data;
 #endif
 
 	table_len = nxp_cpufreq_make_table(pdev, &freq_table, dvfs_tables);
