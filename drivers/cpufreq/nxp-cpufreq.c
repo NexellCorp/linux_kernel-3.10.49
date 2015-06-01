@@ -871,7 +871,7 @@ static int nxp_cpufreq_set_supply(struct platform_device *pdev,
 	struct asv_margin *margin = &asv_margin;
 
 	/* get voltage regulator */
-	dvfs->volt = regulator_get(NULL, pdata->supply_name);
+	dvfs->volt = regulator_get(&pdev->dev, pdata->supply_name);
 	if (IS_ERR(dvfs->volt)) {
 		dev_err(&pdev->dev, "Cannot get regulator for DVS supply %s\n",
 				pdata->supply_name);
