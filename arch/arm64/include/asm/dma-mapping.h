@@ -77,10 +77,18 @@ static inline int dma_set_mask(struct device *dev, u64 mask)
 	return 0;
 }
 
+#if defined(CONFIG_USB_DWCOTG)
+static u64 otg_dmamask = DMA_BIT_MASK(32);
+#endif
 static inline bool dma_capable(struct device *dev, dma_addr_t addr, size_t size)
 {
+#if !defined(CONFIG_USB_DWCOTG)
 	if (!dev->dma_mask)
 		return 0;
+#else
+	if ((dev == NULL) || !dev->dma_mask)
+		return addr + size -1 <= otg_dmamask;
+#endif
 
 	return addr + size - 1 <= *dev->dma_mask;
 }

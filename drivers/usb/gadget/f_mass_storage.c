@@ -1579,8 +1579,11 @@ static int finish_reply(struct fsg_common *common)
 			if (!start_in_transfer(common, bh))
 				rc = -EIO;
 			common->next_buffhd_to_fill = bh->next;
+	// psw0523 fix
+#if 1
 			if (common->can_stall)
 				rc = halt_bulk_in_endpoint(common->fsg);
+#endif
 		}
 		break;
 
@@ -2682,7 +2685,11 @@ static struct fsg_common *fsg_common_init(struct fsg_common *common,
 		curlun->cdrom = !!lcfg->cdrom;
 		curlun->ro = lcfg->cdrom || lcfg->ro;
 		curlun->initially_ro = curlun->ro;
+#if !defined(CONFIG_USB_DWCOTG)
 		curlun->removable = lcfg->removable;
+#else
+		curlun->removable = 1;
+#endif
 		curlun->dev.release = fsg_lun_release;
 		curlun->dev.parent = &gadget->dev;
 		/* curlun->dev.driver = &fsg_driver.driver; XXX */

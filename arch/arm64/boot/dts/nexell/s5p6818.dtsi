@@ -709,6 +709,13 @@
 			reset-id = <RESET_ID_SDMMC2>;
 			clocks = <&sdhc2>;
 		};
-		
+
+		dwcotg@40000 {
+			compatible = "nexell,dwc_otg";
+			reg = <PHYS_BASE_HSOTG 0x11000>;
+			interrupts = <0 IRQ_USB20OTG 0>;
+			reset-id = <RESET_ID_USB20OTG>;
+			status = "okay";
+		};
 	};
 };

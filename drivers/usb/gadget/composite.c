@@ -20,6 +20,7 @@
 
 #include <linux/usb/composite.h>
 #include <asm/unaligned.h>
+#include <linux/wakelock.h>
 
 /*
  * The code in this file is utility code, used to build a gadget driver
@@ -27,6 +28,11 @@
  * objects, and a "usb_composite_driver" by gluing them together along
  * with the relevant device-wide data.
  */
+
+#if defined(CONFIG_PLAT_SLSIAP)
+static bool usb_config_wake_lock_held = false;
+static struct wake_lock usb_config_wake_lock;
+#endif
 
 static struct usb_gadget_strings **get_containers_gs(
 		struct usb_gadget_string_container *uc)
@@ -579,6 +585,15 @@ static void device_qual(struct usb_composite_dev *cdev)
 }
 
 /*-------------------------------------------------------------------------*/
+#if defined(CONFIG_PLAT_SLSIAP)
+void nxp_wake_lock_timeout(void)
+{
+	if (usb_config_wake_lock_held == true) {
+		wake_lock_timeout(&usb_config_wake_lock, 1*HZ);
+	}
+}
+EXPORT_SYMBOL(nxp_wake_lock_timeout);
+#endif
 
 static void reset_config(struct usb_composite_dev *cdev)
 {
@@ -1292,6 +1307,12 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 				value = min(w_length, (u16) value);
 			}
 			break;
+		case USB_DT_DEBUG:
+			value = 0;
+			break;
+		default:
+			printk("not supported descriptor %x\n", w_value >> 8);
+			break;
 		}
 		break;
 
@@ -1310,6 +1331,11 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 		spin_lock(&cdev->lock);
 		value = set_config(cdev, ctrl, w_value);
 		spin_unlock(&cdev->lock);
+#if defined(CONFIG_PLAT_SLSIAP)
+		if (usb_config_wake_lock_held == true) {
+			wake_lock(&usb_config_wake_lock);
+		}
+#endif
 		break;
 	case USB_REQ_GET_CONFIGURATION:
 		if (ctrl->bRequestType != USB_DIR_IN)
@@ -1489,6 +1515,11 @@ void composite_disconnect(struct usb_gadget *gadget)
 	/* REVISIT:  should we have config and device level
 	 * disconnect callbacks?
 	 */
+#if defined(CONFIG_PLAT_SLSIAP)
+	if (usb_config_wake_lock_held == true) {
+		wake_lock_timeout(&usb_config_wake_lock, 1*HZ);
+	}
+#endif
 	spin_lock_irqsave(&cdev->lock, flags);
 	if (cdev->config)
 		reset_config(cdev);
@@ -1521,6 +1552,13 @@ static void __composite_unbind(struct usb_gadget *gadget, bool unbind_driver)
 	 * state protected by cdev->lock.
 	 */
 	WARN_ON(cdev->config);
+
+#if defined(CONFIG_PLAT_SLSIAP)
+	if (usb_config_wake_lock_held == true) {
+		wake_lock_destroy(&usb_config_wake_lock);
+		usb_config_wake_lock_held = false;
+	}
+#endif
 
 	while (!list_empty(&cdev->configs)) {
 		struct usb_configuration	*c;
@@ -1679,6 +1717,12 @@ static int composite_bind(struct usb_gadget *gadget,
 	if (composite->needs_serial && !cdev->desc.iSerialNumber)
 		WARNING(cdev, "userspace failed to provide iSerialNumber\n");
 
+#if defined(CONFIG_PLAT_SLSIAP)
+	if (usb_config_wake_lock_held == false) {
+		wake_lock_init(&usb_config_wake_lock, WAKE_LOCK_SUSPEND, "usb_config_wake_lock");
+		usb_config_wake_lock_held = true;
+	}
+#endif
 	INFO(cdev, "%s ready\n", composite->name);
 	return 0;
 
