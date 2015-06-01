@@ -117,7 +117,7 @@
 			nand-tacc = <0x3f>;
 			nand-ecc-bytes = <1024>;
 			nand-ecc-bits = <40>;
-			wp-gpio = <91>;							/* GPIO_C27 */
+			wp-gpio = <(PAD_GPIO_C+27)>;	/* write protect */
 			status = "okay";
 		};
 
@@ -129,6 +129,7 @@
 			phy-addr = <3>;
 			probed-phy-irq = <(IRQ_GPIO_A_START+9)>;
 			reset_gpio = <(PAD_GPIO_A+10)>;			/* mdio reset pin */
+			loopback_mode = <0>;					/* 0: none, 1: 10M */
 			phy0:ethernet-phy@0 {
 				compatible = "ethernet-phy-ieee802.3-c22";
 				/*max-speed = <1000>;*/
@@ -225,6 +226,25 @@
 				reg = <0x1a>;
 			};
 	    };
+
+		iic1:iic@a5000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ft5x0x@38 {	/* 7bit (0x70>>1) */
+				status = "okay";
+				compatible = "nexell,ft5x0x";
+
+				reg				= <0x38>;
+				mtouch-irq		= <(IRQ_GPIO_E_START+11)>;
+				touch_points	= <10>;
+				x_resol			= <1024>;
+				y_resol			= <600>;
+				rotate			= <0>;
+				/*ptr_cnt		= <7>;*/
+				/*pointercal	= <38242, -340, -453008, -184, 39059, -149296, 65536>;*/
+			 };
+		};
 
         spdiftx@59000 {
 			status = "okay";
