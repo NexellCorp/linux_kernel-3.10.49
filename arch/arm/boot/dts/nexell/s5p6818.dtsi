@@ -270,18 +270,6 @@
 			#endif
 		};
 
-	    iic0:iic@a4000 {
-			compatible = "nexell,nxp-i2c";
-			reg = <PHYS_BASE_I2C0 0x100>;
-			interrupts = <0 IRQ_I2C0 0>;
-			clock-names = "i2c0";
-			clocks = <&i2c0>;
-			nexell,i2c-sda-delay = <100>;
-			nexell,i2c-max-bus-freq = <100000>;
-			nexell,i2c-slave-addr = <0x66>;
-			nexell,reset-id = <RESET_ID_I2C0>;
-		};
-
 		#ifdef CONFIG_I2C_NXP_PORT0
 		#ifdef CONFIG_I2C_NXP_PORT0_GPIO_MODE
 		iic0:iic@a4000 {
