@@ -286,6 +286,19 @@
 			status = "disabled";
 		};
 
+
+		
+		#ifdef CONFIG_I2C_NXP_PORT0
+		#ifdef CONFIG_I2C_NXP_PORT0_GPIO_MODE
+		iic0:iic@a4000 {
+			compatible = "i2c-gpio";
+			gpios = <&gpio_d 3 0 /* sda */
+				&gpio_d 2 0 /* scl */
+				>;
+			i2c-gpio,delay-us = <10>;    /* ~100 kHz */
+		};
+	
+		#else	
 		iic0:iic@a4000 {
 			compatible = "nexell,nxp-i2c";
 			reg = <PHYS_BASE_I2C0 0x100>;
@@ -297,7 +310,20 @@
 			nexell,i2c-slave-addr = <0x66>;
 			nexell,reset-id = <RESET_ID_I2C0>;
 		};
-
+		#endif
+		#endif
+		
+		#ifdef CONFIG_I2C_NXP_PORT1
+		#ifdef CONFIG_I2C_NXP_PORT1_GPIO_MODE
+		iic1:iic@a5000 {
+			compatible = "i2c-gpio";
+			gpios = <&gpio_d 5 0 /* sda */
+				&gpio_d 4 0 /* scl */
+				>;
+			i2c-gpio,delay-us = <10>;    /* ~100 kHz */
+		};
+	
+		#else	
 	  	iic1:iic@a5000 {
 			compatible = "nexell,nxp-i2c";
 			reg = <PHYS_BASE_I2C1 0x100>;
@@ -309,7 +335,21 @@
 			nexell,i2c-slave-addr = <0x66>;
 			nexell,reset-id = <RESET_ID_I2C1>;
 		};
-
+		
+		#endif
+		#endif
+		
+		#ifdef CONFIG_I2C_NXP_PORT2
+		#ifdef CONFIG_I2C_NXP_PORT2_GPIO_MODE
+		iic2:iic@a6000 {
+			compatible = "i2c-gpio";
+			gpios = <&gpio_d 7 0 /* sda */
+				&gpio_d 6 0 /* scl */
+				>;
+			i2c-gpio,delay-us = <10>;    /* ~100 kHz */
+		};
+	
+		#else	
 		iic2:iic@a6000 {
 			compatible = "nexell,nxp-i2c";
 			reg = <PHYS_BASE_I2C2 0x100>;
@@ -321,6 +361,8 @@
 			nexell,i2c-slave-addr = <0x66>;
 			nexell,reset-id = <RESET_ID_I2C2>;
 		};
+		#endif
+		#endif
 
 		spi_0:spi@5b000 {
 			compatible = "nexell,nxp-spi";
@@ -649,6 +691,7 @@
 			reset-id = <RESET_ID_SDMMC0>;
 			clocks = <&sdhc0>;
 		};
+		
 		dw_mmc1:dw_mmc@68000 {
 			compatible = "nexell,dw-mmc";
 			reg = <PHYS_BASE_SDMMC1 0x1000>;
@@ -656,7 +699,6 @@
 			clock-names = "sdhc1";
 			clocks = <&sdhc1>;
 			reset-id = <RESET_ID_SDMMC1>;
-			status = "okay";
 		};
 
 		dw_mmc2:dw_mmc@69000 {
@@ -667,5 +709,6 @@
 			reset-id = <RESET_ID_SDMMC2>;
 			clocks = <&sdhc2>;
 		};
+		
 	};
 };
