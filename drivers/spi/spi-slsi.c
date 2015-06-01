@@ -1539,6 +1539,10 @@ static struct s3c64xx_spi_info *nexell_spi_parse_dt(struct device *dev)
 	*/   
 	sci->bus_id = of_alias_get_id(dev->of_node, "spi");
 		
+	of_property_read_u32(dev->of_node, "reset-id", &temp);
+	nxp_soc_peri_reset_set(temp-1);
+	nxp_soc_peri_reset_set(temp);
+	
 	return sci; 
 }
 #else

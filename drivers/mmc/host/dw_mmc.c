@@ -2385,7 +2385,7 @@ static int dw_mci_init_slot(struct dw_mci *host, unsigned int id)
 
 	if (host->pdata->quirks & DW_MCI_QUIRK_HIGHSPEED)
 		mmc->caps |= MMC_CAP_SD_HIGHSPEED | MMC_CAP_MMC_HIGHSPEED;
-#if 0
+#if 1
 	if (mmc->caps2 & MMC_CAP2_POWEROFF_NOTIFY)
 		mmc->power_notify_type = MMC_HOST_PW_NOTIFY_SHORT;
 	else
@@ -2428,9 +2428,10 @@ static int dw_mci_init_slot(struct dw_mci *host, unsigned int id)
 	if (IS_ERR(host->vmmc)) {
 		pr_info("%s: no vmmc regulator found\n", mmc_hostname(mmc));
 		host->vmmc = NULL;
-	} else
-		regulator_enable(host->vmmc);
-
+	} else {
+		if(regulator_enable(host->vmmc))
+			pr_info("%s: vmmc regulator enable fail\n", mmc_hostname(mmc));
+	}
 	host->pdata->init(id, dw_mci_detect_interrupt, host);
 
 	if (dw_mci_get_cd(mmc))
@@ -2538,12 +2539,10 @@ static bool mci_wait_reset(struct device *dev, struct dw_mci *host)
 static int get_id_cd[3] = { 0, };
 static int _dwmci_get_cd0(u32 slot_id)
 {
-	int ret = 0;
 	return nxp_soc_gpio_get_in_value(get_id_cd[0]);
 }
 static int _dwmci_get_cd1(u32 slot_id)
 {
-	int ret = 0;
 	return nxp_soc_gpio_get_in_value(get_id_cd[1]);
 }
 static int _dwmci_get_cd2(u32 slot_id)
@@ -2565,6 +2564,7 @@ static int __dwmci_init(u32 slot_id, irq_handler_t handler, void *data)
 	host->hclk = clk_get(&host->dev,NULL);
 	clk_set_rate(host->hclk, pdata->bus_hz);
 	clk_prepare_enable(host->hclk);
+
 	id  = of_alias_get_id(np,"dwmmc");
 	ret = of_property_read_u32(np,"cd_gpio",&io);
 			
@@ -2651,7 +2651,15 @@ static int __dwmci_get_ro(u32 slot_id)
      return 0;
 }
 
+static int __dwmci_ext_cd_init(void (*notify_func)(struct platform_device *, int state))
+{
+    return 0;
+}
 
+static int __dwmci_ext_cd_cleanup(void (*notify_func)(struct platform_device *, int state))
+{
+    return 0;
+}
 static u64 dwmci_dmamask = DMA_BIT_MASK(32);
 
 static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
@@ -2668,7 +2676,6 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	}
 	dev->dma_mask = &dwmci_dmamask;	
 	dev->coherent_dma_mask=  DMA_BIT_MASK(32);
-	//pdata->quirks           = DW_MCI_QUIRK_BROKEN_CARD_DETECTION |DW_MCI_QUIRK_HIGHSPEED;
 	pdata->quirks           = DW_MCI_QUIRK_HIGHSPEED;
 	pdata->caps             = MMC_CAP_CMD23;
 	pdata->num_slots		= 1;		
@@ -2690,6 +2697,8 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	pdata->suspend			= __dwmci_suspend;						
 	pdata->resume			= __dwmci_resume;
 	pdata->get_ro			= __dwmci_get_ro;
+	pdata->ext_cd_init 		= __dwmci_ext_cd_init;
+	pdata->ext_cd_cleanup 	= __dwmci_ext_cd_cleanup;
 	if(!(of_property_read_u32(np,"clk_dly",&tmp)))	{
 		pdata->clk_dly				= tmp ;
 	}	else {
@@ -2701,10 +2710,11 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 		if(tmp == 8)
 			pdata->caps |= MMC_CAP_8_BIT_DATA;
 	}
+#if 0
 	if(!(of_property_read_u32(np,"reset-id",&tmp))){
-		printk("reset\n");
 		nxp_soc_peri_reset_set(tmp);
 	}
+#endif
 	if(of_find_property(np,"non-removable",NULL)){
 		pdata->caps |= MMC_CAP_NONREMOVABLE;
 	}
@@ -2871,10 +2881,10 @@ int dw_mci_probe(struct dw_mci *host)
 
 	if (host->pdata->caps & MMC_CAP_UHS_SDR50)
 		clk_set_rate(host->cclk, 200 * 1000 * 1000);
-/*
+
 	if (host->pdata->cd_type == DW_MCI_CD_EXTERNAL)
 		host->pdata->ext_cd_init(&dw_mci_notify_change);
-		*/
+
 
 	/* user set hw timeout */
 	if (!host->pdata->hw_timeout)
@@ -3014,9 +3024,11 @@ int dw_mci_resume(struct dw_mci *host)
 	if (host->pdata->resume)
 		host->pdata->resume(host);
 
-	if (host->vmmc)
-		regulator_enable(host->vmmc);
+	if (host->vmmc) {
+			if( 0 != regulator_enable(host->vmmc))
+				pr_info("vmmc regulator enable fail\n");
 
+	}
 	if (!mci_wait_reset(&host->dev, host)) {
 		ret = -ENODEV;
 		return ret;
