@@ -111,13 +111,13 @@ static void cpu_reset(char str, const char *cmd)
 	if (nxp_pm_reset)
 		nxp_pm_reset(str, cmd);
 
-	__raw_writel((-1UL), (void*)SCR_RESET_SIG_RESET);
+	__raw_writel((-1UL), (void*)__io_address(SCR_RESET_SIG_RESET));
 
 	if (cmd && !strcmp(cmd, "recovery")) {
-		__raw_writel(RECOVERY_SIGNATURE, (void*)SCR_RESET_SIG_SET);
-		__raw_readl ((void*)SCR_RESET_SIG_READ);	/* verify */
+		__raw_writel(RECOVERY_SIGNATURE, __io_address(SCR_RESET_SIG_SET));
+		__raw_readl (__io_address(SCR_RESET_SIG_READ));	/* verify */
 		printk("recovery sign [0x%x:0x%x] \n",
-			SCR_RESET_SIG_READ, readl((void*)SCR_RESET_SIG_READ));
+			SCR_RESET_SIG_READ, readl(__io_address(SCR_RESET_SIG_READ)));
 	}
 
 	NX_ALIVE_SetWriteEnable(CFALSE);	/* close alive gate */
