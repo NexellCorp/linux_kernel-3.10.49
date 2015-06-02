@@ -333,7 +333,7 @@ static int _hw_set_input_size(struct nxp_vin_clipper *me)
         NX_VIP_SetHVSync(module,
                 info->external_sync,
                 mbus_fmt->width*2,
-                mbus_fmt->height,
+                info->interlace ? mbus_fmt->height >> 1 : mbus_fmt->height,
                 info->h_syncwidth,
                 info->h_frontporch,
                 info->h_backporch,
@@ -350,11 +350,12 @@ static int _hw_set_crop(struct nxp_vin_clipper *me)
     struct nxp_capture *parent = nxp_vin_to_parent(me);
     int module = parent->get_module_num(parent);
     struct v4l2_rect *c = &me->crop;
+    struct nxp_vin_platformdata *info = me->platdata;
 
     vmsg("%s: l(%d), t(%d), w(%d), h(%d)\n", __func__, c->left, c->top, c->width, c->height);
 
     NX_VIP_SetClipRegion(module, c->left, c->top,
-            c->left + c->width, c->top + c->height);
+            c->left + c->width, info->interlace ? (c->top + c->height) >> 1 : c->top + c->height);
 
     return 0;
 }
@@ -504,22 +505,36 @@ static void _clear_buf(struct nxp_vin_clipper *me);
 /**
  * call back functions
  */
+static uint32_t _irq_count = 0;
 static irqreturn_t clipper_irq_handler(void *data)
 {
     struct nxp_vin_clipper *me = data;
 
     if (NXP_ATOMIC_READ(&me->state) & NXP_VIN_STATE_RUNNING_CLIPPER) {
-        _done_buf(me, true);
+        bool interlace = me->platdata->interlace;
+        bool do_process = true;
+        if (interlace) {
+            _irq_count++;
+            if (_irq_count == 2) {
+                _irq_count = 0;
+            } else {
+                do_process = false;
+            }
+        }
 
-        if (NXP_ATOMIC_READ(&me->state) & NXP_VIN_STATE_STOPPING) {
-            struct nxp_capture *parent = nxp_vin_to_parent(me);
-            vmsg("%s: real stop...\n", __func__);
-            parent->stop(parent, me);
-            _unregister_irq_handler(me);
-            _clear_buf(me);
-            complete(&me->stop_done);
-        } else {
-            _update_next_buffer(me);
+        if (do_process) {
+            _done_buf(me, true);
+
+            if (NXP_ATOMIC_READ(&me->state) & NXP_VIN_STATE_STOPPING) {
+                struct nxp_capture *parent = nxp_vin_to_parent(me);
+                printk("%s: real stop...\n", __func__);
+                parent->stop(parent, me);
+                _unregister_irq_handler(me);
+                _clear_buf(me);
+                complete(&me->stop_done);
+            } else {
+                _update_next_buffer(me);
+            }
         }
     }
 
