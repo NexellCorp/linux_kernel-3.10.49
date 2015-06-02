@@ -40,7 +40,7 @@
 #define PAD_GPIOA25     (PAD_MODE_ALT | PAD_FUNC_ALT1 | PAD_LEVEL_LOW  | PAD_PULL_OFF | PAD_STRENGTH_0)     // 0: GPIO          ,1: PDVSYNC             ,2:_                    ,3:_                    =	DISD_VSYNC	, ITU601_VSYNC
 #define PAD_GPIOA26     (PAD_MODE_ALT | PAD_FUNC_ALT1 | PAD_LEVEL_LOW  | PAD_PULL_OFF | PAD_STRENGTH_0)     // 0: GPIO          ,1: PDHSYNC             ,2:_                    ,3:_                    =	DISD_HSYNC	, ITU601_HSYNC
 #define PAD_GPIOA27     (PAD_MODE_ALT | PAD_FUNC_ALT1 | PAD_LEVEL_LOW  | PAD_PULL_OFF | PAD_STRENGTH_0)     // 0: GPIO          ,1: PDDE                ,2:_                    ,3:_                    =	DISD_DE
-#if !defined (CONFIG_ANDROID)
+#if defined (CONFIG_ARCH_S5P6818_SVT_LINUX)
 #define PAD_GPIOA28     (PAD_MODE_IN  | PAD_FUNC_ALT0 | PAD_LEVEL_LOW  | PAD_PULL_DN  | PAD_STRENGTH_0)     // 0: GPIO          ,1: VP0_EXTCLK          ,2: I2S2_CLK            ,3: I2S1_CLK            =	VID1_PCLK	, ITU656_CLK	, I2S_MCLK, I2S0_MCLK_LOOP
 #else
 #define PAD_GPIOA28     (PAD_MODE_ALT | PAD_FUNC_ALT3 | PAD_LEVEL_LOW  | PAD_PULL_OFF | PAD_STRENGTH_3)     // 0: GPIO          ,1: VP0_EXTCLK          ,2: I2S2_CLK            ,3: I2S1_CLK            =	VID1_PCLK	, ITU656_CLK	, I2S_MCLK, I2S1_MCLK
@@ -149,7 +149,7 @@
 #define PAD_GPIOD10     (PAD_MODE_ALT | PAD_FUNC_ALT1 | PAD_LEVEL_LOW  | PAD_PULL_OFF | PAD_STRENGTH_3)     // 0: GPIO          ,1: I2S0_BCLK           ,2: AC97_ACBITCLK       ,3:_                    =	I2S_BCLK, AC97_BCLK, I2S0_BCLK_LOOP
 #define PAD_GPIOD11     (PAD_MODE_ALT | PAD_FUNC_ALT1 | PAD_LEVEL_LOW  | PAD_PULL_OFF | PAD_STRENGTH_0)     // 0: GPIO          ,1: I2S0_SDI            ,2: AC97_ACSDATAIN      ,3:_                    =	I2S_DIN, AC97_DIN, I2S0_DIN_LOOP
 #define PAD_GPIOD12     (PAD_MODE_ALT | PAD_FUNC_ALT1 | PAD_LEVEL_LOW  | PAD_PULL_OFF | PAD_STRENGTH_0)     // 0: GPIO          ,1: I2S0_LRCLK          ,2: AC97_ACSYNC         ,3:_                    =	I2S_LRCK, AC97_SYNC, I2S0_LRCK_LOOP
-#if !defined (CONFIG_ANDROID)
+#if defined (CONFIG_ARCH_S5P6818_SVT_LINUX)
 #define PAD_GPIOD13     (PAD_MODE_ALT | PAD_FUNC_ALT1 | PAD_LEVEL_LOW  | PAD_PULL_OFF | PAD_STRENGTH_3)     // 0: GPIO          ,1: I2S0_CODCLK         ,2: AC97_nACRESET       ,3:_                    =	I2S_MCLK, AC97_nRST, I2S0_MCLK_LOOP
 #else
 #define PAD_GPIOD13     (PAD_MODE_IN  | PAD_FUNC_ALT0 | PAD_LEVEL_LOW  | PAD_PULL_DN  | PAD_STRENGTH_0)     // 0: GPIO          ,1: I2S0_CODCLK         ,2: AC97_nACRESET       ,3:_                    =	I2S_MCLK, AC97_nRST, I2S0_MCLK_INPUT

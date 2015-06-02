@@ -99,6 +99,9 @@
         i2c0	= &iic0;
         i2c1	= &iic1;
         i2c2	= &iic2;
+        dwmmc0	= &dw_mmc0;
+        dwmmc1	= &dw_mmc1;
+        dwmmc2	= &dw_mmc2;
 		pwmdev0 = &pwm_device0;
 		pwmdev1 = &pwm_device1;
 		pwmdev1 = &pwm_device2;
@@ -648,7 +651,6 @@
 			reset-id = <RESET_ID_USB20HOST>;
 			hsic_en = <0>;
 			hsic_exthub_gpio = <0>;
-			ehci_late_loadtime = <0>;
 			status = "okay";
 		};
 		
@@ -658,6 +660,41 @@
 			interrupts = <0 IRQ_USB20HOST 0>;
 			reset-id = <RESET_ID_USB20HOST>;
 			status = "disabled";
+		};
+
+		dw_mmc0:dw_mmc@62000 {
+			compatible = "nexell,dw-mmc";
+			reg = <PHYS_BASE_SDMMC0 0x1000>;
+			interrupts = <0 IRQ_SDMMC0 0>;
+			clock-names = "sdhc0";
+			reset-id = <RESET_ID_SDMMC0>;
+			clocks = <&sdhc0>;
+		};
+		dw_mmc1:dw_mmc@68000 {
+			compatible = "nexell,dw-mmc";
+			reg = <PHYS_BASE_SDMMC1 0x1000>;
+			interrupts = <0 IRQ_SDMMC1 0>;
+			clock-names = "sdhc1";
+			clocks = <&sdhc1>;
+			reset-id = <RESET_ID_SDMMC1>;
+			status = "okay";
+		};
+
+		dw_mmc2:dw_mmc@69000 {
+			compatible = "nexell,dw-mmc";
+			reg = <PHYS_BASE_SDMMC2 0x1000>;
+			interrupts = <0 IRQ_SDMMC2 0>;
+			clock-names = "sdhc2";
+			reset-id = <RESET_ID_SDMMC2>;
+			clocks = <&sdhc2>;
+		};
+
+		dwcotg@40000 {
+			compatible = "nexell,dwc_otg";
+			reg = <PHYS_BASE_HSOTG 0x11000>;
+			interrupts = <0 IRQ_USB20OTG 0>;
+			reset-id = <RESET_ID_USB20OTG>;
+			status = "okay";
 		};
 	};
 };
