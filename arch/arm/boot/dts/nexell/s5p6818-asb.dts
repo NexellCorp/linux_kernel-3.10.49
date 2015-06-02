@@ -33,6 +33,7 @@
 
     aliases {
 		snd_null_card0 = &snd_null_card_0;
+		snd_null_card1 = &snd_null_card_1;
 		snd_null_card2 = &snd_null_card_2;
 	};
 
@@ -53,7 +54,7 @@
 			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 		};
 
-		#include "s5p6818-svt-pin.dtsi"
+		#include "s5p6818-asb-pin.dtsi"
 
 		serial@a1000 {
 			enable_dma = <1>;
@@ -155,10 +156,11 @@
 			pre_supply_mclk = <1>;
 			status = "okay";
 		};
+
 		i2s_1:i2s1@56000 {
-			master_mode = <1>;
+			master_mode = <0>;
 			mclk_in = <1>;
-			trans_mode = <0>;
+			trans_mode = <1>;
 			frame_bit = <48>;
 			sample_rate = <48000>;
 			pre_supply_mclk = <0>;
@@ -175,17 +177,13 @@
 			status = "okay";
 		};
 
-        iic0:iic@a4000 {
+		iic0:iic@a4000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			rt5631: rt5631@1a {
-				compatible = "rt,rt5631";
-				reg = <0x1a>;
-			};
-	    };
+		};
 
-        spdiftx@59000 {
+		spdiftx@59000 {
 			status = "okay";
 		};
 
@@ -195,8 +193,7 @@
 		
 		ehci@30000 {
 			hsic_en = <1>;
-			hsic_exthub_gpio = <150>;
-			ehci_late_loadtime = <500>;
+			hsic_exthub_gpio = <159>;
 		};
 
 		#ifdef CONFIG_REGULATOR_MP8845C
@@ -363,15 +360,14 @@
 		nexell,i2s-controller = <&i2s_0>;
 	};
 
-	sound {
-		compatible = "nexell,nxp-rt5631";
+	snd_null_card_1:snd_null_card@1 {
+		compatible = "nexell,snd-null-card";
 		ch = <1>;
 		sample_rate = <48000>;
 	    format = "S16";
 		nexell,i2s-controller = <&i2s_1>;
-		nexell,audio-codec = <&rt5631>;
 	};
-
+	
 	snd_null_card_2:snd_null_card@2 {
 		compatible = "nexell,snd-null-card";
 		ch = <2>;

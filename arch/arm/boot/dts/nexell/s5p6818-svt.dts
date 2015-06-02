@@ -257,7 +257,6 @@
 		ehci@30000 {
 			hsic_en = <1>;
 			hsic_exthub_gpio = <150>;
-			ehci_late_loadtime = <500>;
 		};
 
 		#ifdef CONFIG_REGULATOR_MP8845C
