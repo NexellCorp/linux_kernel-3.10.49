@@ -488,10 +488,12 @@ static int __init timer_get_device_data(struct device_node *node,
 	return 0;
 }
 
+#ifdef CONFIG_ARM
 static struct delay_timer nxp_delay_timer = {
 	.freq = CLK_SOURCE_HZ,
 	.read_current_timer = (unsigned long(*)(void))timer_read_count,
 };
+#endif
 
 static void __init timer_of_init_dt(struct device_node *node)
 {
