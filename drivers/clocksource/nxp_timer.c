@@ -488,6 +488,11 @@ static int __init timer_get_device_data(struct device_node *node,
 	return 0;
 }
 
+static struct delay_timer nxp_delay_timer = {
+	.freq = CLK_SOURCE_HZ,
+	.read_current_timer = (unsigned long(*)(void))timer_read_count,
+};
+
 static void __init timer_of_init_dt(struct device_node *node)
 {
 	struct timer_of_dev *dev = NULL;
@@ -507,6 +512,10 @@ static void __init timer_of_init_dt(struct device_node *node)
 
 	timer_source_of_init(node);
 	timer_event_of_init(node);
+
+#ifdef CONFIG_ARM
+	register_current_timer_delay(&nxp_delay_timer);
+#endif
 	return;
 }
 
