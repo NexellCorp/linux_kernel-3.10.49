@@ -176,7 +176,7 @@
 			status = "okay";
 			#address-cells = <0x1>;
 			#size-cells = <0x0>;
-			phy-addr = <3>;
+			phy-addr = <7>;
 			probed-phy-irq = <(IRQ_GPIO_E_START+23)>;
 			reset_gpio = <(PAD_GPIO_C+28)>;			/* mdio reset pin */
 			loopback_mode = <1>;					/* 0: none, 1: 10M */
