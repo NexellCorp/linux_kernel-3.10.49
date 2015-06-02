@@ -168,8 +168,10 @@ struct nxp_spdif_snd_param {
     void __iomem *base_addr;
 	struct spdif_register spdif;
 	int hdmi_out;
+#if defined (CONFIG_NXP_HDMI_AUDIO_SPDIF)
 	int hdmi_mclk_pll;
 	int hdmi_mclk_div;
+#endif
 };
 
 #define	SPDIF_MASTER_CLKGEN_BASE		0xC0105000
@@ -177,6 +179,7 @@ struct nxp_spdif_snd_param {
 #define	MAX_DIVIDER						((1<<8) - 1)	// 256, align 2
 #define	DIVIDER_ALIGN					2
 
+#if defined (CONFIG_NXP_HDMI_AUDIO_SPDIF)
 static int calc_hdmi_master_clock(unsigned long mclk, int *pllsel, int *plldiv)
 {
 	struct clk *clk;
@@ -233,6 +236,7 @@ static int calc_hdmi_master_clock(unsigned long mclk, int *pllsel, int *plldiv)
 
 	return 0;
 }
+#endif
 
 static void inline spdif_reset(struct nxp_spdif_snd_param *par)
 {
@@ -246,7 +250,8 @@ static int spdif_start(struct nxp_spdif_snd_param *par, int stream)
 {
 	struct spdif_register *spdif = &par->spdif;
 	void __iomem *base = par->base_addr;
-	void __iomem *hdmi = IO_ADDRESS(SPDIF_MASTER_CLKGEN_BASE);
+#if defined (CONFIG_NXP_HDMI_AUDIO_SPDIF)
+	void __iomem *hdmi = (void *)(IO_ADDRESS(SPDIF_MASTER_CLKGEN_BASE));
 	volatile u32 value;
 
 	if (par->hdmi_out) {
@@ -257,6 +262,7 @@ static int spdif_start(struct nxp_spdif_snd_param *par, int stream)
 		writel(value, (hdmi + 0x04));
 		writel(readl(hdmi) | (1<<2), hdmi);
 	}
+#endif
 
 	spdif->clkcon |= (1<<CLKCON_POWER_POS);
 	writel(spdif->con, (base+SPDIF_CON_OFFSET));
@@ -270,15 +276,19 @@ static void spdif_stop(struct nxp_spdif_snd_param *par, int stream)
 {
 	struct spdif_register *spdif = &par->spdif;
 	void __iomem *base = par->base_addr;
-	void __iomem *hdmi = IO_ADDRESS(SPDIF_MASTER_CLKGEN_BASE);
+#if defined (CONFIG_NXP_HDMI_AUDIO_SPDIF)
+	void __iomem *hdmi = (void *)(IO_ADDRESS(SPDIF_MASTER_CLKGEN_BASE));
+#endif
 
 	spdif->clkcon &= ~(1 << CLKCON_POWER_POS);
 	writel(spdif->clkcon, (base+SPDIF_CLKCON_OFFSET));
 
 	par->status &= ~SNDDEV_STATUS_PLAY;
 
+#if defined (CONFIG_NXP_HDMI_AUDIO_SPDIF)
 	if (par->hdmi_out)
 		writel(readl(hdmi) & ~(1<<2), hdmi);	/* clk disable */
+#endif
 }
 
 static int nxp_spdif_check_param(struct nxp_spdif_snd_param *par)
@@ -379,7 +389,9 @@ static int nxp_spdif_setup(struct snd_soc_dai *dai)
 	struct nxp_spdif_snd_param *par = snd_soc_dai_get_drvdata(dai);
 	struct spdif_register *spdif = &par->spdif;
 	void __iomem *base = par->base_addr;
+#if defined (CONFIG_NXP_HDMI_AUDIO_SPDIF)
 	int hdmi_out = par->hdmi_out;
+#endif
 	long rate_hz = par->master_clock;
 	int  ratio = par->master_ratio;
 	unsigned int cstas = spdif->cstas;
@@ -391,8 +403,10 @@ static int nxp_spdif_setup(struct snd_soc_dai *dai)
 		par->sample_rate, rate_hz/(RATIO_256==ratio?256:384), rate_hz,
 		par->hdmi_out?"HDMI":"SPDIF");
 
+#if defined (CONFIG_NXP_HDMI_AUDIO_SPDIF)
 	if (hdmi_out)
 		calc_hdmi_master_clock(rate_hz, &par->hdmi_mclk_pll, &par->hdmi_mclk_div);
+#endif
 
 	/* set clock */
 	par->clk_rate = clk_set_rate(par->clk, rate_hz);
