@@ -42,6 +42,59 @@
 #include <asm/irq.h>
 #include <asm/uaccess.h>
 
+
+
+int phy_loopback_test = 0;
+
+/**
+ * nxpmac_set_phy_loopback - Loopback Test
+ * @speed: 0: disable, 1: 10M, 2: 100M (not tested), 3: 1000M (not tested)
+ */
+static int
+nxpmac_set_phy_loopback(struct phy_device *phydev, int speed)
+{
+	// for realtek phy
+
+	//unsigned long flags;
+
+	if (phydev == NULL)
+		return -1;
+
+	if (speed <= 0 || speed > 3)
+		return -1;
+
+	//spin_lock_irqsave(&priv->lock, flags);
+
+	/* disable PCS loopback */
+	phy_write(phydev, 31, 0);
+	phy_write(phydev, 0, 0x1140);
+	msleep(200);
+
+	/* enable PCS loopback */
+	phy_write(phydev, 31, 0);
+	phy_write(phydev, 0, 0x8000);
+	msleep(50);
+	switch (speed) {
+	case 1:	/* 10M */
+		phy_write(phydev, 0, 0x4100);
+		break;
+	case 2: /* 100M */
+		phy_write(phydev, 0, 0x6100);
+		break;
+	case 3: /* 1000M */
+		phy_write(phydev, 0, 0x4140);
+		break;
+	default:
+		break;
+	}
+	msleep(50);
+	//phy_write(phydev, 0, 0x8000);
+
+	//spin_unlock_irqrestore(&priv->lock, flags);
+
+	return 0;
+}
+
 /**
  * phy_print_status - Convenience function to print out the current phy status
  * @phydev: the phy_device struct
@@ -569,6 +622,7 @@ int phy_start_interrupts(struct phy_device *phydev)
 
 	atomic_set(&phydev->irq_disable, 0);
 	if (request_irq(phydev->irq, phy_interrupt,
+				//IRQF_TRIGGER_LOW | IRQF_SHARED,
 				IRQF_SHARED,
 				"phy_interrupt",
 				phydev) < 0) {
@@ -764,6 +818,9 @@ void phy_state_machine(struct work_struct *work)
 
 			break;
 		case PHY_AN:
+			if (phy_loopback_test)
+				nxpmac_set_phy_loopback(phydev, phy_loopback_test);
+
 			err = phy_read_status(phydev);
 
 			if (err < 0)
@@ -789,6 +846,8 @@ void phy_state_machine(struct work_struct *work)
 				phydev->state = PHY_RUNNING;
 				netif_carrier_on(phydev->attached_dev);
 				phydev->adjust_link(phydev->attached_dev);
+				if (phy_loopback_test)
+					return ;
 
 			} else if (0 == phydev->link_timeout--) {
 				needs_aneg = 1;

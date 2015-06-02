@@ -52,7 +52,6 @@
 #if defined (CONFIG_USB_EHCI_SYNOPSYS)
 #include <nexell/soc-s5pxx18.h>
 extern int hsic_en;
-extern int ehci_late_loadtime;
 #endif
 /*-------------------------------------------------------------------------*/
 
@@ -1341,6 +1340,19 @@ MODULE_LICENSE ("GPL");
 #define	PLATFORM_DRIVER		ehci_hcd_sead3_driver
 #endif
 
+#if defined(CONFIG_USB_EHCI_LATE_LOAD)
+struct delayed_work ehci_late_work;
+
+static void ehci_hcd_late_work(struct work_struct *work)
+{
+	int retval = 0;
+
+	retval = platform_driver_register(&PLATFORM_DRIVER);
+	if (retval < 0)
+		printk("%s error!!! %d\n", __func__, retval);
+}
+#endif
+
 static int __init ehci_hcd_init(void)
 {
 	int retval = 0;
@@ -1369,9 +1381,16 @@ static int __init ehci_hcd_init(void)
 #endif
 
 #ifdef PLATFORM_DRIVER
+#if !defined(CONFIG_USB_EHCI_LATE_LOAD)
 	retval = platform_driver_register(&PLATFORM_DRIVER);
 	if (retval < 0)
 		goto clean0;
+#else
+    INIT_DELAYED_WORK(&ehci_late_work, ehci_hcd_late_work);
+	schedule_delayed_work(&ehci_late_work,
+                msecs_to_jiffies(CONFIG_USB_EHCI_LATE_LOAD));
+	printk("==== echi_hcd_late_work after %d ms\n", CONFIG_USB_EHCI_LATE_LOAD);
+#endif
 #endif
 
 #ifdef PS3_SYSTEM_BUS_DRIVER
@@ -1406,8 +1425,10 @@ clean3:
 clean2:
 #endif
 #ifdef PLATFORM_DRIVER
+#if !defined(CONFIG_USB_EHCI_LATE_LOAD)
 	platform_driver_unregister(&PLATFORM_DRIVER);
 clean0:
+#endif
 #endif
 #ifdef DEBUG
 	debugfs_remove(ehci_debug_root);

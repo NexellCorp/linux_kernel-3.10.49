@@ -191,7 +191,9 @@ int usb_add_gadget_udc_release(struct device *parent, struct usb_gadget *gadget,
 	if (!udc)
 		goto err1;
 
+#if !defined(CONFIG_USB_DWCOTG)
 	dev_set_name(&gadget->dev, "gadget");
+#endif
 	gadget->dev.parent = parent;
 
 	dma_set_coherent_mask(&gadget->dev, parent->coherent_dma_mask);
@@ -203,9 +205,11 @@ int usb_add_gadget_udc_release(struct device *parent, struct usb_gadget *gadget,
 	else
 		gadget->dev.release = usb_udc_nop_release;
 
+#if !defined(CONFIG_USB_DWCOTG)
 	ret = device_register(&gadget->dev);
 	if (ret)
 		goto err2;
+#endif
 
 	device_initialize(&udc->dev);
 	udc->dev.release = usb_udc_release;
@@ -238,7 +242,9 @@ err4:
 err3:
 	put_device(&udc->dev);
 
+#if !defined(CONFIG_USB_DWCOTG)
 err2:
+#endif
 	put_device(&gadget->dev);
 	kfree(udc);
 
@@ -310,7 +316,9 @@ found:
 
 	kobject_uevent(&udc->dev.kobj, KOBJ_REMOVE);
 	device_unregister(&udc->dev);
+#if !defined(CONFIG_USB_DWCOTG)
 	device_unregister(&gadget->dev);
+#endif
 }
 EXPORT_SYMBOL_GPL(usb_del_gadget_udc);
 

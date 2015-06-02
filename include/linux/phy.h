@@ -575,4 +575,6 @@ int __init mdio_bus_init(void);
 void mdio_bus_exit(void);
 
 extern struct bus_type mdio_bus_type;
+
+extern int phy_loopback_test;			/* added by freestyle */
 #endif /* __PHY_H */

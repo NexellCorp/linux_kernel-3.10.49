@@ -22,9 +22,7 @@
 
 #include "clk-s5pxx18.h"
 
-/*
-#define	pr_debug	printk
-*/
+//#define	pr_debug	printk
 
 #define to_clk_dev(_hw) \
 		container_of(_hw, struct clk_dev, hw)

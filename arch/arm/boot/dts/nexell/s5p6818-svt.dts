@@ -12,6 +12,7 @@
 #define	UART_CLOCK_FREQUENCY	147500000
 #define I2C_CLOCK_FREQUENCY		100000000
 #define SPI_CLOCK_FREQUENCY		100000000
+/*#define GMAC_CLOCK_FREQUENCY	200000000*/
 
 #define PMIC_PDATA_INIT(_id, _rname, _minuv, _maxuv, _always_on, _boot_on,	\
 						_init_uv, _init_enable, _slp_slots)					\
@@ -51,6 +52,7 @@
 			spi0:spi@ac000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi1:spi@ad000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
+			/*gmac:gmac@c8000  { clock-frequency = <GMAC_CLOCK_FREQUENCY>; };*/
 		};
 
 		#include "s5p6818-svt-pin.dtsi"
@@ -115,8 +117,28 @@
 			nand-tacc = <0x3f>;
 			nand-ecc-bytes = <1024>;
 			nand-ecc-bits = <40>;
-			wp-gpio = <91>;							/* GPIO_C27 */
+			wp-gpio = <(PAD_GPIO_C+27)>;	/* write protect */
 			status = "okay";
+		};
+
+		gmac0:ethernet@60000 {
+			phy = <&phy0>;
+			status = "okay";
+			#address-cells = <0x1>;
+			#size-cells = <0x0>;
+			phy-addr = <3>;
+			probed-phy-irq = <(IRQ_GPIO_A_START+9)>;
+			reset_gpio = <(PAD_GPIO_A+10)>;			/* mdio reset pin */
+			loopback_mode = <0>;					/* 0: none, 1: 10M */
+			phy0:ethernet-phy@0 {
+				compatible = "ethernet-phy-ieee802.3-c22";
+				/*max-speed = <1000>;*/
+				/*linux,phandle = <2452000>;*/
+				/*interrupt-parent = <40000>;*/
+				/*interrupts = <(IRQ_GPIO_A_START+9) 0>;*/
+				reg = <0>;
+				device_type = "ethernet-phy";
+			};
 		};
 
 		framebuffer@0 {
@@ -204,6 +226,25 @@
 				reg = <0x1a>;
 			};
 	    };
+
+		iic1:iic@a5000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ft5x0x@38 {	/* 7bit (0x70>>1) */
+				status = "okay";
+				compatible = "nexell,ft5x0x";
+
+				reg				= <0x38>;
+				mtouch-irq		= <(IRQ_GPIO_E_START+11)>;
+				touch_points	= <10>;
+				x_resol			= <1024>;
+				y_resol			= <600>;
+				rotate			= <0>;
+				/*ptr_cnt		= <7>;*/
+				/*pointercal	= <38242, -340, -453008, -184, 39059, -149296, 65536>;*/
+			 };
+		};
 
         spdiftx@59000 {
 			status = "okay";
@@ -426,6 +467,7 @@
 	    format = "S16";
 	};
 
+	#ifdef CONFIG_KEYBOARD_GPIO
     gpio-keys {
         compatible = "gpio-keys";
         power {
@@ -434,4 +476,13 @@
             linux,code = <116>; /* KEY_POWER */
         };
     };
+	#endif
+	#ifdef CONFIG_KEYBOARD_NXP_IO_KEY
+    io-keypad {
+        compatible = "nexell,nxp-keypad";
+        buttons  = <
+			(PAD_GPIO_ALV + 0)	116 0	/* gpio, keycode, active high */
+        >;
+    };
+    #endif
 };

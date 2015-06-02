@@ -114,7 +114,7 @@ static void __init cma_region_reserve(struct cma_region *regions, const char *ma
                 (reg->alignment & ~reg->alignment)) {
                 pr_err("NXP/CMA: failed to reserve '%s': "
                         "incorrect alignment 0x%08x.\n",
-                        reg->name, reg->alignment);
+                        reg->name, (uint)reg->alignment);
                 continue;
             }
         } else {
@@ -143,23 +143,18 @@ static void __init cma_region_reserve(struct cma_region *regions, const char *ma
                 reg->reserved = 1;
             } else {
                 pr_err("NXP/CMA: No free space in memory for '%s': size(%d)\n",
-                        reg->name, reg->size);
+                        reg->name, (int)reg->size);
             }
         }
 
         if (reg->reserved) {
-            pr_debug("NXP/CMA: "
-                    "Reserved 0x%08x/0x%08x for '%s'\n",
-                    reg->start, reg->size, reg->name);
             printk("NXP/CMA: "
-                    "Reserved 0x%08x/0x%08x for '%s'\n",
-                    reg->start, reg->size, reg->name);
+                    "Reserved 0x%p/0x%08x for '%s'\n",
+                    (void*)reg->start, (uint)reg->size, reg->name);
 
 #if 1
             if (0 == cma_early_region_register(reg)) {
                 paddr_last = min(paddr, paddr_last);
-                pr_debug("NXP/CMA: success register cma region for '%s'\n",
-                        reg->name);
                 printk("NXP/CMA: success register cma region for '%s'\n",
                         reg->name);
             } else {

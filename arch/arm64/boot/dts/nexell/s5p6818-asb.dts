@@ -33,6 +33,7 @@
 
     aliases {
 		snd_null_card0 = &snd_null_card_0;
+		snd_null_card1 = &snd_null_card_1;
 		snd_null_card2 = &snd_null_card_2;
 	};
 
@@ -79,7 +80,7 @@
 		};
 		
 		dw_mmc@62000 {
-			bus_speed = <100>;
+			bus_speed = <50>;
 			cd_gpio = <(PAD_GPIO_ALV + 1)>;	
 			clk_dly = <0x01020000>;
 		};
@@ -150,6 +151,46 @@
 				
 		};
 
+		adc:adc@53000 {
+			status = "okay";
+		};
+
+		nand:nand@51000 {
+			nand-bus-width = <8>;
+			nand-ecc-mode = "hw";
+			/*nand-on-flash-bbt = <1>;*/
+
+			nand-tacs = <0x0>;						/* unit: bclk cycle */
+			nand-tcah = <0x0>;
+			nand-tcos = <0xf>;
+			nand-tcoh = <0xf>;
+			nand-tacc = <0x3f>;
+			nand-ecc-bytes = <1024>;
+			nand-ecc-bits = <40>;
+			wp-gpio = <(PAD_GPIO_C+27)>;	/* write protect */
+			status = "okay";
+		};
+
+		gmac0:ethernet@60000 {
+			phy = <&phy0>;
+			status = "okay";
+			#address-cells = <0x1>;
+			#size-cells = <0x0>;
+			phy-addr = <3>;
+			probed-phy-irq = <(IRQ_GPIO_E_START+23)>;
+			reset_gpio = <(PAD_GPIO_C+28)>;			/* mdio reset pin */
+			loopback_mode = <1>;					/* 0: none, 1: 10M */
+			phy0:ethernet-phy@0 {
+				compatible = "ethernet-phy-ieee802.3-c22";
+				/*max-speed = <1000>;*/
+				/*linux,phandle = <2452000>;*/
+				/*interrupt-parent = <40000>;*/
+				/*interrupts = <(IRQ_GPIO_A_START+9) 0>;*/
+				reg = <0>;
+				device_type = "ethernet-phy";
+			};
+		};
+
 		rtc@10c00 {
 			status = "okay";
 		};
@@ -218,10 +259,11 @@
 			pre_supply_mclk = <1>;
 			status = "okay";
 		};
+
 		i2s_1:i2s1@56000 {
-			master_mode = <1>;
+			master_mode = <0>;
 			mclk_in = <1>;
-			trans_mode = <0>;
+			trans_mode = <1>;
 			frame_bit = <48>;
 			sample_rate = <48000>;
 			pre_supply_mclk = <0>;
@@ -244,7 +286,7 @@
 
 		};
 
-        spdiftx@59000 {
+    spdiftx@59000 {
 			status = "okay";
 		};
 
@@ -254,8 +296,7 @@
 		
 		ehci@30000 {
 			hsic_en = <1>;
-			hsic_exthub_gpio = <150>;
-			ehci_late_loadtime = <500>;
+			hsic_exthub_gpio = <159>;
 		};
 
 		#ifdef CONFIG_REGULATOR_MP8845C
@@ -353,16 +394,15 @@
 	    format = "S16";
 		nexell,i2s-controller = <&i2s_0>;
 	};
-#if 0
-	sound {
-		compatible = "nexell,nxp-rt5631";
+
+	snd_null_card_1:snd_null_card@1 {
+		compatible = "nexell,snd-null-card";
 		ch = <1>;
 		sample_rate = <48000>;
 	    format = "S16";
 		nexell,i2s-controller = <&i2s_1>;
-		nexell,audio-codec = <&rt5631>;
 	};
-#endif
+	
 	snd_null_card_2:snd_null_card@2 {
 		compatible = "nexell,snd-null-card";
 		ch = <2>;

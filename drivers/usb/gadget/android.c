@@ -30,9 +30,29 @@
 
 #include "gadget_chips.h"
 
+#define USE_FFS		(0)
+
+
+/*
+ * Kbuild is not very cooperative with respect to linking separately
+ * compiled library objects into one module.  So for now we won't use
+ * separate compilation ... ensuring init/exit sections work to shrink
+ * the runtime footprint, and giving us at least some parts of what
+ * a "gcc --combine ... part1.c part2.c part3.c ... " build would.
+ */
+#include "usbstring.c"
+#include "config.c"
+#include "epautoconf.c"
+#include "composite.c"
+
+#if (USE_FFS == 1)
 #include "f_fs.c"
+#endif
 #include "f_audio_source.c"
 #include "f_mass_storage.c"
+#include "u_serial.c"
+#include "f_acm.c"
+#include "f_adb.c"
 #include "f_mtp.c"
 #include "f_accessory.c"
 #define USB_ETH_RNDIS y
@@ -147,7 +167,7 @@ static struct usb_configuration android_config_driver = {
 	.unbind		= android_unbind_config,
 	.bConfigurationValue = 1,
 	.bmAttributes	= USB_CONFIG_ATT_ONE | USB_CONFIG_ATT_SELFPOWER,
-	.MaxPower	= 500, /* 500ma */
+	.bMaxPower	= 0xFA, /* 500ma */
 };
 
 static void android_work(struct work_struct *data)
@@ -206,6 +226,7 @@ static void android_disable(struct android_dev *dev)
 /*-------------------------------------------------------------------------*/
 /* Supported functions initialization */
 
+#if (USE_FFS == 1)
 struct functionfs_config {
 	bool opened;
 	bool enabled;
@@ -360,6 +381,7 @@ static void *functionfs_acquire_dev_callback(const char *dev_name)
 static void functionfs_release_dev_callback(struct ffs_data *ffs_data)
 {
 }
+#endif	/* #if (USE_FFS == 1) */
 
 #define MAX_ACM_INSTANCES 4
 struct acm_function_config {
@@ -931,7 +953,10 @@ static struct android_usb_function audio_source_function = {
 };
 
 static struct android_usb_function *supported_functions[] = {
+#if (USE_FFS == 1)
 	&ffs_function,
+#endif
+	&adb_function,
 	&acm_function,
 	&mtp_function,
 	&ptp_function,
@@ -1316,7 +1341,9 @@ static int android_bind(struct usb_composite_dev *cdev)
 	 * Start disconnected. Userspace will connect the gadget once
 	 * it is done configuring the functions.
 	 */
+#if !defined(CONFIG_PLAT_SLSIAP)
 	usb_gadget_disconnect(gadget);
+#endif
 
 	ret = android_init_functions(dev->functions, cdev);
 	if (ret)

@@ -93,8 +93,6 @@ static const struct hc_driver nxp_ehci_hc_driver = {
 int hsic_en = 0;
 EXPORT_SYMBOL(hsic_en);
 
-int ehci_late_loadtime = 0;
-EXPORT_SYMBOL(ehci_late_loadtime);
 
 static void nxp_ehci_resume_work(struct work_struct *work);
 
@@ -164,13 +162,6 @@ static int nxp_ehci_probe(struct platform_device *pdev)
 	pdev->dev.platform_data = pdata;
 
 	of_property_read_u32(pdev->dev.of_node, "hsic_en", &hsic_en);
-	of_property_read_u32(pdev->dev.of_node, "ehci_late_loadtime", &ehci_late_loadtime);
-
-	if (ehci_late_loadtime > 0) {
-        printk("==== echi_hcd late load after %d ms\n", ehci_late_loadtime);
-		msleep(ehci_late_loadtime);
-        printk("==== loading echi_hcd %d ms\n", ehci_late_loadtime);
-	}
 
 	if (!pdata) {
 		dev_err(&pdev->dev, "No platform data defined\n");

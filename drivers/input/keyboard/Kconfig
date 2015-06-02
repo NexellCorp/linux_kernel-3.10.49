@@ -641,4 +641,10 @@ config KEYBOARD_CROS_EC
 	  To compile this driver as a module, choose M here: the
 	  module will be called cros_ec_keyb.
 
+config KEYBOARD_NXP_IO_KEY
+    tristate "SLsiAP IO Keypad support"
+    depends on PLAT_SLSIAP
+    help
+      Say Y here to enable the gpio keypad on SLsiAP SoC based board.
+
 endif
