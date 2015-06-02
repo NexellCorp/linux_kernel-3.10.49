@@ -151,6 +151,46 @@
 				
 		};
 
+		adc:adc@53000 {
+			status = "okay";
+		};
+
+		nand:nand@51000 {
+			nand-bus-width = <8>;
+			nand-ecc-mode = "hw";
+			/*nand-on-flash-bbt = <1>;*/
+
+			nand-tacs = <0x0>;						/* unit: bclk cycle */
+			nand-tcah = <0x0>;
+			nand-tcos = <0xf>;
+			nand-tcoh = <0xf>;
+			nand-tacc = <0x3f>;
+			nand-ecc-bytes = <1024>;
+			nand-ecc-bits = <40>;
+			wp-gpio = <(PAD_GPIO_C+27)>;	/* write protect */
+			status = "okay";
+		};
+
+		gmac0:ethernet@60000 {
+			phy = <&phy0>;
+			status = "okay";
+			#address-cells = <0x1>;
+			#size-cells = <0x0>;
+			phy-addr = <3>;
+			probed-phy-irq = <(IRQ_GPIO_E_START+23)>;
+			reset_gpio = <(PAD_GPIO_C+28)>;			/* mdio reset pin */
+			loopback_mode = <1>;					/* 0: none, 1: 10M */
+			phy0:ethernet-phy@0 {
+				compatible = "ethernet-phy-ieee802.3-c22";
+				/*max-speed = <1000>;*/
+				/*linux,phandle = <2452000>;*/
+				/*interrupt-parent = <40000>;*/
+				/*interrupts = <(IRQ_GPIO_A_START+9) 0>;*/
+				reg = <0>;
+				device_type = "ethernet-phy";
+			};
+		};
+
 		rtc@10c00 {
 			status = "okay";
 		};
