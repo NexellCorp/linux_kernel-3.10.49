@@ -12,7 +12,6 @@
 #define	UART_CLOCK_FREQUENCY	147500000
 #define I2C_CLOCK_FREQUENCY		100000000
 #define SPI_CLOCK_FREQUENCY		100000000
-/*#define GMAC_CLOCK_FREQUENCY	200000000*/
 
 #define PMIC_PDATA_INIT(_id, _rname, _minuv, _maxuv, _always_on, _boot_on,	\
 						_init_uv, _init_enable, _slp_slots)					\
@@ -52,7 +51,6 @@
 			spi0:spi@ac000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi1:spi@ad000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
 			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
-			/*gmac:gmac@c8000  { clock-frequency = <GMAC_CLOCK_FREQUENCY>; };*/
 		};
 
 		#include "s5p6818-svt-pin.dtsi"
