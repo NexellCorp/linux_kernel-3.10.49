@@ -3,7 +3,7 @@
 #	http://www.nexell.co.kr
 #
 
-obj-y += cpu_init_early.o
+obj-y += cpu_init_early.o cpu-sys.o
 
 ifeq ($(CONFIG_ARM64),y)
 obj-y += setup_64.o

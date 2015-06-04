@@ -59,6 +59,14 @@
 #define PAD_GPIO_E      		(4 * 32)
 #define PAD_GPIO_ALV    		(5 * 32)
 
+/* Alive wakeup detect mode */
+#define	PM_DECT_ASYNC_LOWLEVEL 	(0)
+#define	PM_DECT_ASYNC_HIGHLEVEL	(1)
+#define	PM_DECT_FALLINGEDGE 	(2)
+#define	PM_DECT_RISINGEDGE  	(3)
+#define	PM_DECT_SYNC_LOWLEVEL 	(4)
+#define	PM_DECT_SYNC_HIGHLEVEL 	(5)
+#define	PM_DECT_BOTHEDGE  		(6)
 
 /*	the data output format. */
 #define	DPC_FORMAT_RGB555     	0	///< RGB555 Format

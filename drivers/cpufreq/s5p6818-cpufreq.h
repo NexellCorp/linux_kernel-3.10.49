@@ -125,7 +125,7 @@ struct asv_param {
 static struct asv_tb_info *pAsv_Table = NULL;
 static struct asv_param	Asv_Param = { 0, };
 
-extern void nxp_cpu_id_ecid(u32 ecid[4]);
+extern int nxp_cpu_id_ecid(u32 ecid[4]);
 
 static inline unsigned int MtoL(unsigned int data, int bits)
 {

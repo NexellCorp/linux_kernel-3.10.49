@@ -66,10 +66,10 @@
 		};
 
 		spi@5b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
-
-
 			spidev@0 {
 				compatible = "spidev";
 				reg = <0 0>;
@@ -81,6 +81,8 @@
 			};
 		};
 		spi@5c000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
 		};
@@ -260,7 +262,7 @@
 		};
 
 		#ifdef CONFIG_REGULATOR_MP8845C
-		iic0:iic@a4000 {
+		iic2:iic@a6000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
@@ -274,7 +276,7 @@
 			};
 		};
 
-		iic2:iic@a6000 {
+		iic0:iic@a4000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
