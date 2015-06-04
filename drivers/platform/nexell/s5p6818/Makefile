@@ -26,4 +26,4 @@ include  $(srctree)/drivers/platform/nexell/s5p6818/prototype.mk
 #===============================================================================
 # Board Type
 #===============================================================================
-obj-$(CONFIG_ARCH_S5P6818_BD_SVT) += svt/
+obj-$(CONFIG_ARCH_S5P6818_SVT) += svt/
