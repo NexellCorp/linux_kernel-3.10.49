@@ -196,7 +196,7 @@
 			clock-names = "timer0", "timer1", "pclk";
 		};
 
-    	cpufreq@bb000 {
+    	dynamic-freq@bb000 {
     	    compatible = "nexell,nxp-cpufreq";
     	    reg = <0xc00bb000 0x30000>;
  		};
