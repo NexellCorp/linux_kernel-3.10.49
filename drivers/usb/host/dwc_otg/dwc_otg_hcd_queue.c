@@ -44,6 +44,7 @@
 #include "dwc_otg_mphi_fix.h"
 
 extern bool microframe_schedule;
+extern struct device dwc_hcd_dev;
 
 /** 
  * Free each QTD in the QH's QTD-list then free the QH.  QH should already be
@@ -75,7 +76,7 @@ void dwc_otg_hcd_qh_free(dwc_otg_hcd_t * hcd, dwc_otg_qh_t * qh)
 		} else {
 			buf_size = hcd->core_if->core_params->max_transfer_size;
 		}
-		DWC_DMA_FREE(buf_size, qh->dw_align_buf, qh->dw_align_buf_dma);
+		DWC_DMA_FREE(&dwc_hcd_dev, buf_size, qh->dw_align_buf, qh->dw_align_buf_dma);
 	}
 
 	DWC_SPINLOCK_IRQSAVE(hcd->lock, &flags);

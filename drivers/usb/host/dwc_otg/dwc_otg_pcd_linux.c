@@ -59,6 +59,8 @@
 #include "dwc_otg_driver.h"
 #include "dwc_otg_dbg.h"
 
+extern struct device dwc_pcd_dev;
+
 static struct gadget_wrapper {
 	dwc_otg_pcd_t *pcd;
 
@@ -370,7 +372,8 @@ static int ep_queue(struct usb_ep *usb_ep, struct usb_request *usb_req,
 #endif
                     usb_req->dma == DWC_DMA_ADDR_INVALID)
 				{
-                	dma_addr = dma_map_single(dev, usb_req->buf,
+                	//dma_addr = dma_map_single(dev, usb_req->buf,
+                	dma_addr = dma_map_single(&dwc_pcd_dev, usb_req->buf,
                     					usb_req->length,
                                         ep->dwc_ep.is_in ?
                                         DMA_TO_DEVICE:
@@ -1085,7 +1088,8 @@ static int _complete(dwc_otg_pcd_t * pcd, void *ep_handle,
                         if (otg_dev != NULL)
                                   dev = DWC_OTG_OS_GETDEV(otg_dev->os_dep);
 
-			dma_unmap_single(dev, req->dma, req->length,
+			//dma_unmap_single(dev, req->dma, req->length,
+			dma_unmap_single(&dwc_pcd_dev, req->dma, req->length,
                                          ep->dwc_ep.is_in ?
                                                 DMA_TO_DEVICE: DMA_FROM_DEVICE);
                 }
@@ -1130,7 +1134,8 @@ static int _complete(dwc_otg_pcd_t * pcd, void *ep_handle,
 				DWC_DEBUGPL(DBG_PCD, "%s: dma_unmap_single (usb req %p) %p:%d  dma %x:%x (%s)\n",
 					__func__, req, req->buf, req->length, req->dma, dwc_otg_req->dma,
 					ep->dwc_ep.is_in?"in":"out");
-				dma_unmap_single(dev, dwc_otg_req->dma, dwc_otg_req->length,
+				//dma_unmap_single(dev, dwc_otg_req->dma, dwc_otg_req->length,
+				dma_unmap_single(&dwc_pcd_dev, dwc_otg_req->dma, dwc_otg_req->length,
              			ep->dwc_ep.is_in ?
                        DMA_TO_DEVICE: DMA_FROM_DEVICE);
             	req->dma = DWC_DMA_ADDR_INVALID;
@@ -1443,6 +1448,9 @@ static void free_wrapper(struct gadget_wrapper *d)
  *
  */
 static u64 pcd_dma_mask = DMA_BIT_MASK(32);
+struct device dwc_pcd_dev = {};
+EXPORT_SYMBOL(dwc_pcd_dev);
+
 int pcd_init(dwc_bus_dev_t *_dev)
 {
 	dwc_otg_device_t *otg_dev = DWC_OTG_BUSDRVDATA(_dev);
@@ -1452,6 +1460,7 @@ int pcd_init(dwc_bus_dev_t *_dev)
 
     _dev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
     _dev->dev.dma_mask = &pcd_dma_mask;
+	dwc_pcd_dev = _dev->dev;
 
 	otg_dev->pcd = dwc_otg_pcd_init(otg_dev->core_if);
 

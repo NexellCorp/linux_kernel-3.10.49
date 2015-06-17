@@ -40,6 +40,8 @@
 /** This definition should actually migrate to the Portability Library */
 #define DWC_CONSTANT_CPU_TO_LE16(x) (x)
 
+extern struct device dwc_pcd_dev;
+
 extern dwc_otg_pcd_ep_t *get_ep_by_addr(dwc_otg_pcd_t * pcd, u16 wIndex);
 
 static int cfi_core_features_buf(uint8_t * buf, uint16_t buflen);
@@ -407,13 +409,13 @@ static void cfi_release(cfiobject_t * cfiobj)
 	CFI_INFO("%s\n", __func__);
 
 	if (cfiobj->buf_in.buf) {
-		DWC_DMA_FREE(CFI_IN_BUF_LEN, cfiobj->buf_in.buf,
+		DWC_DMA_FREE(&dwc_pcd_dev, CFI_IN_BUF_LEN, cfiobj->buf_in.buf,
 			     cfiobj->buf_in.addr);
 		cfiobj->buf_in.buf = NULL;
 	}
 
 	if (cfiobj->buf_out.buf) {
-		DWC_DMA_FREE(CFI_OUT_BUF_LEN, cfiobj->buf_out.buf,
+		DWC_DMA_FREE(&dwc_pcd_dev, CFI_OUT_BUF_LEN, cfiobj->buf_out.buf,
 			     cfiobj->buf_out.addr);
 		cfiobj->buf_out.buf = NULL;
 	}
@@ -531,7 +533,7 @@ static int cfi_ep_enable(struct cfiobject *cfi, struct dwc_otg_pcd *pcd,
 
 		/* Allocate the DMA Descriptors chain of MAX_DMA_DESCS_PER_EP count */
 		ep->dwc_ep.descs =
-		    DWC_DMA_ALLOC(MAX_DMA_DESCS_PER_EP *
+		    DWC_DMA_ALLOC(&dwc_pcd_dev, MAX_DMA_DESCS_PER_EP *
 				  sizeof(dwc_otg_dma_desc_t),
 				  &ep->dwc_ep.descs_dma_addr);
 
@@ -792,7 +794,7 @@ static void *cfi_ep_alloc_buf(struct cfiobject *cfi, struct dwc_otg_pcd *pcd,
 			      struct dwc_otg_pcd_ep *ep, dma_addr_t * dma,
 			      unsigned size, gfp_t flags)
 {
-	return DWC_DMA_ALLOC(size, dma);
+	return DWC_DMA_ALLOC(&dwc_pcd_dev, size, dma);
 }
 
 /**
@@ -804,7 +806,7 @@ int init_cfi(cfiobject_t * cfiobj)
 
 	/* Allocate a buffer for IN XFERs */
 	cfiobj->buf_in.buf =
-	    DWC_DMA_ALLOC(CFI_IN_BUF_LEN, &cfiobj->buf_in.addr);
+	    DWC_DMA_ALLOC(&dwc_pcd_dev, CFI_IN_BUF_LEN, &cfiobj->buf_in.addr);
 	if (NULL == cfiobj->buf_in.buf) {
 		CFI_INFO("Unable to allocate buffer for INs\n");
 		return -DWC_E_NO_MEMORY;
@@ -812,7 +814,7 @@ int init_cfi(cfiobject_t * cfiobj)
 
 	/* Allocate a buffer for OUT XFERs */
 	cfiobj->buf_out.buf =
-	    DWC_DMA_ALLOC(CFI_OUT_BUF_LEN, &cfiobj->buf_out.addr);
+	    DWC_DMA_ALLOC(&dwc_pcd_dev, CFI_OUT_BUF_LEN, &cfiobj->buf_out.addr);
 	if (NULL == cfiobj->buf_out.buf) {
 		CFI_INFO("Unable to allocate buffer for OUT\n");
 		return -DWC_E_NO_MEMORY;

@@ -56,6 +56,8 @@
 extern int init_cfi(cfiobject_t * cfiobj);
 #endif
 
+extern struct device dwc_pcd_dev;
+
 /**
  * Choose endpoint from ep arrays using usb_ep structure.
  */
@@ -247,7 +249,7 @@ static dwc_otg_cil_callbacks_t pcd_callbacks = {
 dwc_otg_dev_dma_desc_t *dwc_otg_ep_alloc_desc_chain(dwc_dma_t * dma_desc_addr,
 						    uint32_t count)
 {
-	return DWC_DMA_ALLOC_ATOMIC(count * sizeof(dwc_otg_dev_dma_desc_t),
+	return DWC_DMA_ALLOC_ATOMIC(&dwc_pcd_dev, count * sizeof(dwc_otg_dev_dma_desc_t),
 							dma_desc_addr);
 }
 
@@ -257,7 +259,7 @@ dwc_otg_dev_dma_desc_t *dwc_otg_ep_alloc_desc_chain(dwc_dma_t * dma_desc_addr,
 void dwc_otg_ep_free_desc_chain(dwc_otg_dev_dma_desc_t * desc_addr,
 				uint32_t dma_desc_addr, uint32_t count)
 {
-	DWC_DMA_FREE(count * sizeof(dwc_otg_dev_dma_desc_t), desc_addr,
+	DWC_DMA_FREE(&dwc_pcd_dev, count * sizeof(dwc_otg_dev_dma_desc_t), desc_addr,
 		     dma_desc_addr);
 }
 
@@ -1166,7 +1168,7 @@ dwc_otg_pcd_t *dwc_otg_pcd_init(dwc_otg_core_if_t * core_if)
 	 */
 	if (GET_CORE_IF(pcd)->dma_enable) {
 		pcd->setup_pkt =
-		    DWC_DMA_ALLOC(sizeof(*pcd->setup_pkt) * 5,
+		    DWC_DMA_ALLOC(&dwc_pcd_dev, sizeof(*pcd->setup_pkt) * 5,
 				  &pcd->setup_pkt_dma_handle);
 		if (pcd->setup_pkt == NULL) {
 			DWC_FREE(pcd);
@@ -1174,10 +1176,10 @@ dwc_otg_pcd_t *dwc_otg_pcd_init(dwc_otg_core_if_t * core_if)
 		}
 
 		pcd->status_buf =
-		    DWC_DMA_ALLOC(sizeof(uint16_t),
+		    DWC_DMA_ALLOC(&dwc_pcd_dev, sizeof(uint16_t),
 				  &pcd->status_buf_dma_handle);
 		if (pcd->status_buf == NULL) {
-			DWC_DMA_FREE(sizeof(*pcd->setup_pkt) * 5,
+			DWC_DMA_FREE(&dwc_pcd_dev, sizeof(*pcd->setup_pkt) * 5,
 				     pcd->setup_pkt, pcd->setup_pkt_dma_handle);
 			DWC_FREE(pcd);
 			return NULL;
@@ -1220,10 +1222,10 @@ dwc_otg_pcd_t *dwc_otg_pcd_init(dwc_otg_core_if_t * core_if)
 					    (dev_if->setup_desc_addr[0],
 					     dev_if->dma_setup_desc_addr[0], 1);
 
-				DWC_DMA_FREE(sizeof(*pcd->setup_pkt) * 5,
+				DWC_DMA_FREE(&dwc_pcd_dev, sizeof(*pcd->setup_pkt) * 5,
 					     pcd->setup_pkt,
 					     pcd->setup_pkt_dma_handle);
-				DWC_DMA_FREE(sizeof(*pcd->status_buf),
+				DWC_DMA_FREE(&dwc_pcd_dev, sizeof(*pcd->status_buf),
 					     pcd->status_buf,
 					     pcd->status_buf_dma_handle);
 
@@ -1314,9 +1316,9 @@ void dwc_otg_pcd_remove(dwc_otg_pcd_t * pcd)
 	}
 
 	if (GET_CORE_IF(pcd)->dma_enable) {
-		DWC_DMA_FREE(sizeof(*pcd->setup_pkt) * 5, pcd->setup_pkt,
+		DWC_DMA_FREE(&dwc_pcd_dev, sizeof(*pcd->setup_pkt) * 5, pcd->setup_pkt,
 			     pcd->setup_pkt_dma_handle);
-		DWC_DMA_FREE(sizeof(uint16_t), pcd->status_buf,
+		DWC_DMA_FREE(&dwc_pcd_dev, sizeof(uint16_t), pcd->status_buf,
 			     pcd->status_buf_dma_handle);
 		if (GET_CORE_IF(pcd)->dma_desc_enable) {
 			dwc_otg_ep_free_desc_chain(dev_if->setup_desc_addr[0],
@@ -2139,7 +2141,7 @@ int dwc_otg_pcd_ep_queue(dwc_otg_pcd_t * pcd, void *ep_handle,
 	if ((dma_buf & 0x3) && GET_CORE_IF(pcd)->dma_enable
 #endif
 			&& !GET_CORE_IF(pcd)->dma_desc_enable) {
-		req->dw_align_buf = DWC_DMA_ALLOC(buflen,
+		req->dw_align_buf = DWC_DMA_ALLOC(&dwc_pcd_dev, buflen,
 				 &req->dw_align_buf_dma);
 		DWC_WARN( "%s: DWC_DMA_ALLOC (req %p) %p:%d dma %p (align %p:%p)\n",
         	__func__, req_handle, req->buf, req->length, (void *)req->dma,

@@ -40,6 +40,7 @@
 #include "dwc_otg_regs.h"
 
 extern bool microframe_schedule;
+extern struct device dwc_hcd_dev;
 
 static inline uint8_t frame_list_idx(uint16_t frame)
 {
@@ -80,7 +81,7 @@ static int desc_list_alloc(dwc_otg_qh_t * qh)
 	int retval = 0;
 
 	qh->desc_list = (dwc_otg_host_dma_desc_t *)
-	    DWC_DMA_ALLOC(sizeof(dwc_otg_host_dma_desc_t) * max_desc_num(qh),
+	    DWC_DMA_ALLOC(&dwc_hcd_dev, sizeof(dwc_otg_host_dma_desc_t) * max_desc_num(qh),
 			  &qh->desc_list_dma);
 
 	if (!qh->desc_list) {
@@ -109,7 +110,7 @@ static int desc_list_alloc(dwc_otg_qh_t * qh)
 static void desc_list_free(dwc_otg_qh_t * qh)
 {
 	if (qh->desc_list) {
-		DWC_DMA_FREE(max_desc_num(qh), qh->desc_list,
+		DWC_DMA_FREE(&dwc_hcd_dev, max_desc_num(qh), qh->desc_list,
 			     qh->desc_list_dma);
 		qh->desc_list = NULL;
 	}
@@ -126,7 +127,7 @@ static int frame_list_alloc(dwc_otg_hcd_t * hcd)
 	if (hcd->frame_list)
 		return 0;
 
-	hcd->frame_list = DWC_DMA_ALLOC(4 * MAX_FRLIST_EN_NUM,
+	hcd->frame_list = DWC_DMA_ALLOC(&dwc_hcd_dev, 4 * MAX_FRLIST_EN_NUM,
 					&hcd->frame_list_dma);
 	if (!hcd->frame_list) {
 		retval = -DWC_E_NO_MEMORY;
@@ -143,7 +144,7 @@ static void frame_list_free(dwc_otg_hcd_t * hcd)
 	if (!hcd->frame_list)
 		return;
 	
-	DWC_DMA_FREE(4 * MAX_FRLIST_EN_NUM, hcd->frame_list, hcd->frame_list_dma);
+	DWC_DMA_FREE(&dwc_hcd_dev, 4 * MAX_FRLIST_EN_NUM, hcd->frame_list, hcd->frame_list_dma);
 	hcd->frame_list = NULL;
 }
 

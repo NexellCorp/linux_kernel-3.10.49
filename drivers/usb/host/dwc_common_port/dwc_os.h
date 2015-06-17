@@ -681,9 +681,9 @@ extern void __DWC_FREE(void *mem_ctx, void *addr);
 #define DWC_FREE(_addr_) __DWC_FREE(NULL, _addr_)
 
 # ifdef DWC_LINUX
-#define DWC_DMA_ALLOC(_size_,_dma_) __DWC_DMA_ALLOC(NULL, _size_, _dma_)
-#define DWC_DMA_ALLOC_ATOMIC(_size_,_dma_) __DWC_DMA_ALLOC_ATOMIC(NULL, _size_,_dma_)
-#define DWC_DMA_FREE(_size_,_virt_,_dma_) __DWC_DMA_FREE(NULL, _size_, _virt_, _dma_)
+#define DWC_DMA_ALLOC __DWC_DMA_ALLOC
+#define DWC_DMA_ALLOC_ATOMIC __DWC_DMA_ALLOC_ATOMIC
+#define DWC_DMA_FREE __DWC_DMA_FREE
 # endif
 
 # if defined(DWC_FREEBSD) || defined(DWC_NETBSD)
@@ -739,9 +739,9 @@ extern void dwc_memory_debug_report(void);
 /* Linux doesn't need any extra parameters for DMA buffer allocation, so we
  * just throw away the DMA context parameter.
  */
-#define dwc_dma_alloc(_ctx_,_size_,_dma_) DWC_DMA_ALLOC(_size_, _dma_)
-#define dwc_dma_alloc_atomic(_ctx_,_size_,_dma_) DWC_DMA_ALLOC_ATOMIC(_size_, _dma_)
-#define dwc_dma_free(_ctx_,_size_,_virt_,_dma_) DWC_DMA_FREE(_size_, _virt_, _dma_)
+#define dwc_dma_alloc(_ctx_,_size_,_dma_) DWC_DMA_ALLOC(_ctx_, _size_, _dma_)
+#define dwc_dma_alloc_atomic(_ctx_,_size_,_dma_) DWC_DMA_ALLOC_ATOMIC(_ctx_, _size_, _dma_)
+#define dwc_dma_free(_ctx_,_size_,_virt_,_dma_) DWC_DMA_FREE(_ctx_, _size_, _virt_, _dma_)
 #endif
 
 #if defined(DWC_FREEBSD) || defined(DWC_NETBSD)

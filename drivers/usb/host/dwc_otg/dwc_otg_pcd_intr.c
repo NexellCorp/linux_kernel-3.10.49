@@ -42,6 +42,8 @@
 extern void complete_xiso_ep(dwc_otg_pcd_ep_t * ep);
 #endif
 
+extern struct device dwc_pcd_dev;
+
 //#define PRINT_CFI_DMA_DESCS
 
 //#define DEBUG_EP0
@@ -2522,7 +2524,7 @@ static void complete_ep(dwc_otg_pcd_ep_t * ep)
 #ifdef CFG_USE_FREE_LIST
 			add_free_list(ep, req->dw_align_buf, req->dw_align_buf_dma, req->length);
 #else
-			DWC_DMA_FREE(req->length, req->dw_align_buf,
+			DWC_DMA_FREE(&dwc_pcd_dev, req->length, req->dw_align_buf,
 					req->dw_align_buf_dma);
 #endif
 			req->dw_align_buf = NULL;

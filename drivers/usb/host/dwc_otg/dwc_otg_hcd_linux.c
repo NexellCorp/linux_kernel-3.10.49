@@ -73,6 +73,8 @@
 #include "dwc_otg_hcd.h"
 #include "dwc_otg_mphi_fix.h"
 
+extern struct device dwc_hcd_dev;
+
 #ifdef CONFIG_BATTERY_NXE2000 
 #include <linux/power/nxe2000_battery.h>
 #endif
@@ -664,6 +666,9 @@ extern mphi_regs_t c_mphi_regs;
  * a negative error on failure.
  */
 static u64 hcd_dma_mask = DMA_BIT_MASK(32);
+struct device dwc_hcd_dev = {};
+EXPORT_SYMBOL(dwc_hcd_dev);
+
 int hcd_init(dwc_bus_dev_t *_dev)
 {
 	struct usb_hcd *hcd = NULL;
@@ -683,6 +688,7 @@ int hcd_init(dwc_bus_dev_t *_dev)
               
 	_dev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
     _dev->dev.dma_mask = &hcd_dma_mask;
+	dwc_hcd_dev = _dev->dev;
 
 #if    defined(LM_INTERFACE) || defined(PLATFORM_INTERFACE)
     dma_set_mask(&_dev->dev, dmamask);
@@ -1164,12 +1170,16 @@ static void endpoint_reset(struct usb_hcd *hcd, struct usb_host_endpoint *ep)
 	int is_out = usb_endpoint_dir_out(&ep->desc);
 	int is_control = usb_endpoint_xfer_control(&ep->desc);
 	dwc_otg_hcd_t *dwc_otg_hcd = hcd_to_dwc_otg_hcd(hcd);
-        struct device *dev = DWC_OTG_OS_GETDEV(dwc_otg_hcd->otg_dev->os_dep);
+//	struct device *dev = DWC_OTG_OS_GETDEV(dwc_otg_hcd->otg_dev->os_dep);
 
+#if 0
 	if (dev)
 		udev = to_usb_device(dev);
 	else
 		return;
+#else
+	udev = to_usb_device(&dwc_hcd_dev);
+#endif
 
 	DWC_DEBUGPL(DBG_HCD, "DWC OTG HCD EP RESET: Endpoint Num=0x%02d\n", epnum);
 
