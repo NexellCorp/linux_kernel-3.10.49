@@ -11,18 +11,16 @@
 */
 static inline int wait_key_ready(void)
 {
-	unsigned long timeout = jiffies + 1;
-
 	while (!NX_ECID_GetKeyReady()) {
-		if (time_after(jiffies, timeout)) {
+		if (time_after(jiffies, jiffies + 1)) {
 			if (NX_ECID_GetKeyReady())
-				return 0;
+				break;
 			pr_err("Error: id not key ready \n");
-			break;
+			return -EINVAL;
 		}
 		cpu_relax();
 	}
-	return -EINVAL;
+	return 0;
 }
 
 int nxp_cpu_id_guid(u32 guid[4])
@@ -103,6 +101,7 @@ static struct attribute_group sys_attr_group = {
 static int __init cpu_sys_init_setup(void)
 {
 	struct kobject *kobj = kobject_create_and_add("cpu", &platform_bus.kobj);
+	u32 uid[4] = {0, };
 	int ret = 0;
 
 	if (!kobj) {
@@ -116,6 +115,11 @@ static int __init cpu_sys_init_setup(void)
 		kobject_del(kobj);
 		return -ret;
 	}
+
+	if (0 > nxp_cpu_id_ecid(uid))
+		printk("FAIL: ecid !!!\n");
+
+	printk("ECID: %08x:%08x:%08x:%08x\n", uid[0], uid[1], uid[2], uid[3]);
 	return ret;
 }
 core_initcall(cpu_sys_init_setup);
