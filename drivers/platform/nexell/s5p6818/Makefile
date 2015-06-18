@@ -7,8 +7,8 @@ obj-y += cpu_init_early.o cpu-sys.o
 
 ifeq ($(CONFIG_ARM64),y)
 obj-y += setup_64.o
-obj-$(CONFIG_SMP) += platsmp.o headsmp.o
-obj-$(CONFIG_SMP) += sched_clock.o
+obj-$(CONFIG_SMP) += platsmp_64.o headsmp_64.o
+obj-$(CONFIG_SMP) += sched_clock_64.o
 endif
 
 PROTO_MODULE := drivers/platform/nexell/s5p6818/prototype/module
