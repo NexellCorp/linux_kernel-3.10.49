@@ -56,6 +56,11 @@
 
 		#include "s5p6818-asb-pin.dtsi"
 
+   		dynamic-freq@bb000 {
+   			supply_name  = "vdd_arm";
+   			vdd_arm-supply	= <&VCC1P1_ARM_PMIC>;
+   		};
+
 		serial@a1000 {
 			enable_dma = <1>;
 		};
@@ -64,7 +69,7 @@
 			status = "okay";
 			enable_dma = <1>;
 		};
-		
+
 		serial@a2000 {
 			status = "okay";
 			enable_dma = <1>;
@@ -78,26 +83,26 @@
 		serial@6f000 {
 			status = "okay";
 		};
-		
+
 		dw_mmc@62000 {
 			bus_speed = <50>;
-			cd_gpio = <(PAD_GPIO_ALV + 1)>;	
+			cd_gpio = <(PAD_GPIO_ALV + 1)>;
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@68000 {
 			bus_speed = <50>;
-			cd_gpio = <(PAD_GPIO_C + 0)>;	
+			cd_gpio = <(PAD_GPIO_C + 0)>;
 			clk_dly = <0x01020000>;
 		};
 		dw_mmc@69000 {
 			bus_speed = <50>;
-			cd_gpio = <(PAD_GPIO_C + 1)>;	
+			cd_gpio = <(PAD_GPIO_C + 1)>;
 			//bus_wd = <4>;
 			//non-removable;
 			//ddr-mode;
 			clk_dly = <0x01020000>;
-		};	
-		
+		};
+
 		spi@5b000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -148,7 +153,7 @@
 					hierarchy = <1>; //0 : master, 1 : slave
 				};
 			};
-				
+
 		};
 
 		adc:adc@53000 {
@@ -293,7 +298,7 @@
 		spdifrx@5a000 {
 			status = "okay";
 		};
-		
+
 		ehci@30000 {
 			hsic_en = <1>;
 			hsic_exthub_gpio = <159>;
@@ -344,7 +349,7 @@
 					#ifndef CONFIG_REGULATOR_MP8845C
 					VCC1P1_ARM_PMIC:	dcdc1	{ PMIC_PDATA_INIT( 0, "nxe2000_dcdc1",	 900000, 1500000, 1, 1, 1200000, 1, 0x4) };
 					VCC1P0_CORE_PMIC:	dcdc2	{ PMIC_PDATA_INIT( 1, "nxe2000_dcdc2",	1000000, 1500000, 1, 1, 1100000, 1, 0x4) };
-					#endif	
+					#endif
 					VCC3P3_PMIC: 		dcdc3	{ PMIC_PDATA_INIT			( 2, "nxe2000_dcdc3",	1000000, 3500000, 1, 1, 3300000, 1, 0x0) };
 					VCC1P5_DDR_PMIC:	dcdc4	{ PMIC_PDATA_INIT 	( 3, "nxe2000_dcdc4",	1000000, 2000000, 1, 1, 1500000, 1, 0xF) };
 					VCC1P5_CORE_PMIC:	dcdc5	{ PMIC_PDATA_INIT		( 4, "nxe2000_dcdc5",	1000000, 2000000, 1, 1, 1500000, 1, 0x4) };
@@ -402,7 +407,7 @@
 	    format = "S16";
 		nexell,i2s-controller = <&i2s_1>;
 	};
-	
+
 	snd_null_card_2:snd_null_card@2 {
 		compatible = "nexell,snd-null-card";
 		ch = <2>;
