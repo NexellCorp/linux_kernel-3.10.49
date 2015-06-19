@@ -1927,7 +1927,7 @@ CONFIG_DVB_TUNER_DIB0090=m
 # Tools to develop new frontends
 #
 # CONFIG_DVB_DUMMY_FE is not set
-# CONFIG_NXP_MP2TS_IF is not set
+CONFIG_NXP_MP2TS_IF=y
 
 #
 # Graphics support
