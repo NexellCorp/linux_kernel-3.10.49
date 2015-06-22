@@ -2,6 +2,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/types.h>
+#include <linux/clk.h>
 #include <linux/platform_device.h>
 
 #include <nexell/platform.h>
@@ -98,12 +99,13 @@ static struct attribute_group sys_attr_group = {
 	.attrs = (struct attribute **)sys_attrs,
 };
 
-static int __init cpu_sys_init_setup(void)
+static int __init cpu_sys_id_setup(void)
 {
-	struct kobject *kobj = kobject_create_and_add("cpu", &platform_bus.kobj);
+	struct kobject *kobj;
 	u32 uid[4] = {0, };
 	int ret = 0;
 
+	kobj = kobject_create_and_add("cpu", &platform_bus.kobj);
 	if (!kobj) {
 		pr_err("Failed create cpu kernel object ....\n");
 		return -ret;
@@ -121,5 +123,110 @@ static int __init cpu_sys_init_setup(void)
 
 	printk("ECID: %08x:%08x:%08x:%08x\n", uid[0], uid[1], uid[2], uid[3]);
 	return ret;
+}
+
+/*
+ *  "sys/devices/platform/pll.N"
+ */
+static ssize_t clk_pll_show(struct device *pdev,
+					struct device_attribute *attr, char *buf)
+{
+	struct attribute *at = &attr->attr;
+	struct clk *clk;
+	const char *c;
+	char *s = buf, name[16] = { 0, };
+	long rate;
+	int pll;
+
+	c = &at->name[strlen("pll.")];
+	pll = simple_strtoul(c, NULL, 10);
+	sprintf(name, "pll%d", pll);
+
+	clk = clk_get(NULL, name);
+	if (IS_ERR(clk)) {
+		printk("Fail, not support pll.%d (0~3)\n", pll);
+		return 0;
+	}
+	rate = clk_get_rate(clk);
+	clk_put(clk);
+
+	s += sprintf(s, "%ld\n", rate/1000);	/* khz */
+
+	return (s - buf);
+}
+
+static ssize_t clk_pll_store(struct device *pdev,
+					struct device_attribute *attr, const char *buf, size_t n)
+{
+	struct attribute *at = &attr->attr;
+	struct clk *clk;
+	char name[16] = { 0, };
+	const char *c;
+	unsigned long freq;
+	int pll;
+
+	c = &at->name[strlen("pll.")];
+	pll = simple_strtoul(c, NULL, 10);
+	sprintf(name, "pll%d", pll);
+
+	clk = clk_get(NULL, name);
+	if (IS_ERR(clk)) {
+		printk("Fail, not support pll.%d (0~3)\n", pll);
+		return 0;
+	}
+	sscanf(buf,"%lu", &freq);
+
+#if defined (CONFIG_ARM_NXP_CPUFREQ)
+	clk_set_rate(clk, freq*1000);
+#endif
+	clk_put(clk);
+
+	return n;
+}
+
+static struct device_attribute clk_pll_attr[] = {
+	__ATTR(pll.0, 0664, clk_pll_show, clk_pll_store),
+	__ATTR(pll.1, 0664, clk_pll_show, clk_pll_store),
+	__ATTR(pll.2, 0664, clk_pll_show, clk_pll_store),
+	__ATTR(pll.3, 0664, clk_pll_show, clk_pll_store),
+};
+
+static struct attribute *pll_attrs[] = {
+	&clk_pll_attr[0].attr,
+	&clk_pll_attr[1].attr,
+	&clk_pll_attr[2].attr,
+	&clk_pll_attr[3].attr,
+	NULL,
+};
+
+static struct attribute_group pll_attr_group = {
+	.attrs = (struct attribute **)pll_attrs,
+};
+
+static int __init cpu_sys_clk_setup(void)
+{
+	struct kobject *kobj;
+	int ret = 0;
+
+	kobj = kobject_create_and_add("pll", &platform_bus.kobj);
+	if (!kobj) {
+		pr_err("Failed create pll kernel object ....\n");
+		return -ret;
+	}
+
+	ret = sysfs_create_group(kobj, &pll_attr_group);
+	if (ret) {
+		pr_err("Failed create pll sysfs group ...\n");
+		kobject_del(kobj);
+		return -ret;
+	}
+	return ret;
+}
+
+static int __init cpu_sys_init_setup(void)
+{
+	cpu_sys_id_setup();
+	cpu_sys_clk_setup();
+	return 0;
 }
 core_initcall(cpu_sys_init_setup);
