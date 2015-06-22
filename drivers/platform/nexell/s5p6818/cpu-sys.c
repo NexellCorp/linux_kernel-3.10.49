@@ -10,6 +10,7 @@
 /*
 #define	pr_debug	printk
 */
+
 static inline int wait_key_ready(void)
 {
 	while (!NX_ECID_GetKeyReady()) {
