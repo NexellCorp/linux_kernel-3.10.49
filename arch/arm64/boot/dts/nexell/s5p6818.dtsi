@@ -287,7 +287,6 @@
 		};
 
 
-		
 		#ifdef CONFIG_I2C_NXP_PORT0
 		#ifdef CONFIG_I2C_NXP_PORT0_GPIO_MODE
 		iic0:iic@a4000 {
@@ -297,8 +296,7 @@
 				>;
 			i2c-gpio,delay-us = <10>;    /* ~100 kHz */
 		};
-	
-		#else	
+		#else
 		iic0:iic@a4000 {
 			compatible = "nexell,nxp-i2c";
 			reg = <PHYS_BASE_I2C0 0x100>;
@@ -312,7 +310,7 @@
 		};
 		#endif
 		#endif
-		
+
 		#ifdef CONFIG_I2C_NXP_PORT1
 		#ifdef CONFIG_I2C_NXP_PORT1_GPIO_MODE
 		iic1:iic@a5000 {
@@ -322,8 +320,7 @@
 				>;
 			i2c-gpio,delay-us = <10>;    /* ~100 kHz */
 		};
-	
-		#else	
+		#else
 	  	iic1:iic@a5000 {
 			compatible = "nexell,nxp-i2c";
 			reg = <PHYS_BASE_I2C1 0x100>;
@@ -335,10 +332,9 @@
 			nexell,i2c-slave-addr = <0x66>;
 			nexell,reset-id = <RESET_ID_I2C1>;
 		};
-		
 		#endif
 		#endif
-		
+
 		#ifdef CONFIG_I2C_NXP_PORT2
 		#ifdef CONFIG_I2C_NXP_PORT2_GPIO_MODE
 		iic2:iic@a6000 {
@@ -348,8 +344,7 @@
 				>;
 			i2c-gpio,delay-us = <10>;    /* ~100 kHz */
 		};
-	
-		#else	
+		#else
 		iic2:iic@a6000 {
 			compatible = "nexell,nxp-i2c";
 			reg = <PHYS_BASE_I2C2 0x100>;
@@ -492,17 +487,6 @@
 			status = "disabled";
 		};
 		#endif
-
-		tmu_0@96000 {
-			compatible = "nexell,nxp-tmu";
-			interrupt = <0 IRQ_TMU0 0>;
-			reg = <PHYS_BASE_TMU0 0>;
-			channel_id    = <0>;
-			trig_degree   = <85>;
-			trig_duration = <100>;
-			trig_cpufreq  = <800000>;
-			poll_duration = <100>;
-		};
 
 		mp2ts:mp2ts@5d000 {
 			compatible = "nexell,nxp-mp2ts";
@@ -691,7 +675,7 @@
 			reset-id = <RESET_ID_SDMMC0>;
 			clocks = <&sdhc0>;
 		};
-		
+
 		dw_mmc1:dw_mmc@68000 {
 			compatible = "nexell,dw-mmc";
 			reg = <PHYS_BASE_SDMMC1 0x1000>;
@@ -717,5 +701,30 @@
 			reset-id = <RESET_ID_USB20OTG>;
 			status = "okay";
 		};
-	};
+
+		#ifdef CONFIG_SENSORS_NXP_TMU
+		tmu-hwmon@96000 {
+			compatible = "nexell,nxp-tmu-hwmon";
+			interrupts = <0 IRQ_TMU0 0>;
+			reg = <PHYS_BASE_TMU0 0x100>;
+			channel = <0>;
+			/* overtemp, cpufreq, duration:
+			  temperature less -> more, if cpufreq is zero, system poweroff */
+			triggers = < >;
+			status = "disabled";
+		};
+
+		tmu-hwmon@97000 {
+			compatible = "nexell,nxp-tmu-hwmon";
+			interrupts = <0 IRQ_TMU1 0>;
+			reg = <PHYS_BASE_TMU1 0x100>;
+			channel = <1>;
+			/* overtemp, cpufreq, duration:
+			  temperature less -> more, if cpufreq is zero, system poweroff */
+			triggers = < >;
+			status = "disabled";
+		};
+		#endif
+
+	}; /*** soc ***/
 };

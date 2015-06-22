@@ -31,7 +31,7 @@
 /*
 #define	pr_debug	printk
 */
-#define	PLL_LOCKING_TIME		50
+#define	PLL_LOCKING_TIME		100
 
 struct pll_pms {
 	long rate;	/* unint Khz */
@@ -126,7 +126,7 @@ static void pll_set_rate(int PLL, int P, int M, int S)
 	reg->CLKMODEREG0 = (1 << PLL); 				// update pll
 
 	while(reg->CLKMODEREG0 & (1<<31)); 			// wait for change update pll
-	udelay(1);
+	udelay(10);
 
 	/*
 	 * 3. Update PLL & wait PLL locking
