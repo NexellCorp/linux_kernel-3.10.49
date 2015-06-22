@@ -150,24 +150,6 @@ struct dw_mci_slot {
 
 static struct workqueue_struct *dw_mci_card_workqueue;
 
-static unsigned long nexell_dwmmc_caps[3] = {
-    MMC_CAP_CMD23,
-    MMC_CAP_CMD23,
-    MMC_CAP_UHS_DDR50 | MMC_CAP_1_8V_DDR |
-    MMC_CAP_8_BIT_DATA | MMC_CAP_CMD23,
-};
-static const struct dw_mci_drv_data nexell_drv_data = {
-    .caps           = nexell_dwmmc_caps,
-#if 0
-    .init           = dw_mci_exynos_priv_init,
-    .setup_clock        = dw_mci_exynos_setup_clock,
-    .prepare_command    = dw_mci_exynos_prepare_command,
-    .set_ios        = dw_mci_exynos_set_ios,
-    .parse_dt       = dw_mci_exynos_parse_dt,
-#endif
-};
-
-
 #if defined(CONFIG_ESP8089)
 #include <mach/platform.h>
 static struct dw_mci_slot* mci_slot[4] = {NULL, NULL, NULL, NULL};
@@ -2710,7 +2692,7 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 		if(tmp == 8)
 			pdata->caps |= MMC_CAP_8_BIT_DATA;
 	}
-#if 0
+#if 1
 	if(!(of_property_read_u32(np,"reset-id",&tmp))){
 		nxp_soc_peri_reset_set(tmp);
 	}
@@ -2721,7 +2703,7 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	if(of_find_property(np,"ddr-mode",NULL)){
 		pdata->caps |=  MMC_CAP_UHS_DDR50 | MMC_CAP_1_8V_DDR | MMC_CAP_ERASE | MMC_CAP_HW_RESET ;
 	}
-	
+	pdata->caps2 = MMC_CAP2_NO_PRESCAN_POWERUP;
 	return pdata;
 }
 
@@ -2857,7 +2839,6 @@ int dw_mci_probe(struct dw_mci *host)
 		host->num_slots = host->pdata->num_slots;
 	else
 		host->num_slots = ((mci_readl(host, HCON) >> 1) & 0x1F) + 1;
-
 	/* We need at least one slot to succeed */
 	for (i = 0; i < host->num_slots; i++) {
 		ret = dw_mci_init_slot(host, i);
@@ -2910,7 +2891,6 @@ int dw_mci_probe(struct dw_mci *host)
 		 host->irq, width, fifo_size, host->pdata->hw_timeout);
 	if (host->quirks & DW_MCI_QUIRK_IDMAC_DTO)
 		dev_info(&host->dev, "Internal DMAC interrupt fix enabled.\n");
-
 	return 0;
 
 err_init_slot:
