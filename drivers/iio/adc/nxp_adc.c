@@ -427,20 +427,21 @@ static int nxp_read_raw(struct iio_dev *indio_dev,
 		adcon  = __raw_readl(&reg->ADCCON) & ~(0x07 << ASEL_BITP) & ~(0x01 << ADEN_BITP);
 		adcon |= ch << ASEL_BITP;	// channel
 		__raw_writel(adcon, &reg->ADCCON);
-		adcon  = __raw_readl(&reg->ADCCON);
+		dmb();
 		adcon |=  1 << ADEN_BITP;	// start
 		__raw_writel(adcon, &reg->ADCCON);
+		
+		__raw_writel(0x1, &reg->ADCINTCLR);
+		__raw_writel(0x1, &reg->ADCINTENB);
 
 		/* *****************************************************
 		 * Set register values direct for test.
 		 * *****************************************************/
-		//__raw_writel(0x1, &reg->ADCINTENB);
-		//__raw_writel(0x1, &reg->ADCINTCLR);
 		//#ifdef CONFIG_ARCH_S5P6818
 		//__raw_writel(0x80F9, &reg->ADCPRESCON);
 		//#endif
 		//__raw_writel(0x8180, &reg->ADCCON);
-
+		dmb();
 		while (wait > 0) {
 			if (__raw_readl(&reg->ADCINTCLR) & (1<<AICL_BITP)) {
 				__raw_writel(0x1, &reg->ADCINTCLR);	/* pending clear */
@@ -463,7 +464,7 @@ static int nxp_read_raw(struct iio_dev *indio_dev,
 #endif
 	}
 
-	usleep_range (1, 10);
+	//usleep_range (1, 10);
 	pr_debug("%s, ch=%d, val=0x%x\n", __func__, ch, *val);
 
 	return IIO_VAL_INT;
@@ -693,7 +694,6 @@ static int nxp_adc_probe(struct platform_device *pdev)
 		ret = -ENOMEM;
 		goto err_iio_free;
 	}
-
 
 	ret = nxp_adc_setup(adc, pdev);
 	if (0 > ret) {

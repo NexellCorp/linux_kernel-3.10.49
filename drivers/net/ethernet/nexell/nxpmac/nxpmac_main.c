@@ -77,6 +77,8 @@
 #define TX_DBG(fmt, args...)  do { } while (0)
 #endif
 
+#define CONFIG_NXPMAC_MII_SYSFS
+
 #define STMMAC_ALIGN(x)	L1_CACHE_ALIGN(x)
 #define JUMBO_LEN	9000
 
@@ -283,6 +285,7 @@ void stmmac_disable_eee_mode(struct stmmac_priv *priv)
  *  if there is no data transfer and if we are not in LPI state,
  *  then MAC Transmitter can be moved to LPI state.
  */
+#if 0
 static void stmmac_eee_ctrl_timer(unsigned long arg)
 {
 	struct stmmac_priv *priv = (struct stmmac_priv *)arg;
@@ -290,6 +293,7 @@ static void stmmac_eee_ctrl_timer(unsigned long arg)
 	stmmac_enable_eee_mode(priv);
 	mod_timer(&priv->eee_ctrl_timer, STMMAC_LPI_T(eee_timer));
 }
+#endif
 
 /**
  * stmmac_eee_init: init EEE
@@ -1559,6 +1563,127 @@ static void stmmac_init_tx_coalesce(struct stmmac_priv *priv)
 	add_timer(&priv->txtimer);
 }
 
+#ifdef CONFIG_NXPMAC_MII_SYSFS
+#define MIIREG_NONE		99
+static unsigned int miireg = MIIREG_NONE;
+
+static ssize_t miireg_show(struct kobject *kobj,
+			struct kobj_attribute *attr, char *buf)
+{
+	if (miireg == MIIREG_NONE)
+		return sprintf(buf, "-\n");
+	else
+		return sprintf(buf, "0x%x\n", miireg);
+}
+
+static ssize_t miireg_store(struct kobject *kobj,
+			struct kobj_attribute *attr, const char *buf, size_t n)
+{
+	unsigned long val;
+
+	int rc = kstrtoul(buf, 0, &val);
+	if (rc < 0)
+		return rc;
+
+	miireg = (uint32_t)val;
+
+	return n;
+}
+
+static ssize_t miidata_show(struct kobject *kobj,
+			struct kobj_attribute *attr, char *buf)
+{
+	struct stmmac_priv *priv = container_of(kobj, struct stmmac_priv, kobj);
+	int data;
+
+	if (!priv->phydev)
+		return 0;
+
+	if (miireg == MIIREG_NONE)
+		return sprintf(buf, "-\n");
+
+	data = phy_read(priv->phydev, miireg);
+
+	return sprintf(buf, "0x%x\n", data);
+}
+
+static ssize_t miidata_store(struct kobject *kobj,
+			struct kobj_attribute *attr, const char *buf, size_t n)
+{
+	struct stmmac_priv *priv = container_of(kobj, struct stmmac_priv, kobj);
+	unsigned long val;
+	int rc = kstrtoul(buf, 0, &val);
+
+	if (rc < 0)
+		return rc;
+
+	if (!priv->phydev)
+		return 0;
+
+	if (miireg == MIIREG_NONE)
+		return 0;
+
+	pr_debug("  %s ... val: 0x%lx\n", __func__, val);
+
+	phy_write(priv->phydev, miireg, (u16)val);
+	return n;
+}
+
+#define MIIREG_ATTR_RW(type)	__ATTR(type, S_IRUGO | S_IWUSR, type##_show, type##_store)
+#define MIIREG_ATTR_RO(type)	__ATTR(type, S_IRUGO,           type##_show, type##_store)
+
+static struct kobj_attribute miireg_attr = MIIREG_ATTR_RW(miireg);
+static struct kobj_attribute miidata_attr = MIIREG_ATTR_RW(miidata);
+
+/* sys attribte group */
+static struct attribute *attrs[] = {
+	&miireg_attr.attr,
+	&miidata_attr.attr,
+	NULL,
+};
+
+static struct attribute_group attr_group = {
+		.attrs = (struct attribute **)attrs,
+};
+
+static void stmmac_kobj_release(struct kobject *kobj)
+{
+    kfree(kobj);
+}
+
+static struct kobj_type stmmac_kobj_ktype = {
+    .release    = stmmac_kobj_release,
+    .sysfs_ops  = &kobj_sysfs_ops,
+};
+
+static int nxpmac_mii_sysfs(struct net_device *dev)
+{
+	struct stmmac_priv *priv = netdev_priv(dev);
+	int ret;
+
+	kobject_init(&priv->kobj, &stmmac_kobj_ktype);
+    ret = kobject_add(&priv->kobj, &priv->device->kobj, "mii_phy");
+    if (ret) {
+        pr_err("%s: kobject_add error: %d\n", __func__, ret);
+        kobject_put(&priv->kobj);
+		return -EINVAL;
+    }
+
+	ret = sysfs_create_group(&priv->kobj, &attr_group);
+	if (ret) {
+		pr_err("%s: sysfs create group failed\n", __func__);
+		goto err_group_create;
+	}
+
+	return 0;
+
+err_group_create:
+	kobject_put(&priv->kobj);
+	return -EINVAL;
+}
+#endif /* CONFIG_NXPMAC_MII_SYSFS */
+
+
 /**
  *  stmmac_open - open entry point of the driver
  *  @dev : pointer to the device structure.
@@ -2739,6 +2864,10 @@ struct stmmac_priv *stmmac_dvr_probe(struct device *device,
 		}
 	}
 
+#ifdef CONFIG_NXPMAC_MII_SYSFS
+	nxpmac_mii_sysfs(ndev);
+#endif
+
 	return priv;
 
 error_mdio_register:
@@ -2767,6 +2896,10 @@ int stmmac_dvr_remove(struct net_device *ndev)
 
 	priv->hw->dma->stop_rx(priv->ioaddr);
 	priv->hw->dma->stop_tx(priv->ioaddr);
+
+#ifdef CONFIG_NXPMAC_MII_SYSFS
+	kobject_put(&priv->kobj);
+#endif
 
 	stmmac_set_mac(priv->ioaddr, false);
 	if (priv->pcs != STMMAC_PCS_RGMII && priv->pcs != STMMAC_PCS_TBI &&
