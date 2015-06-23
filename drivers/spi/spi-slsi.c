@@ -1499,18 +1499,21 @@ static void s3c64xx_spi_hwinit(struct s3c64xx_spi_driver_data *sdd, int channel)
 }
 
 #ifdef CONFIG_OF
+static u64 spi_dmamask = DMA_BIT_MASK(32);
 static struct s3c64xx_spi_info *nexell_spi_parse_dt(struct device *dev)
 {
 	struct s3c64xx_spi_info *sci;
 	u32 temp;
 	
+	dev->dma_mask = &spi_dmamask;
+	dev->coherent_dma_mask = DMA_BIT_MASK(32);
 	sci = devm_kzalloc(dev, sizeof(*sci), GFP_KERNEL);
 	if (!sci) {
 		dev_err(dev, "memory allocation for spi_info failed\n");
 	    return ERR_PTR(-ENOMEM);
 	 }    
-#if 0
-	sci->enable_dma = 1;
+#if 1
+ 	sci->enable_dma = 1;
 
 	sci->dma_filter     = pl08x_filter_id;
 	sci->dma_rx_param   = (void *)PL08X_DMA_NAME_SSP0_RX;
@@ -1529,14 +1532,6 @@ static struct s3c64xx_spi_info *nexell_spi_parse_dt(struct device *dev)
 	} else {
 		sci->num_cs = temp;
 	}    
-	/*
-	if (of_property_read_u32(dev->of_node, "hierarchy", &temp)) {
-		dev_warn(dev, "number of chip select lines not specified, assuming 1 chip select line\n");
-		sci->hierarchy = 1; 
-	} else {
-		sci->hierarchy = temp;
-	} 
-	*/   
 	sci->bus_id = of_alias_get_id(dev->of_node, "spi");
 		
 	of_property_read_u32(dev->of_node, "reset-id", &temp);
