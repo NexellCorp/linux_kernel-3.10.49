@@ -47,6 +47,7 @@
 #define DRVNAME	"nxp-tmu-hwmon"
 
 #define	THERMAL_EFUSE_TRIM		1
+#define	THERMAL_UP_OFFS			2
 #define THERMAL_POLL_TIME		100		/* ms */
 #define THERMAL_EVENT_MAX		3
 #define THERMAL_FREQ_STEP		100000	/* khz */
@@ -386,7 +387,7 @@ static void nxp_thermal_step_down(struct work_struct *work)
 		pr_debug("Thermal.%d event[%d] %3d C, %3d\n",
 				channel, i, event->temp, temp);
 		*/
-		if (event->temp > temp) {
+		if ((event->temp - THERMAL_UP_OFFS) > temp) {
 			/*
 			 * up
 			 */
