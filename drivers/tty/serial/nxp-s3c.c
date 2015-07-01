@@ -54,11 +54,13 @@
 #endif
 #include "nxp-s3c.h"
 
+#include <linux/amba/pl08x.h>
 #include <nexell/platform.h>
 #include <nexell/soc-s5pxx18.h>
 
-#if 0
+#if 0 
 #define dbg(x...)		printk(x)
+#define dev_info(fmg,msg...) printk(msg)
 #else
 #define dbg(x...) 	do { } while (0)
 #endif
@@ -158,7 +160,8 @@ static void s3c24xx_sgbuf_free(struct dma_chan *chan, struct s3c24xx_sgbuf *sg,
 static void s3c24xx_dma_probe_initcall(struct s3c24xx_uart_port *uport)
 {
 	/* DMA is the sole user of the platform data right now */
-	struct s3c24xx_uart_drv_data *plat = uport->port.dev->platform_data;
+	//struct s3c24xx_uart_drv_data *plat = uport->port.dev->platform_data;
+	struct s3c24xx_uart_drv_data *plat = uport->data;
 	struct dma_slave_config tx_conf = {
 		.dst_addr = uport->port.mapbase + S3C2410_UTXH,
 		.dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE,
@@ -168,7 +171,7 @@ static void s3c24xx_dma_probe_initcall(struct s3c24xx_uart_port *uport)
 	};
 	struct dma_chan *chan;
 	dma_cap_mask_t mask;
-
+	if(!plat)
 	/* We need platform data */
 	if (!plat || !plat->dma_filter) {
 		dev_info(uport->port.dev, "no DMA platform data\n");
@@ -213,6 +216,7 @@ static void s3c24xx_dma_probe_initcall(struct s3c24xx_uart_port *uport)
 		dev_info(uport->port.dev, "DMA channel RX %s\n",
 			 dma_chan_name(uport->dmarx.chan));
 	}
+
 }
 
 #ifndef MODULE
@@ -471,6 +475,7 @@ static inline void s3c24xx_dma_tx_stop(struct s3c24xx_uart_port *uport)
 static inline bool s3c24xx_dma_tx_start(struct s3c24xx_uart_port *uport)
 {
 	struct uart_port *port = &uport->port;
+	struct s3c24xx_uart_drv_data *data = uport->data;
 	if (!uport->using_tx_dma)
 		return false;
 
@@ -751,7 +756,6 @@ static void s3c24xx_dma_startup(struct s3c24xx_uart_port *uport)
 	struct uart_port *port = &uport->port;
 	int ucon = rd_regl(port, S3C2410_UCON);
 
-	printk("%s \n",__func__);
 	if (!uport->dmatx.chan)
 		return;
 
@@ -1363,10 +1367,11 @@ static int s3c24xx_serial_startup(struct uart_port *port)
 	/* Enable Rx Interrupt */
 	__clear_bit(S3C64XX_UINTM_RXD, portaddrl(port, S3C64XX_UINTM));
 
+
 	if (data->enable_dma) {
 		count = uart_circ_chars_pending(xmit);
 		if (count > 4)
-		s3c24xx_dma_startup(uport);
+			s3c24xx_dma_startup(uport);
 	}
 	dbg("s3c24xx_serial_startup ok\n");
 	return ret;
@@ -1910,6 +1915,9 @@ static void s3c24xx_serial_drv_init(void *data, int port)
 	nxp_soc_peri_reset_set(drv_data->reset_id);
 }
 
+//#define DMA_PERIPHERAL_NAME_UART1_TX            "uart1_tx"          // ID: 2, UART0_MODULE
+//#define DMA_PERIPHERAL_NAME_UART1_RX            "uart1_rx"          // ID: 3, UART0_MODULE
+static u64 uart_dmamask = DMA_BIT_MASK(32);
 static struct s3c24xx_serial_drv_data *s3c24xx_get_driver_data(struct platform_device *pdev,
 					struct s3c24xx_uart_drv_data **udata, int *port_index)
 {
@@ -1917,7 +1925,7 @@ static struct s3c24xx_serial_drv_data *s3c24xx_get_driver_data(struct platform_d
 	struct s3c24xx_uart_drv_data *ud;
 	const struct of_device_id *match;
 	unsigned int tieoff[3];
-	int reset, ret;
+	int reset, ret, dma;
 
 	if (!pdev->dev.of_node)
 		return EXYNOS4210_SERIAL_DRV_DATA;
@@ -1947,6 +1955,27 @@ static struct s3c24xx_serial_drv_data *s3c24xx_get_driver_data(struct platform_d
 	if (!of_property_read_u32(pdev->dev.of_node, "reset-id", &reset))
 		ud->reset_id = reset;
 
+	if (!of_property_read_u32(pdev->dev.of_node, "dma-enable", &dma)) {
+		ud->enable_dma = dma;	
+		ud->dma_filter =  &pl08x_filter_id;
+		switch(ud->hwport)
+		{	
+			case 0 :
+				ud->dma_rx_param = (void *)PL08X_DMA_NAME_UART0_RX;
+				ud->dma_tx_param = (void *)PL08X_DMA_NAME_UART0_TX;
+				break;
+			case 1 :	
+				ud->dma_rx_param = (void *)PL08X_DMA_NAME_UART1_RX;
+				ud->dma_tx_param = (void *)PL08X_DMA_NAME_UART1_TX;
+				break;
+			case 2 : 
+				ud->dma_rx_param = (void *)PL08X_DMA_NAME_UART2_RX;
+				ud->dma_tx_param = (void *)PL08X_DMA_NAME_UART2_TX;
+				break;
+		}
+		pdev->dev.dma_mask = &uart_dmamask;
+		pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
+	}
 	*port_index = ret;
 	*udata = ud;
 
@@ -1985,7 +2014,7 @@ static int s3c24xx_serial_probe(struct platform_device *pdev)
 	uport->info = uport->drv_data->info;
 	uport->data = (pdev->dev.platform_data) ?
 			(struct s3c24xx_uart_drv_data *)pdev->dev.platform_data : udata;
-//			uport->drv_data->def_data;
+	uport->drv_data->def_data;
 	uport->port.line = port_index;
 	uport->port.iotype = UPIO_MEM;
 	uport->port.uartclk	= 0;
@@ -1994,7 +2023,6 @@ static int s3c24xx_serial_probe(struct platform_device *pdev)
 	uport->port.flags = UPF_BOOT_AUTOCONF;
 	uport->port.fifosize = (uport->info->fifosize) ? uport->info->fifosize :
 						uport->drv_data->fifosize[port_index];
-
 	if (uport->data->enable_dma)
 		s3c24xx_dma_probe(uport);
 
