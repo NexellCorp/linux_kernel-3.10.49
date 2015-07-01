@@ -36,7 +36,6 @@
 extern void secondary_start_head(void);
 volatile unsigned long secondary_pen_release = INVALID_HWID;
 
-
 /*
  * Write secondary_pen_release in a way that is guaranteed to be
  * visible to all observers, irrespective of whether they're taking part
@@ -136,7 +135,6 @@ static void smp_soc_cpu_postboot(void)
 }
 
 #ifdef CONFIG_HOTPLUG_CPU
-
 static int smp_soc_cpu_disable(unsigned int cpu)
 {
 	printk("[%s]\n", __func__);
