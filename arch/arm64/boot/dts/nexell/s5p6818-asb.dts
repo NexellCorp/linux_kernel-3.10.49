@@ -375,11 +375,7 @@
 			trigger-step-up = <1>;
 			/* overtemp, cpufreq, duration:
 			  temperature less -> more, if cpufreq is zero, system poweroff */
-			triggers = <
-				85   800000 100
-				100  400000  10
-			    120       0   0
-				>;
+			triggers = <	>;
 			status = "okay";
 		};
 
@@ -388,11 +384,7 @@
 			trigger-step-up = <1>;
 			/* overtemp, cpufreq, duration:
 			  temperature less -> more, if cpufreq is zero, system poweroff */
-			triggers = <
-				85   800000 100
-				100  400000  10
-			    120       0   0
-				>;
+			triggers = < >;
 			status = "okay";
 		};
 	};	/*** soc ***/
