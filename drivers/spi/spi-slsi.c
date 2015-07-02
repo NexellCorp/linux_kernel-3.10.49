@@ -1,4 +1,5 @@
 /*
+	printk(KERN_ERR "\033[33m\033[1m == %s %d     \033[0m\r\n", __func__,__LINE__);
  * Copyright (C) 2009 Samsung Electronics Ltd.
  *	Jaswinder Singh <jassi.brar@samsung.com>
  *
@@ -1513,11 +1514,24 @@ static struct s3c64xx_spi_info *nexell_spi_parse_dt(struct device *dev)
 	    return ERR_PTR(-ENOMEM);
 	 }    
 #if 1
+	sci->bus_id = of_alias_get_id(dev->of_node, "spi");
  	sci->enable_dma = 1;
-
 	sci->dma_filter     = pl08x_filter_id;
-	sci->dma_rx_param   = (void *)PL08X_DMA_NAME_SSP0_RX;
-	sci->dma_tx_param   = (void *)PL08X_DMA_NAME_SSP0_TX;
+
+	switch( sci->bus_id ) {
+	case 0 :
+		sci->dma_rx_param   = (void *)PL08X_DMA_NAME_SSP0_RX;
+		sci->dma_tx_param   = (void *)PL08X_DMA_NAME_SSP0_TX;
+		break;
+	case 1:
+		sci->dma_rx_param   = (void *)PL08X_DMA_NAME_SSP1_RX;
+		sci->dma_tx_param   = (void *)PL08X_DMA_NAME_SSP1_TX;
+		break;
+	case 2:
+		sci->dma_rx_param   = (void *)PL08X_DMA_NAME_SSP2_RX;
+		sci->dma_tx_param   = (void *)PL08X_DMA_NAME_SSP2_TX;
+		break;
+	}
 #endif
 	if (of_property_read_u32(dev->of_node, "clk_nr", &temp)) {
 	  dev_warn(dev, "spi bus clock parent not specified, using clock at index 0 as parent\n");
@@ -1532,7 +1546,6 @@ static struct s3c64xx_spi_info *nexell_spi_parse_dt(struct device *dev)
 	} else {
 		sci->num_cs = temp;
 	}    
-	sci->bus_id = of_alias_get_id(dev->of_node, "spi");
 		
 	of_property_read_u32(dev->of_node, "reset-id", &temp);
 	nxp_soc_peri_reset_set(temp-1);
