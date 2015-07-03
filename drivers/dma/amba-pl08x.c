@@ -2076,10 +2076,54 @@ static void pl08x_ensure_on(struct pl08x_driver_data *pl08x)
 	writel(PL080_CONFIG_ENABLE, pl08x->base + PL080_CONFIG);
 }
 
+#if defined(CONFIG_AMBA_PL08X_USE_ISR)
+/*
+    * This tasklet handles the completion of a DMA descriptor by
+	 * calling its callback and freeing it.
+	  */
+static void vchan_useisr(unsigned long arg)
+{
+    struct virt_dma_chan *vc = (struct virt_dma_chan *)arg;
+    struct virt_dma_desc *vd;
+    dma_async_tx_callback cb = NULL;
+    void *cb_data = NULL;
+    LIST_HEAD(head);
+
+	spin_lock(&vc->lock);
+	list_splice_tail_init(&vc->desc_completed, &head);
+	vd = vc->cyclic;
+	if (vd) {
+		vc->cyclic = NULL;
+	    cb = vd->tx.callback;
+	    cb_data = vd->tx.callback_param;
+	}   
+	spin_unlock(&vc->lock);
+
+	if (cb)
+		cb(cb_data);
+
+	while (!list_empty(&head)) {
+		vd = list_first_entry(&head, struct virt_dma_desc, node);
+		cb = vd->tx.callback;
+		cb_data = vd->tx.callback_param;
+		
+		list_del(&vd->node);
+
+		vc->desc_free(vd);
+
+		if (cb)
+			cb(cb_data);
+	}   
+}
+#endif
+
 static irqreturn_t pl08x_irq(int irq, void *dev)
 {
 	struct pl08x_driver_data *pl08x = dev;
 	u32 mask = 0, err, tc, i;
+#if defined(CONFIG_AMBA_PL08X_USE_ISR)
+	struct virt_dma_chan *vc = NULL;
+#endif
 
 	/* check & clear - ERR & TC interrupts */
 	err = readl(pl08x->base + PL080_ERR_STATUS);
@@ -2112,7 +2156,17 @@ static irqreturn_t pl08x_irq(int irq, void *dev)
 			spin_lock(&plchan->vc.lock);
 			tx = plchan->at;
 			if (tx && tx->cyclic) {
+#if !defined(CONFIG_AMBA_PL08X_USE_ISR)
 				vchan_cyclic_callback(&tx->vd);
+#else
+				vc = to_virt_chan(tx->vd.tx.chan);
+
+				vc->cyclic = &tx->vd;
+
+				spin_unlock(&plchan->vc.lock);
+			    vchan_useisr((unsigned long)vc);
+				spin_lock(&plchan->vc.lock);
+#endif
 			} else if (tx) {
 				plchan->at = NULL;
 				/*
@@ -2121,7 +2175,19 @@ static irqreturn_t pl08x_irq(int irq, void *dev)
 				 */
 				pl08x_release_mux(plchan);
 				tx->done = true;
+#if !defined(CONFIG_AMBA_PL08X_USE_ISR)
 				vchan_cookie_complete(&tx->vd);
+#else
+				vc = to_virt_chan(tx->vd.tx.chan);
+				dma_cookie_complete(&tx->vd.tx);
+				dev_vdbg(vc->chan.device->dev, "txd %p[%x]: marked complete\n",
+					&tx->vd, tx->vd.tx.cookie);
+				list_add_tail(&tx->vd.node, &vc->desc_completed);
+
+				spin_unlock(&plchan->vc.lock);
+			    vchan_useisr((unsigned long)vc);
+				spin_lock(&plchan->vc.lock);
+#endif
 
 				/*
 				 * And start the next descriptor (if any),
