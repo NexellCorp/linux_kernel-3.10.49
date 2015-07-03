@@ -158,6 +158,9 @@
 		};
 
 		nand:nand@51000 {
+		#ifdef CONFIG_NXP_FTL
+			ftl-start-block = <0x6000000>;
+		#else
 			nand-bus-width = <8>;
 			nand-ecc-mode = "hw";
 			/*nand-on-flash-bbt = <1>;*/
@@ -170,6 +173,7 @@
 			nand-ecc-bytes = <1024>;
 			nand-ecc-bits = <40>;
 			wp-gpio = <(PAD_GPIO_C+27)>;	/* write protect */
+		#endif
 			status = "okay";
 		};
 
