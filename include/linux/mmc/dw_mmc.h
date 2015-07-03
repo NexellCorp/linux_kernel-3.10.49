@@ -170,7 +170,7 @@ struct dw_mci {
 	u32			cd_rd_thr;
 	u16			verid;
 	u16			data_offset;
-	struct device		dev;
+	struct device		*dev;
 	struct dw_mci_board	*pdata;
 	const struct dw_mci_drv_data	*drv_data;
 	void			*priv;

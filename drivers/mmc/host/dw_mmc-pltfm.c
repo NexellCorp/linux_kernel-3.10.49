@@ -44,7 +44,7 @@ int dw_mci_pltfm_register(struct platform_device *pdev,
 		return host->irq;
 
 	host->drv_data = drv_data;
-	host->dev = pdev->dev;
+	host->dev = &pdev->dev;
 	host->irq_flags = 0;
 	host->pdata = pdev->dev.platform_data;
 	host->regs = devm_ioremap_resource(&pdev->dev, regs);

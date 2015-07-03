@@ -56,6 +56,11 @@
 
 		#include "s5p6818-asb-pin.dtsi"
 
+   		dynamic-freq@bb000 {
+   			supply_name  = "vdd_arm";
+   			vdd_arm-supply	= <&VCC1P1_ARM_PMIC>;
+   		};
+
 		serial@a1000 {
 			enable_dma = <1>;
 		};
@@ -65,27 +70,55 @@
 		};
 
 		spi@5b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
 
 
 			spidev@0 {
 				compatible = "spidev";
-				reg = <0 0>;
+				reg = <0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
-					spi-cs-gpio = <10>;
+				  spi-cs-gpio = <(PAD_GPIO_C + 30)>;
 					spi-feedback-delay = <02>;
+					hierarchy = <0>; //0 : master, 1 : slave
 				};
 			};
 		};
 		spi@5c000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
+			//status = "okay";
+			spidev@0 {
+				compatible = "spidev";
+				reg = <0>;
+				spi-max-frequency = < 50000000 >;
+				controller-data {
+				  spi-cs-gpio = <(PAD_GPIO_E + 15)>;
+					spi-feedback-delay = <02>;
+				};
+			};
 		};
 		spi@5f000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
 			num_cs = <1>;
 			clk_nr = <0>;
+			status = "okay";
+			spidev@0 {
+				compatible = "spidev";
+				reg = <0>;
+				spi-max-frequency = < 50000000 >;
+				controller-data {
+			  	spi-cs-gpio = <(PAD_GPIO_C + 10)>;
+					spi-feedback-delay = <02>;
+					hierarchy = <1>; //0 : master, 1 : slave
+				};
+			};
 		};
 
 		rtc@10c00 {
@@ -262,7 +295,32 @@
 		};
 		#endif // CONFIG_REGULATOR_NXE2000
 
-	};	// soc
+		tmu-hwmon@96000 {
+			polling-delay = <100>;
+			trigger-step-up = <1>;
+			/* overtemp, cpufreq, duration:
+			  temperature less -> more, if cpufreq is zero, system poweroff */
+			triggers = <
+				85   800000 100
+				100  400000  10
+			    120       0   0
+				>;
+			status = "okay";
+		};
+
+		tmu-hwmon@97000 {
+			polling-delay = <100>;
+			trigger-step-up = <1>;
+			/* overtemp, cpufreq, duration:
+			  temperature less -> more, if cpufreq is zero, system poweroff */
+			triggers = <
+				85   800000 100
+				100  400000  10
+			    120       0   0
+				>;
+			status = "okay";
+		};
+	};	/*** soc ***/
 
 
     nxp-ion {

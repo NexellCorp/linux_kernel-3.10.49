@@ -40,28 +40,28 @@ struct s3c24xx_uart_info {
 	int (*reset_port)(struct uart_port *, struct s3c24xx_uart_drv_data *);
 };
 
-#ifdef CONFIG_DMA_ENGINE
 struct s3c24xx_serial_drv_data {
 	struct s3c24xx_uart_info *info;
 	struct s3c24xx_uart_drv_data *def_data;
 	unsigned int fifosize[UART_NR];
 };
-struct pl011_sgbuf {
+#ifdef CONFIG_DMA_ENGINE
+struct s3c24xx_sgbuf {
 	struct scatterlist sg;
 	char *buf;
 };
 
-struct pl011_dmarx_data {
+struct s3c24xx_dmarx_data {
 	struct dma_chan		*chan;
 	struct completion	complete;
 	bool			use_buf_b;
-	struct pl011_sgbuf	sgbuf_a;
-	struct pl011_sgbuf	sgbuf_b;
+	struct s3c24xx_sgbuf	sgbuf_a;
+	struct s3c24xx_sgbuf	sgbuf_b;
 	dma_cookie_t		cookie;
 	bool			running;
 };
 
-struct pl011_dmatx_data {
+struct s3c24xx_dmatx_data {
 	struct dma_chan		*chan;
 	struct scatterlist	sg;
 	char			*buf;
@@ -89,10 +89,12 @@ struct s3c24xx_uart_port {
 	unsigned int im;
 	unsigned int dmacr;
 	/* DMA stuff */
+#ifdef CONFIG_DMA_ENGINE
 	bool			using_tx_dma;
 	bool			using_rx_dma;
-	struct pl011_dmarx_data dmarx;
-	struct pl011_dmatx_data	dmatx;
+	struct s3c24xx_dmarx_data dmarx;
+	struct s3c24xx_dmatx_data	dmatx;
+#endif
 };
 
 /* conversion functions */

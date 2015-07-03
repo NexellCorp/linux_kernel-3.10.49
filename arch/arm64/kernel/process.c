@@ -51,6 +51,9 @@
 #include <asm/mmu_context.h>
 #include <asm/processor.h>
 #include <asm/stacktrace.h>
+#if defined (CONFIG_SMP) && defined (CONFIG_ARCH_S5P6818)
+#include <asm/tlbflush.h>
+#endif
 
 static void setup_restart(void)
 {
@@ -293,6 +296,15 @@ static void tls_thread_switch(struct task_struct *next)
 	: : "r" (tpidr), "r" (tpidrro));
 }
 
+#if defined (CONFIG_SMP) && defined (CONFIG_ARCH_S5P6818)
+static void tlb_flush_thread(struct task_struct *prev)
+{
+	/* Flush the prev task's TLB entries */
+	if (prev->mm)
+		flush_tlb_mm(prev->mm);
+}
+#endif
+
 /*
  * Thread switching.
  */
@@ -300,6 +312,10 @@ struct task_struct *__switch_to(struct task_struct *prev,
 				struct task_struct *next)
 {
 	struct task_struct *last;
+
+#if defined (CONFIG_SMP) && defined (CONFIG_ARCH_S5P6818)
+	tlb_flush_thread(prev);
+#endif
 
 	fpsimd_thread_switch(next);
 	tls_thread_switch(next);

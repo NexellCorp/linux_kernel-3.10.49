@@ -918,7 +918,6 @@ static int nxp_cpufreq_set_supply(struct platform_device *pdev,
 				pdata->supply_name);
 		return -1;
 	}
-	dvfs->boot_voltage = regulator_get_voltage(dvfs->volt);
 
 	pm_notifier = &dvfs->pm_notifier;
 	pm_notifier->notifier_call = nxp_cpufreq_pm_notify;
@@ -926,6 +925,10 @@ static int nxp_cpufreq_set_supply(struct platform_device *pdev,
 		dev_err(&pdev->dev, "Cannot pm notifier %s\n", pdata->supply_name);
 		return -1;
 	}
+
+	/* bootup voltage */
+	nxp_cpufreq_change_voltage(dvfs, dvfs->boot_frequency, false);
+	dvfs->boot_voltage = regulator_get_voltage(dvfs->volt);
 
 	/* set margin voltage */
 	if (margin->value && dvfs->asv_ops->modify_vol_table)

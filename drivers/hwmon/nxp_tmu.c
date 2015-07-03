@@ -211,12 +211,12 @@ static void nxp_thermal_dev_trim(struct nxp_thermal_dev *thermal)
 
 	while (count-- > 0) {
 	    // Program the measured data to e-fuse
-    	u32 val = readl(IO_ADDRESS(PHY_BASEADDR_TIEOFF_MODULE + (76*4)));
+    	u32 val = readl((void*)IO_ADDRESS(PHY_BASEADDR_TIEOFF_MODULE + (76*4)));
     	val = val | 0x3;;
-    	writel(val, IO_ADDRESS(PHY_BASEADDR_TIEOFF_MODULE + (76*4)));
+    	writel(val, (void*)IO_ADDRESS(PHY_BASEADDR_TIEOFF_MODULE + (76*4)));
 
     	// e-fuse Sensing Done. Check.
-    	val = readl(IO_ADDRESS(PHY_BASEADDR_TIEOFF_MODULE + (76*4)));
+    	val = readl((void*)IO_ADDRESS(PHY_BASEADDR_TIEOFF_MODULE + (76*4)));
     	ret = (((val>>3) & 0x3) == 0x3);
     	if (ret)
     		break;
