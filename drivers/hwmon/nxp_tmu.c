@@ -801,7 +801,7 @@ exit_free:
 	return err;
 }
 
-static int __cpuexit nxp_thermal_remove(struct platform_device *pdev)
+static int nxp_thermal_remove(struct platform_device *pdev)
 {
 	struct nxp_thermal_dev *thermal = platform_get_drvdata(pdev);
 	struct nxp_thermal_event *events = thermal->events;
