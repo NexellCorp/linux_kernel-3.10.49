@@ -568,6 +568,8 @@ static int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
 	err = phy_init_hw(phydev);
 	if (err)
 		phy_detach(phydev);
+	else
+		phy_resume(phydev);
 
 	return err;
 }
@@ -614,6 +616,7 @@ void phy_detach(struct phy_device *phydev)
 {
 	phydev->attached_dev->phydev = NULL;
 	phydev->attached_dev = NULL;
+	phy_suspend(phydev);
 
 	/* If the device had no specific driver before (i.e. - it
 	 * was using the generic driver), we unbind the device
@@ -623,6 +626,48 @@ void phy_detach(struct phy_device *phydev)
 		device_release_driver(&phydev->dev);
 }
 EXPORT_SYMBOL(phy_detach);
+
+int phy_suspend(struct phy_device *phydev)
+{
+	struct phy_driver *phydrv = to_phy_driver(phydev->dev.driver);
+	int ret = 0;
+	#if 0
+	struct ethtool_wolinfo wol = { .cmd = ETHTOOL_GWOL };
+
+	/* If the device has WOL enabled, we cannot suspend the PHY */
+	phy_ethtool_get_wol(phydev, &wol);
+	if (wol.wolopts)
+		return -EBUSY;
+	#endif
+
+	if (phydrv->suspend)
+		ret = phydrv->suspend(phydev);
+
+	if (ret)
+		return ret;
+
+	phydev->suspended = true;
+
+	return ret;
+}
+EXPORT_SYMBOL(phy_suspend);
+
+int phy_resume(struct phy_device *phydev)
+{
+	struct phy_driver *phydrv = to_phy_driver(phydev->dev.driver);
+	int ret = 0;
+
+	if (phydrv->resume)
+		ret = phydrv->resume(phydev);
+
+	if (ret)
+		return ret;
+
+	phydev->suspended = false;
+
+	return ret;
+}
+EXPORT_SYMBOL(phy_resume);
 
 
 /* Generic PHY support and helper functions */

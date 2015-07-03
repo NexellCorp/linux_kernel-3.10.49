@@ -108,6 +108,14 @@ struct stmmac_priv {
 	u32 adv_ts;
 	int use_riwt;
 	spinlock_t ptp_lock;
+
+#ifdef CONFIG_NXPMAC_DEBUG_FS
+	int dbgfs_initialized;
+	struct dentry *dbgfs_dir;
+	struct dentry *dbgfs_rings_status;
+	struct dentry *dbgfs_dma_cap;
+#endif
+
 	struct kobject kobj;
 };
 
