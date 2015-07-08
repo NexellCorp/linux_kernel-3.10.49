@@ -29,7 +29,7 @@ CONFIG_BUILDTIME_EXTABLE_SORT=y
 # General setup
 #
 CONFIG_INIT_ENV_ARG_LIMIT=32
-CONFIG_CROSS_COMPILE="aarch64-linux-android-"
+CONFIG_CROSS_COMPILE="aarch64-linux-gnu-"
 CONFIG_LOCALVERSION=""
 # CONFIG_LOCALVERSION_AUTO is not set
 CONFIG_DEFAULT_HOSTNAME="S5P6818"
@@ -834,88 +834,7 @@ CONFIG_DMA_SHARED_BUFFER=y
 # Bus devices
 #
 # CONFIG_CONNECTOR is not set
-CONFIG_MTD=y
-# CONFIG_MTD_TESTS is not set
-# CONFIG_MTD_REDBOOT_PARTS is not set
-# CONFIG_MTD_CMDLINE_PARTS is not set
-CONFIG_MTD_OF_PARTS=y
-# CONFIG_MTD_AR7_PARTS is not set
-
-#
-# User Modules And Translation Layers
-#
-CONFIG_MTD_BLKDEVS=y
-CONFIG_MTD_BLOCK=y
-# CONFIG_FTL is not set
-# CONFIG_NFTL is not set
-# CONFIG_INFTL is not set
-# CONFIG_RFD_FTL is not set
-# CONFIG_SSFDC is not set
-# CONFIG_SM_FTL is not set
-# CONFIG_MTD_OOPS is not set
-
-#
-# RAM/ROM/Flash chip drivers
-#
-# CONFIG_MTD_CFI is not set
-# CONFIG_MTD_JEDECPROBE is not set
-CONFIG_MTD_MAP_BANK_WIDTH_1=y
-CONFIG_MTD_MAP_BANK_WIDTH_2=y
-CONFIG_MTD_MAP_BANK_WIDTH_4=y
-# CONFIG_MTD_MAP_BANK_WIDTH_8 is not set
-# CONFIG_MTD_MAP_BANK_WIDTH_16 is not set
-# CONFIG_MTD_MAP_BANK_WIDTH_32 is not set
-CONFIG_MTD_CFI_I1=y
-CONFIG_MTD_CFI_I2=y
-# CONFIG_MTD_CFI_I4 is not set
-# CONFIG_MTD_CFI_I8 is not set
-# CONFIG_MTD_RAM is not set
-# CONFIG_MTD_ROM is not set
-# CONFIG_MTD_ABSENT is not set
-
-#
-# Mapping drivers for chip access
-#
-# CONFIG_MTD_COMPLEX_MAPPINGS is not set
-# CONFIG_MTD_PLATRAM is not set
-
-#
-# Self-contained MTD device drivers
-#
-# CONFIG_MTD_DATAFLASH is not set
-# CONFIG_MTD_M25P80 is not set
-# CONFIG_MTD_SST25L is not set
-# CONFIG_MTD_SLRAM is not set
-# CONFIG_MTD_PHRAM is not set
-# CONFIG_MTD_MTDRAM is not set
-# CONFIG_MTD_BLOCK2MTD is not set
-
-#
-# Disk-On-Chip Device Drivers
-#
-# CONFIG_MTD_DOCG3 is not set
-CONFIG_MTD_NAND_IDS=y
-CONFIG_MTD_NAND_ECC=y
-# CONFIG_MTD_NAND_ECC_SMC is not set
-CONFIG_MTD_NAND=y
-# CONFIG_MTD_NAND_ECC_BCH is not set
-# CONFIG_MTD_SM_COMMON is not set
-# CONFIG_MTD_NAND_DENALI is not set
-# CONFIG_MTD_NAND_DISKONCHIP is not set
-# CONFIG_MTD_NAND_DOCG4 is not set
-# CONFIG_MTD_NAND_NANDSIM is not set
-# CONFIG_MTD_NAND_PLATFORM is not set
-# CONFIG_MTD_ALAUDA is not set
-CONFIG_MTD_NAND_NXP=y
-CONFIG_MTD_NAND_ECC_HW=y
-CONFIG_NAND_RANDOMIZER=y
-# CONFIG_MTD_ONENAND is not set
-
-#
-# LPDDR flash memory drivers
-#
-# CONFIG_MTD_LPDDR is not set
-# CONFIG_MTD_UBI is not set
+# CONFIG_MTD is not set
 CONFIG_DTC=y
 CONFIG_OF=y
 
@@ -932,7 +851,6 @@ CONFIG_OF_DEVICE=y
 CONFIG_OF_I2C=y
 CONFIG_OF_NET=y
 CONFIG_OF_MDIO=y
-CONFIG_OF_MTD=y
 # CONFIG_PARPORT is not set
 CONFIG_BLK_DEV=y
 # CONFIG_BLK_DEV_COW_COMMON is not set
@@ -943,11 +861,12 @@ CONFIG_BLK_DEV_LOOP_MIN_COUNT=8
 # CONFIG_BLK_DEV_NBD is not set
 CONFIG_BLK_DEV_RAM=y
 CONFIG_BLK_DEV_RAM_COUNT=16
-CONFIG_BLK_DEV_RAM_SIZE=32768
+CONFIG_BLK_DEV_RAM_SIZE=65536
 # CONFIG_BLK_DEV_XIP is not set
 # CONFIG_CDROM_PKTCDVD is not set
 # CONFIG_ATA_OVER_ETH is not set
 # CONFIG_BLK_DEV_RBD is not set
+# CONFIG_NXP_FTL is not set
 
 #
 # Misc devices
@@ -2442,6 +2361,7 @@ CONFIG_DMADEVICES=y
 # DMA Devices
 #
 CONFIG_AMBA_PL08X=y
+# CONFIG_AMBA_PL08X_USE_ISR is not set
 # CONFIG_DW_DMAC is not set
 # CONFIG_TIMB_DMA is not set
 # CONFIG_PL330_DMA is not set
@@ -2848,7 +2768,6 @@ CONFIG_MISC_FILESYSTEMS=y
 # CONFIG_BEFS_FS is not set
 # CONFIG_BFS_FS is not set
 # CONFIG_EFS_FS is not set
-# CONFIG_JFFS2_FS is not set
 # CONFIG_LOGFS is not set
 # CONFIG_CRAMFS is not set
 # CONFIG_SQUASHFS is not set
