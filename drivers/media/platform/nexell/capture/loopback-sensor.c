@@ -1,5 +1,6 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/delay.h>
 
 //#include <mach/platform.h>
 #include <nexell/platform.h>
@@ -63,13 +64,50 @@ static void local_setup_io(void)
     }    
 }
 
+static int local_power_enable(bool on)
+{
+	unsigned int nEnable;
+	unsigned int nReset;
+
+  if( on )
+  {
+    /* Loopback Enable */
+    nEnable  = (PAD_GPIO_A + 21) | PAD_FUNC_ALT0;
+    nxp_soc_gpio_set_out_value(nEnable, 0);
+    nxp_soc_gpio_set_io_dir(nEnable, 1);
+    nxp_soc_gpio_set_io_func(nEnable, NX_GPIO_PADFUNC_0);
+    nxp_soc_gpio_set_out_value(nEnable, 0);
+
+    /* Loopback Reset */
+    nReset = (PAD_GPIO_A + 22) | PAD_FUNC_ALT0;
+    nxp_soc_gpio_set_out_value(nReset, 0);
+    nxp_soc_gpio_set_io_dir(nReset, 1);
+    //nxp_soc_gpio_set_io_func(nReset, nxp_soc_gpio_get_altnum(nReset));
+    nxp_soc_gpio_set_io_func(nReset, NX_GPIO_PADFUNC_0);
+    nxp_soc_gpio_set_out_value(nReset, 0);
+    mdelay(10);
+
+#if 0
+    /* I2C Set  */
+    unsigned int nSCL = (PAD_GPIO_D + 4) | PAD_FUNC_ALT1;
+    nxp_soc_gpio_set_out_value(nSCL, 1);
+    nxp_soc_gpio_set_io_dir(nSCL, 1);
+
+    unsigned int nSDA = (PAD_GPIO_D + 5) | PAD_FUNC_ALT1;
+    nxp_soc_gpio_set_out_value(nSDA, 1);
+    nxp_soc_gpio_set_io_dir(nSDA, 1);
+#endif
+  }
+
+  return 0;
+}
+
 static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 {
 	U32 g_DPCIndex = 1;
 	NX_DPC_PADCLK clock = NX_DPC_PADCLK_VCLK;
 
 	NX_DISPLAY_TFTLCD	*pTFTLCD        = pDisMode->pTFTLCD;
-	NX_ENCODER_MODE		*pEncoderMode	= pDisMode->pEncoderMode;
 
 	U32 				dwVCLKDivider=0, dwSyncDelay=0;
 	NX_DPC_DITHER 	    RDither, GDither, BDither;
@@ -77,16 +115,6 @@ static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 
 	RDither = GDither = BDither = NX_DPC_DITHER_5BIT;
 	bEmbeddedSync = bRGBMode = CFALSE;
-
-/*
-	if( g_DPCIndex )
-	{
-		//NX_DPC_SetHorizontalUpScaler( g_DPCIndex, CTRUE, 320, 720 );		// DPC1's upscale test
-		NX_DPC_SetHorizontalUpScaler( g_DPCIndex, CFALSE, 720, 720 );
-	}
-	else
-		NX_DPC_SetHorizontalUpScaler( g_DPCIndex, CFALSE, 2, 2 );
-*/
 
 	//--------------------------------------------------------------------------
 	NX_DPC_SetDPCEnable( g_DPCIndex, CFALSE );
@@ -152,16 +180,14 @@ static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 			bEmbeddedSync = CTRUE;
 	else	bEmbeddedSync = CFALSE;
 
+/*
 	if( bEmbeddedSync )
 		printk(KERN_INFO "[%s]DPC Format 655!!\n", __func__);
+*/
 
 	// Sync Delay?
 	if( bRGBMode )
 	{
-/*			2009/5/28 NXC-1000 databook 26.4.6 Delay
-		if( 0 == g_DPCIndex )   dwSyncDelay = 7 * dwVCLKDivider;    // Primary DPC
-		else                    dwSyncDelay = 4 * dwVCLKDivider;    // Secondary DPC
-*/
 		dwSyncDelay = 7 * dwVCLKDivider;
 	}
 	else
@@ -242,58 +268,10 @@ static CBOOL	SetDisplayMode( NX_DISPLAY_MODE *pDisMode )
 		NX_DPC_SetDither( g_DPCIndex, NX_DPC_DITHER_BYPASS, NX_DPC_DITHER_BYPASS, NX_DPC_DITHER_BYPASS );
 	}
 
-	//--------------------------------------------------------------------------
-/*
-	if( 1 == g_DPCIndex )
-	{
-		if( CNULL != pEncoderMode )
-		{
-			NX_DPC_SetENCEnable( g_DPCIndex, CTRUE );
-
-    		//NX_TIMER_TickCountDelay( 100 );
-    		//NX_DPC_SetClockDivisorEnable( g_DPCIndex, CTRUE );
-    		//NX_TIMER_TickCountDelay( 100 );
-    		//NX_DPC_SetENCEnable( g_DPCIndex, CFALSE );
-    		//NX_TIMER_TickCountDelay( 100 );
-    		//NX_DPC_SetClockDivisorEnable( g_DPCIndex, CFALSE );
-    		//NX_TIMER_TickCountDelay( 100 );
-			NX_DPC_SetClockDivisorEnable(g_DPCIndex, CTRUE);	// CLKENB : Provides internal operating clock.
-
-    		NX_DPC_SetENCEnable( g_DPCIndex, CTRUE );
-
-			//NX_DPC_SetVideoEncoderPowerDown(  g_DPCIndex, CTRUE );
-			NX_DPC_SetVideoEncoderMode( g_DPCIndex, (NX_DPC_VBS)pEncoderMode->dwBroadcast, pEncoderMode->bPedestal ) ;
-			NX_DPC_SetVideoEncoderFSCAdjust( g_DPCIndex, 0 );
-			NX_DPC_SetVideoEncoderBandwidth( g_DPCIndex, (NX_DPC_BANDWIDTH)pEncoderMode->dwYBandWidth,
-											 (NX_DPC_BANDWIDTH)pEncoderMode->dwCBandWidth ) ;
-			NX_DPC_SetVideoEncoderColorControl( g_DPCIndex, 0, 0, 0, 0, 0 );
-			NX_DPC_SetVideoEncoderTiming( g_DPCIndex,
-										  pEncoderMode->dwHorSyncStart,
-										  pEncoderMode->dwHorSyncEnd,
-										  pEncoderMode->dwVerSyncStart,
-										  pEncoderMode->dwVerSyncEnd );
-			NX_DPC_SetVideoEncoderPowerDown( g_DPCIndex, CFALSE );
-			NX_DPC_SetENCEnable( g_DPCIndex, CTRUE );
-		}
-		else
-		{
-			NX_DPC_SetENCEnable( g_DPCIndex, CFALSE );
-		}
-	}
-*/
-	//--------------------------------------------------------------------------
 	NX_DPC_SetClockDivisorEnable(g_DPCIndex, CTRUE);	// CLKENB : Provides internal operating clock.
-
-#if 0
-	NX_DISPLAYTOP_SetRESCONVMUX	( CFALSE, PADMUX_SecondaryMLC );   
-	NX_DISPLAYTOP_SetHDMIMUX		( CFALSE, PADMUX_SecondaryMLC );  
-	NX_DISPLAYTOP_SetMIPIMUX    ( CFALSE, PADMUX_SecondaryMLC );  
-	NX_DISPLAYTOP_SetLVDSMUX    ( CFALSE, PADMUX_SecondaryMLC ); 
-#endif
 
 	NX_DISPLAYTOP_SetPrimaryMUX(2 * g_DPCIndex); 
 	NX_DISPLAYTOP_SetPADClock(PADMUX_SecondaryMLC, PADCLK_InvCLK ); 
-//	NX_DPC_SetDPCEnable( g_DPCIndex, CTRUE );
 	NX_DPC_SetEnable( g_DPCIndex, CTRUE, CFALSE, CFALSE, CFALSE, CTRUE );
 
 	return CTRUE;
@@ -355,22 +333,6 @@ static void _dpc_mode1(void)
 		0			// dwEvenVerSyncEndOffset
 	};
 
-	/*NX_ENCODER_MODE	MODE_InternalVideoEncoder_EncoderMode =*/
-	/*{*/
-		/*(U32)NX_DPC_VBS_NTSC_M ,		// dwOutputMode*/
-		/*CTRUE,                          // bPedestal*/
-		/*//(U32)NX_DPC_BANDWIDTH_LOW ,	// dwYBandWidth*/
-		/*//(U32)NX_DPC_BANDWIDTH_LOW ,	// dwCBandWidth*/
-		/*(U32)NX_DPC_BANDWIDTH_HIGH ,	// dwYBandWidth*/
-		/*(U32)NX_DPC_BANDWIDTH_HIGH ,	// dwCBandWidth*/
-
-		/*63,			// dwHorSyncStart*/
-		/*1715,		// dwHorSyncEnd*/
-		/*0,			// dwVerSyncStart*/
-		/*3			// dwVerSyncEnd*/
-	/*};*/
-
-
 	NX_DISPLAY_MODE 	MODE_InternalVideoEncoder =
 	{
 		&MODE_InternalVideoEncoder_TFTLCD,         // pTFTLCD
@@ -379,13 +341,6 @@ static void _dpc_mode1(void)
 	};
 
 	pDisMode = &MODE_InternalVideoEncoder;
-
-	//--------------------------------------------------------------------------
-	// Share variables
-	// SetDelay
-	/*U32 	DelayRGB_PVD, DelayHS_CP1, DelayVS_FRAM, DelayDE_CP2;*/
-	// SetDither
-	/*NX_DPC_DITHER DitherR, DitherG, DitherB;*/
 
 	SetDisplayMode( pDisMode );
 }
@@ -397,31 +352,34 @@ static void _release_reset(void)
     NX_RSTCON_SetRST(RESETINDEX_OF_DISPLAYTOP_MODULE_i_HDMI_SPDIF_nRST , 1);
     NX_RSTCON_SetRST(RESETINDEX_OF_DISPLAYTOP_MODULE_i_HDMI_TMDS_nRST  , 1);
     NX_RSTCON_SetRST(RESETINDEX_OF_DISPLAYTOP_MODULE_i_HDMI_PHY_nRST   , 1);
+}
 
-		NX_RSTCON_SetRST(NX_DISPLAYTOP_GetResetNumber(), 0);
-		NX_RSTCON_SetRST(NX_DISPLAYTOP_GetResetNumber(), 1);
-
-		NX_RSTCON_SetRST(NX_DUALDISPLAY_GetResetNumber( 0 ), 0);
-		NX_RSTCON_SetRST(NX_DUALDISPLAY_GetResetNumber( 0 ), 1);
+static void _release_clk(int module)
+{
+	NX_DISPTOP_CLKGEN_SetBaseAddress(HDMI_CLKGEN, (void *)IO_ADDRESS(NX_DISPTOP_CLKGEN_GetPhysicalAddress(HDMI_CLKGEN)));
+	NX_DISPTOP_CLKGEN_SetClockDivisorEnable(HDMI_CLKGEN, CFALSE );	
+  NX_DPC_SetClockDivisorEnable(module, CFALSE);
 }
 
 static void _set_base_address(int module)
 {
+		NX_HDMI_Initialize();
+    NX_TIEOFF_Initialize();
+
 #if 1
-	NX_DISPLAYTOP_SetBaseAddress((U32)IO_ADDRESS(NX_DISPLAYTOP_GetPhysicalAddress()));
-	NX_DPC_SetBaseAddress(module, (U32)IO_ADDRESS(NX_DPC_GetPhysicalAddress(module)));
-	NX_MLC_SetBaseAddress(module, (U32)IO_ADDRESS(NX_MLC_GetPhysicalAddress(module)));
+	NX_DISPLAYTOP_SetBaseAddress((void *)IO_ADDRESS(NX_DISPLAYTOP_GetPhysicalAddress()));
+	NX_DPC_SetBaseAddress(module, (void *)IO_ADDRESS(NX_DPC_GetPhysicalAddress(module)));
+	NX_MLC_SetBaseAddress(module, (void *)IO_ADDRESS(NX_MLC_GetPhysicalAddress(module)));
 #endif
 
-  NX_RSTCON_SetBaseAddress((U32)IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
-	NX_HDMI_SetBaseAddress(0, (U32)IO_ADDRESS(NX_HDMI_GetPhysicalAddress(0)));
-	NX_TIEOFF_SetBaseAddress((U32)IO_ADDRESS(NX_TIEOFF_GetPhysicalAddress()));
-	NX_DISPTOP_CLKGEN_SetBaseAddress(HDMI_CLKGEN, (U32)IO_ADDRESS(NX_DISPTOP_CLKGEN_GetPhysicalAddress(HDMI_CLKGEN)));
+  NX_RSTCON_SetBaseAddress((void *)IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_HDMI_SetBaseAddress(0, (void *)IO_ADDRESS(NX_HDMI_GetPhysicalAddress(0)));
+	NX_TIEOFF_SetBaseAddress((void *)IO_ADDRESS(NX_TIEOFF_GetPhysicalAddress()));
+	NX_DISPTOP_CLKGEN_SetBaseAddress(HDMI_CLKGEN, (void *)IO_ADDRESS(NX_DISPTOP_CLKGEN_GetPhysicalAddress(HDMI_CLKGEN)));
 }
 
 static void _set_hdmi_clk_27MHz(void)
 {
-    NX_TIEOFF_Initialize();
     NX_TIEOFF_Set(TIEOFFINDEX_OF_DISPLAYTOP0_i_HDMI_PHY_REFCLK_SEL, 1);
 
     // HDMI PCLK Enable
@@ -510,7 +468,7 @@ static void _mlc_set(int module, int width, int height)
 
     NX_MLC_SetScreenSize(module, width, height);
     NX_MLC_SetBackground(module, 0xFFFFFF);
-    NX_MLC_SetSRAMMODE(module, TOPMLC, SLEEPMODE);
+//    NX_MLC_SetSRAMMODE(module, TOPMLC, SLEEPMODE);
     NX_MLC_SetSRAMMODE(module, TOPMLC, RUN);
 
 #if 0
@@ -536,19 +494,20 @@ static void _mlc_set(int module, int width, int height)
 
 static void display_out_bt656(int module, int width, int height, int on)
 {
-    printk("[%s] module : %d, width : %d, hegiht : %d, Enable : %d\n", __func__, module, width, height, on);
+    //printk("[%s] module : %d, width : %d, hegiht : %d, Enable : %d\n", __func__, module, width, height, on);
 
     if (on) {
 				_set_base_address(module);
         _release_reset();
         _set_hdmi_clk_27MHz();
         _dpc_clk_enable(module);
-			 	dump_register_dpc(module);
+			 	//dump_register_dpc(module);
         _mlc_set(module, width, height);
         _dpc_mode1();
         _mlc_set(module, width, height);
-				dump_register_dpc(module);
+				//dump_register_dpc(module);
     } else {
+			_release_clk(module);
     }
 }
 
@@ -569,7 +528,10 @@ static int loopback_sensor_s_stream(struct v4l2_subdev *sd, int enable)
     printk("%s %d\n", __func__, enable);
 
 		if( enable>0 )
+		{
 			local_setup_io();
+			local_power_enable( enable );
+		}
 
     display_out_bt656(me->dpc_module, me->width, me->height, enable);
 

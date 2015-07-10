@@ -389,6 +389,93 @@
 		};
 	};	/*** soc ***/
 
+	nxp-ion {
+		compatible = "nexell,nxp-ion";
+		nr = <3>;
+		names = "ion_noncontig_heap", "ion_contig_heap", "nxp_contig_heap";
+		types = <0 1 6>;
+	};
+
+	nxp-v4l2 {
+ 		compatible = "nexell,nxp-v4l2";
+
+    capture {
+    	nr = <2>;
+
+		capture0 {
+				module = <2>;
+						type = <0>;
+
+						port = <0>;
+						external_sync = <0>;
+
+						h_active =  <720>;
+						h_frontporch = <7>;
+						h_syncwidth = <1>;
+						h_backporch = <10>;
+						v_active =  <480>;
+						v_frontporch = <0>;
+						v_syncwidth = <1>;
+						v_backporch = <0>;
+
+						data_order = <0>;
+						vid = <0>;
+
+						interlace = <0>;
+						late_power_down = <0>;
+
+						sensor {
+								type = <2>;
+								sensor_name = "loopback-sensor";
+						};
+
+						power {
+								enable_io = <(PAD_GPIO_A + 21)>;
+								enable_invert = <1>;
+								reset_io    =   <(PAD_GPIO_A + 22)>;
+								reset_enable = <1>;
+						};
+				};
+
+			capture1 {
+				module          = <1>;
+				type            = <0>;
+
+				port            = <0>;
+				external_sync   = <0>;
+												
+				h_active        = <704>;
+				h_frontporch    = <7>;
+				h_syncwidth     = <1>;
+				h_backporch     = <10>;
+				v_active        = <480>;
+				v_frontporch    = <0>;
+				v_syncwidth     = <2>;
+				v_backporch     = <3>;
+
+				data_order      = <0>;
+				vid             = <1>;
+
+				interlace       = <1>;
+				late_power_down = <0>;
+
+				sensor {
+						type        = <0>;
+						sensor_name = "tw9900";
+						i2c_adapter = <1>;
+						addr        = <0x44>;
+				};
+
+				power {
+						enable_io       = <(PAD_GPIO_A + 4)>;
+						enable_invert   = <1>;
+						#reset_io        = <(PAD_GPIO_C + 6)>;
+						#reset_invert    = <1>;
+      	};
+    	};
+  	};
+	};
+
 	pdm-dir {
 		compatible = "nexell,pdm-dir";
 		#address-cells = <1>;
