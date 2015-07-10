@@ -3,10 +3,13 @@
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/switch.h>
+#include <linux/delay.h>
 
 #include <media/v4l2-device.h>
 #include <media/v4l2-subdev.h>
 #include <media/v4l2-ctrls.h>
+
+#include <nexell/platform.h>
 
 /*#include <mach/platform.h>*/
 /*#include <mach/soc.h>*/
@@ -17,6 +20,16 @@
 #else
 #define vmsg(a...)
 #endif
+
+#if 1
+extern void nxp_soc_gpio_set_out_value(unsigned int io, int high);
+extern int  nxp_soc_gpio_get_altnum(unsigned int io);
+extern void nxp_soc_gpio_set_io_dir(unsigned int io, int out);
+extern void nxp_soc_gpio_set_io_func(unsigned int io, unsigned int func);
+#endif
+
+extern void dump_register(int module);
+
 
 #define DEFAULT_BRIGHTNESS  0x1e
 struct tw9900_state {
@@ -45,7 +58,7 @@ struct reg_val {
 
 static struct reg_val _sensor_init_data[] =
 {
-    {0x02, 0x44},
+    {0x02, 0x40},
     {0x03, 0xa2},
     {0x07, 0x02},
     {0x08, 0x12},
@@ -80,6 +93,142 @@ void tw9900_external_set_brightness(char brightness) {
 }
 EXPORT_SYMBOL(tw9900_external_set_brightness);
 
+#if 0
+/**
+ * hw function
+ */
+/* debugging */
+#define DUMP_REGISTER 1
+void dump_register(int module)
+{
+#if (DUMP_REGISTER)
+#define DBGOUT(args...)  printk(args)
+    NX_VIP_RegisterSet *pREG =
+        (NX_VIP_RegisterSet*)NX_VIP_GetBaseAddress(module);
+
+    DBGOUT("BASE ADDRESS: %p\n", pREG);
+#if defined(CONFIG_ARCH_S5P4418)
+    DBGOUT(" VIP_CONFIG     = 0x%04x\r\n", pREG->VIP_CONFIG);
+    DBGOUT(" VIP_HVINT      = 0x%04x\r\n", pREG->VIP_HVINT);
+    DBGOUT(" VIP_SYNCCTRL   = 0x%04x\r\n", pREG->VIP_SYNCCTRL);
+    DBGOUT(" VIP_SYNCMON    = 0x%04x\r\n", pREG->VIP_SYNCMON);
+    DBGOUT(" VIP_VBEGIN     = 0x%04x\r\n", pREG->VIP_VBEGIN);
+    DBGOUT(" VIP_VEND       = 0x%04x\r\n", pREG->VIP_VEND);
+    DBGOUT(" VIP_HBEGIN     = 0x%04x\r\n", pREG->VIP_HBEGIN);
+    DBGOUT(" VIP_HEND       = 0x%04x\r\n", pREG->VIP_HEND);
+    DBGOUT(" VIP_FIFOCTRL   = 0x%04x\r\n", pREG->VIP_FIFOCTRL);
+    DBGOUT(" VIP_HCOUNT     = 0x%04x\r\n", pREG->VIP_HCOUNT);
+    DBGOUT(" VIP_VCOUNT     = 0x%04x\r\n", pREG->VIP_VCOUNT);
+    DBGOUT(" VIP_CDENB      = 0x%04x\r\n", pREG->VIP_CDENB);
+    DBGOUT(" VIP_ODINT      = 0x%04x\r\n", pREG->VIP_ODINT);
+    DBGOUT(" VIP_IMGWIDTH   = 0x%04x\r\n", pREG->VIP_IMGWIDTH);
+    DBGOUT(" VIP_IMGHEIGHT  = 0x%04x\r\n", pREG->VIP_IMGHEIGHT);
+    DBGOUT(" CLIP_LEFT      = 0x%04x\r\n", pREG->CLIP_LEFT);
+    DBGOUT(" CLIP_RIGHT     = 0x%04x\r\n", pREG->CLIP_RIGHT);
+    DBGOUT(" CLIP_TOP       = 0x%04x\r\n", pREG->CLIP_TOP);
+    DBGOUT(" CLIP_BOTTOM    = 0x%04x\r\n", pREG->CLIP_BOTTOM);
+    DBGOUT(" DECI_TARGETW   = 0x%04x\r\n", pREG->DECI_TARGETW);
+    DBGOUT(" DECI_TARGETH   = 0x%04x\r\n", pREG->DECI_TARGETH);
+    DBGOUT(" DECI_DELTAW    = 0x%04x\r\n", pREG->DECI_DELTAW);
+    DBGOUT(" DECI_DELTAH    = 0x%04x\r\n", pREG->DECI_DELTAH);
+    DBGOUT(" DECI_CLEARW    = 0x%04x\r\n", pREG->DECI_CLEARW);
+    DBGOUT(" DECI_CLEARH    = 0x%04x\r\n", pREG->DECI_CLEARH);
+    DBGOUT(" DECI_LUSEG     = 0x%04x\r\n", pREG->DECI_LUSEG);
+    DBGOUT(" DECI_CRSEG     = 0x%04x\r\n", pREG->DECI_CRSEG);
+    DBGOUT(" DECI_CBSEG     = 0x%04x\r\n", pREG->DECI_CBSEG);
+    DBGOUT(" DECI_FORMAT    = 0x%04x\r\n", pREG->DECI_FORMAT);
+    DBGOUT(" DECI_ROTFLIP   = 0x%04x\r\n", pREG->DECI_ROTFLIP);
+    DBGOUT(" DECI_LULEFT    = 0x%04x\r\n", pREG->DECI_LULEFT);
+    DBGOUT(" DECI_CRLEFT    = 0x%04x\r\n", pREG->DECI_CRLEFT);
+    DBGOUT(" DECI_CBLEFT    = 0x%04x\r\n", pREG->DECI_CBLEFT);
+    DBGOUT(" DECI_LURIGHT   = 0x%04x\r\n", pREG->DECI_LURIGHT);
+    DBGOUT(" DECI_CRRIGHT   = 0x%04x\r\n", pREG->DECI_CRRIGHT);
+    DBGOUT(" DECI_CBRIGHT   = 0x%04x\r\n", pREG->DECI_CBRIGHT);
+    DBGOUT(" DECI_LUTOP     = 0x%04x\r\n", pREG->DECI_LUTOP);
+    DBGOUT(" DECI_CRTOP     = 0x%04x\r\n", pREG->DECI_CRTOP);
+    DBGOUT(" DECI_CBTOP     = 0x%04x\r\n", pREG->DECI_CBTOP);
+    DBGOUT(" DECI_LUBOTTOM  = 0x%04x\r\n", pREG->DECI_LUBOTTOM);
+    DBGOUT(" DECI_CRBOTTOM  = 0x%04x\r\n", pREG->DECI_CRBOTTOM);
+    DBGOUT(" DECI_CBBOTTOM  = 0x%04x\r\n", pREG->DECI_CBBOTTOM);
+    DBGOUT(" CLIP_LUSEG     = 0x%04x\r\n", pREG->CLIP_LUSEG);
+    DBGOUT(" CLIP_CRSEG     = 0x%04x\r\n", pREG->CLIP_CRSEG);
+    DBGOUT(" CLIP_CBSEG     = 0x%04x\r\n", pREG->CLIP_CBSEG);
+    DBGOUT(" CLIP_FORMAT    = 0x%04x\r\n", pREG->CLIP_FORMAT);
+    DBGOUT(" CLIP_ROTFLIP   = 0x%04x\r\n", pREG->CLIP_ROTFLIP);
+    DBGOUT(" CLIP_LULEFT    = 0x%04x\r\n", pREG->CLIP_LULEFT);
+    DBGOUT(" CLIP_CRLEFT    = 0x%04x\r\n", pREG->CLIP_CRLEFT);
+    DBGOUT(" CLIP_CBLEFT    = 0x%04x\r\n", pREG->CLIP_CBLEFT);
+    DBGOUT(" CLIP_LURIGHT   = 0x%04x\r\n", pREG->CLIP_LURIGHT);
+    DBGOUT(" CLIP_CRRIGHT   = 0x%04x\r\n", pREG->CLIP_CRRIGHT);
+    DBGOUT(" CLIP_CBRIGHT   = 0x%04x\r\n", pREG->CLIP_CBRIGHT);
+    DBGOUT(" CLIP_LUTOP     = 0x%04x\r\n", pREG->CLIP_LUTOP);
+    DBGOUT(" CLIP_CRTOP     = 0x%04x\r\n", pREG->CLIP_CRTOP);
+    DBGOUT(" CLIP_CBTOP     = 0x%04x\r\n", pREG->CLIP_CBTOP);
+    DBGOUT(" CLIP_LUBOTTOM  = 0x%04x\r\n", pREG->CLIP_LUBOTTOM);
+    DBGOUT(" CLIP_CRBOTTOM  = 0x%04x\r\n", pREG->CLIP_CRBOTTOM);
+    DBGOUT(" CLIP_CBBOTTOM  = 0x%04x\r\n", pREG->CLIP_CBBOTTOM);
+    DBGOUT(" VIP_SCANMODE   = 0x%04x\r\n", pREG->VIP_SCANMODE);
+    DBGOUT(" CLIP_YUYVENB   = 0x%04x\r\n", pREG->CLIP_YUYVENB);
+    DBGOUT(" CLIP_BASEADDRH = 0x%04x\r\n", pREG->CLIP_BASEADDRH);
+    DBGOUT(" CLIP_BASEADDRL = 0x%04x\r\n", pREG->CLIP_BASEADDRL);
+    DBGOUT(" CLIP_STRIDEH   = 0x%04x\r\n", pREG->CLIP_STRIDEH);
+    DBGOUT(" CLIP_STRIDEL   = 0x%04x\r\n", pREG->CLIP_STRIDEL);
+    DBGOUT(" VIP_VIP1       = 0x%04x\r\n", pREG->VIP_VIP1);
+    /* DBGOUT(" VIPCLKENB      = 0x%04x\r\n", pREG->VIPCLKENB); */
+    /* DBGOUT(" VIPCLKGEN[0][0]= 0x%04x\r\n", pREG->VIPCLKGEN[0][0]); */
+    /* DBGOUT(" VIPCLKGEN[0][1]= 0x%04x\r\n", pREG->VIPCLKGEN[0][1]); */
+    /* DBGOUT(" VIPCLKGEN[1][0]= 0x%04x\r\n", pREG->VIPCLKGEN[1][0]); */
+    /* DBGOUT(" VIPCLKGEN[1][1]= 0x%04x\r\n", pREG->VIPCLKGEN[1][1]); */
+#elif defined(CONFIG_ARCH_S5P6818)
+    DBGOUT(" VIP_CONFIG     = 0x%04x\r\n", pREG->VIP_CONFIG);
+    DBGOUT(" VIP_HVINT      = 0x%04x\r\n", pREG->VIP_HVINT);
+    DBGOUT(" VIP_SYNCCTRL   = 0x%04x\r\n", pREG->VIP_SYNCCTRL);
+    DBGOUT(" VIP_SYNCMON    = 0x%04x\r\n", pREG->VIP_SYNCMON);
+    DBGOUT(" VIP_VBEGIN     = 0x%04x\r\n", pREG->VIP_VBEGIN);
+    DBGOUT(" VIP_VEND       = 0x%04x\r\n", pREG->VIP_VEND);
+    DBGOUT(" VIP_HBEGIN     = 0x%04x\r\n", pREG->VIP_HBEGIN);
+    DBGOUT(" VIP_HEND       = 0x%04x\r\n", pREG->VIP_HEND);
+    DBGOUT(" VIP_FIFOCTRL   = 0x%04x\r\n", pREG->VIP_FIFOCTRL);
+    DBGOUT(" VIP_HCOUNT     = 0x%04x\r\n", pREG->VIP_HCOUNT);
+    DBGOUT(" VIP_VCOUNT     = 0x%04x\r\n", pREG->VIP_VCOUNT);
+    DBGOUT(" VIP_PADCLK_SEL = 0x%04x\r\n", pREG->VIP_PADCLK_SEL);
+    DBGOUT(" VIP_INFIFOCLR  = 0x%04x\r\n", pREG->VIP_INFIFOCLR);
+    DBGOUT(" VIP_CDENB      = 0x%04x\r\n", pREG->VIP_CDENB);
+    DBGOUT(" VIP_ODINT      = 0x%04x\r\n", pREG->VIP_ODINT);
+    DBGOUT(" VIP_IMGWIDTH   = 0x%04x\r\n", pREG->VIP_IMGWIDTH);
+    DBGOUT(" VIP_IMGHEIGHT  = 0x%04x\r\n", pREG->VIP_IMGHEIGHT);
+    DBGOUT(" CLIP_LEFT      = 0x%04x\r\n", pREG->CLIP_LEFT);
+    DBGOUT(" CLIP_RIGHT     = 0x%04x\r\n", pREG->CLIP_RIGHT);
+    DBGOUT(" CLIP_TOP       = 0x%04x\r\n", pREG->CLIP_TOP);
+    DBGOUT(" CLIP_BOTTOM    = 0x%04x\r\n", pREG->CLIP_BOTTOM);
+    DBGOUT(" DECI_TARGETW   = 0x%04x\r\n", pREG->DECI_TARGETW);
+    DBGOUT(" DECI_TARGETH   = 0x%04x\r\n", pREG->DECI_TARGETH);
+    DBGOUT(" DECI_DELTAW    = 0x%04x\r\n", pREG->DECI_DELTAW);
+    DBGOUT(" DECI_DELTAH    = 0x%04x\r\n", pREG->DECI_DELTAH);
+    DBGOUT(" DECI_CLEARW    = 0x%04x\r\n", pREG->DECI_CLEARW);
+    DBGOUT(" DECI_CLEARH    = 0x%04x\r\n", pREG->DECI_CLEARH);
+    DBGOUT(" DECI_FORMAT    = 0x%04x\r\n", pREG->DECI_FORMAT);
+    DBGOUT(" DECI_LUADDR    = 0x%04x\r\n", pREG->DECI_LUADDR);
+    DBGOUT(" DECI_LUSTRIDE  = 0x%04x\r\n", pREG->DECI_LUSTRIDE);
+    DBGOUT(" DECI_CRADDR    = 0x%04x\r\n", pREG->DECI_CRADDR);
+    DBGOUT(" DECI_CRSTRIDE  = 0x%04x\r\n", pREG->DECI_CRSTRIDE);
+    DBGOUT(" DECI_CBADDR    = 0x%04x\r\n", pREG->DECI_CBADDR);
+    DBGOUT(" DECI_CBSTRIDE  = 0x%04x\r\n", pREG->DECI_CBSTRIDE);
+    DBGOUT(" CLIP_FORMAT    = 0x%04x\r\n", pREG->CLIP_FORMAT);
+    DBGOUT(" CLIP_LUADDR    = 0x%04x\r\n", pREG->CLIP_LUADDR);
+    DBGOUT(" CLIP_LUSTRIDE  = 0x%04x\r\n", pREG->CLIP_LUSTRIDE);
+    DBGOUT(" CLIP_CRADDR    = 0x%04x\r\n", pREG->CLIP_CRADDR);
+    DBGOUT(" CLIP_CRSTRIDE  = 0x%04x\r\n", pREG->CLIP_CRSTRIDE);
+    DBGOUT(" CLIP_CBADDR    = 0x%04x\r\n", pREG->CLIP_CBADDR);
+    DBGOUT(" CLIP_CBSTRIDE  = 0x%04x\r\n", pREG->CLIP_CBSTRIDE);
+    DBGOUT(" VIP_SCANMODE   = 0x%04x\r\n", pREG->VIP_SCANMODE);
+    DBGOUT(" VIP_VIP1       = 0x%04x\r\n", pREG->VIP_VIP1);
+#endif
+
+#endif
+}
+#endif
+
 /**
  * util functions
  */
@@ -88,7 +237,94 @@ static inline struct tw9900_state *ctrl_to_me(struct v4l2_ctrl *ctrl)
     return container_of(ctrl->handler, struct tw9900_state, handler);
 }
 
-#define THINE_I2C_RETRY_CNT				3
+
+static void local_setup_io(void)
+{
+	u_int *pad;
+	int i, len; 
+	u_int io, fn; 
+
+	const u_int port[][2] = { 
+			/* BT565 DATA */
+			//PCLK	
+			{ PAD_GPIO_A + 28, NX_GPIO_PADFUNC_1 },
+			//DATA
+			{ PAD_GPIO_A + 30, NX_GPIO_PADFUNC_1 },
+			{ PAD_GPIO_B +  0, NX_GPIO_PADFUNC_1 },
+			{ PAD_GPIO_B +  2, NX_GPIO_PADFUNC_1 },
+			{ PAD_GPIO_B +  4, NX_GPIO_PADFUNC_1 },
+			{ PAD_GPIO_B +  6, NX_GPIO_PADFUNC_1 },
+			{ PAD_GPIO_B +  8, NX_GPIO_PADFUNC_1 },
+			{ PAD_GPIO_B +  9, NX_GPIO_PADFUNC_1 },
+			{ PAD_GPIO_B + 10, NX_GPIO_PADFUNC_1 },
+	};   
+
+	pad = (u_int *)port;
+	len = sizeof(port)/sizeof(port[0]);
+
+	for (i = 0; i < len; i++) {
+			io = *pad++;
+			fn = *pad++;
+			nxp_soc_gpio_set_io_dir(io, 0); 
+			nxp_soc_gpio_set_io_func(io, fn); 
+	}
+}
+
+static int local_power_enable(bool on)
+{
+	unsigned int nMUX;
+	unsigned int nIN;
+	unsigned int nReset;
+	unsigned int nSCL;
+	unsigned int nSDA;
+
+	if( on )
+	{
+		/* U38 MUX Enable */
+		nMUX	= (PAD_GPIO_A + 3) | PAD_FUNC_ALT0;
+		nxp_soc_gpio_set_out_value(nMUX, 1);
+		nxp_soc_gpio_set_io_dir(nMUX, 1);
+		//nxp_soc_gpio_set_io_func(nMUX, nxp_soc_gpio_get_altnum(nMUX));
+		nxp_soc_gpio_set_io_func(nMUX, NX_GPIO_PADFUNC_0);
+		nxp_soc_gpio_set_out_value(nMUX, 1);
+	
+		/* tw9900 MUX Enable */
+		nIN	= (PAD_GPIO_C + 6) | PAD_FUNC_ALT0;
+		nxp_soc_gpio_set_out_value(nIN, 0);
+		nxp_soc_gpio_set_io_dir(nIN, 1);
+
+		nxp_soc_gpio_set_io_func(nIN, NX_GPIO_PADFUNC_0);
+		mdelay(1);
+		nxp_soc_gpio_set_out_value(nIN, 0);
+
+		/* tw9900 Reset */
+		nReset	= (PAD_GPIO_A + 6) | PAD_FUNC_ALT0;
+		nxp_soc_gpio_set_out_value(nReset, 1);
+		nxp_soc_gpio_set_io_dir(nReset, 1);
+		nxp_soc_gpio_set_io_func(nReset, NX_GPIO_PADFUNC_0);
+		mdelay(1);
+
+		nxp_soc_gpio_set_out_value(nReset, 0);
+		mdelay(10);
+
+		nxp_soc_gpio_set_out_value(nReset, 1);
+		mdelay(100);
+
+		/* I2C Set  */
+		nSCL	= (PAD_GPIO_D + 4) | PAD_FUNC_ALT1;
+		nxp_soc_gpio_set_out_value(nSCL, 1);
+		nxp_soc_gpio_set_io_dir(nSCL, 1);
+
+		nSDA	= (PAD_GPIO_D + 5) | PAD_FUNC_ALT1;
+		nxp_soc_gpio_set_out_value(nSDA, 1);
+		nxp_soc_gpio_set_io_dir(nSDA, 1);
+	}    
+
+	return 0;
+}
+
+
+#define THINE_I2C_RETRY_CNT				10
 static int _i2c_read_byte(struct i2c_client *client, u8 addr, u8 *data)
 {
 	s8 i = 0;
@@ -311,10 +547,53 @@ static irqreturn_t _irq_handler(int irq, void *devdata)
 }
 #endif
 
+
+static void read_register(void)
+{
+	uint8_t addr[] =
+	{
+		0x02,
+    	0x03,
+    	0x07,
+    	0x08,
+    	0x09,
+    	0x0a,
+    	0x0b,
+    	0x1b,
+    	0x10,
+    	0x11,
+    	0x2f,
+    	0x55,
+    	0xaf,
+    	0xb1,
+    	0xb4,
+    	0x52
+	};
+
+	int i=0;
+	uint8_t result;
+    struct tw9900_state *me = &_state;
+
+	for(i=0; i<(sizeof(addr)/sizeof(addr[0])); i++)
+	{
+		_i2c_read_byte(me->i2c_client, addr[i], &result);
+		mdelay(10);
+		printk(KERN_INFO "[%s] ADDR : 0x%02X, VAL : 0x%02X\n", __func__, addr[i], result);
+	}
+}
+
+
 static int tw9900_s_stream(struct v4l2_subdev *sd, int enable)
 {
+		//printk(KERN_INFO "[%s] enable : %d\n", __func__, enable);
+		int i=0;
+		struct tw9900_state *me;
+		struct reg_val *reg_val;
+
     if (enable) {
         if (_state.first) {
+			local_setup_io();
+			local_power_enable( enable );
 #if 0
             /*int ret = request_irq(IRQ_ALIVE_4, _irq_handler, IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING, "tw9900", &_state);*/
             int ret = request_irq(IRQ_GPIO_A_START + 3, _irq_handler, IRQF_TRIGGER_FALLING | IRQF_TRIGGER_RISING, "tw9900", &_state);
@@ -323,14 +602,22 @@ static int tw9900_s_stream(struct v4l2_subdev *sd, int enable)
                 return -1;
             }
 #else
-            struct tw9900_state *me = &_state;
-            struct reg_val *reg_val = _sensor_init_data;
+						i=0;
+            me = &_state;
+            reg_val = _sensor_init_data;
+#if 1
             while (reg_val->reg != 0xff) {
                 _i2c_write_byte(me->i2c_client, reg_val->reg, reg_val->val);
+				mdelay(10);
+				i++;
                 reg_val++;
             }
 #endif
-            _state.first = false;
+#endif
+			//read_register();
+
+			//remark for test by keun  2015.05.22
+            //_state.first = false;
         }
     }
     return 0;
