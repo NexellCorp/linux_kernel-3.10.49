@@ -1761,7 +1761,6 @@ err_group_create:
 #endif /* CONFIG_NXPMAC_MII_SYSFS */
 
 
-
 static int nxpmac_hw_setup(struct net_device *dev, bool init_ptp, int init_fs)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
@@ -1926,16 +1925,6 @@ static int stmmac_open(struct net_device *dev)
 			goto open_error_lpiirq;
 		}
 	}
-
-	ret = stmmac_init_ptp(priv);
-	if (ret)
-		pr_warn("%s: failed PTP initialisation\n", __func__);
-
-#ifdef CONFIG_NXPMAC_DEBUG_FS
-	ret = stmmac_init_fs(dev);
-	if (ret < 0)
-		pr_warn("%s: failed debugFS registration\n", __func__);
-#endif
 
 	priv->eee_enabled = stmmac_eee_init(priv);
 
@@ -2729,60 +2718,48 @@ static const struct file_operations stmmac_dma_cap_fops = {
 
 static int stmmac_init_fs(struct net_device *dev)
 {
-	struct stmmac_priv *priv = netdev_priv(dev);
+	/* Create debugfs entries */
+	stmmac_fs_dir = debugfs_create_dir(NXPMAC_RESOURCE_NAME, NULL);
 
+	if (!stmmac_fs_dir || IS_ERR(stmmac_fs_dir)) {
+		pr_err("ERROR %s, debugfs create directory failed\n",
+		       NXPMAC_RESOURCE_NAME);
 
-	if (priv->dbgfs_initialized)
-		return 0;
-
-	/* Create per netdev entries */
-	priv->dbgfs_dir = debugfs_create_dir(dev->name, stmmac_fs_dir);
-
-	if (!priv->dbgfs_dir || IS_ERR(priv->dbgfs_dir)) {
-		pr_err("ERROR %s/%s, debugfs create directory failed\n",
-		       NXPMAC_RESOURCE_NAME, dev->name);
-
-		priv->dbgfs_initialized = 0;
 		return -ENOMEM;
 	}
 
 	/* Entry to report DMA RX/TX rings */
-	priv->dbgfs_rings_status =
-		debugfs_create_file("descriptors_status", S_IRUGO,
-				    priv->dbgfs_dir, dev,
-				    &stmmac_rings_status_fops);
+	stmmac_rings_status = debugfs_create_file("descriptors_status",
+						  S_IRUGO, stmmac_fs_dir, dev,
+						  &stmmac_rings_status_fops);
 
-	if (!priv->dbgfs_rings_status || IS_ERR(priv->dbgfs_rings_status)) {
+	if (!stmmac_rings_status || IS_ERR(stmmac_rings_status)) {
 		pr_info("ERROR creating stmmac ring debugfs file\n");
-		debugfs_remove_recursive(priv->dbgfs_dir);
+		debugfs_remove(stmmac_fs_dir);
 
-		priv->dbgfs_initialized = 0;
 		return -ENOMEM;
 	}
 
 	/* Entry to report the DMA HW features */
-	priv->dbgfs_dma_cap = debugfs_create_file("dma_cap", S_IRUGO,
-					    priv->dbgfs_dir,
-					    dev, &stmmac_dma_cap_fops);
+	stmmac_dma_cap = debugfs_create_file("dma_cap", S_IRUGO, stmmac_fs_dir,
+					     dev, &stmmac_dma_cap_fops);
 
-	if (!priv->dbgfs_dma_cap || IS_ERR(priv->dbgfs_dma_cap)) {
+	if (!stmmac_dma_cap || IS_ERR(stmmac_dma_cap)) {
 		pr_info("ERROR creating stmmac MMC debugfs file\n");
-		debugfs_remove_recursive(priv->dbgfs_dir);
+		debugfs_remove(stmmac_rings_status);
+		debugfs_remove(stmmac_fs_dir);
 
-		priv->dbgfs_initialized = 0;
 		return -ENOMEM;
 	}
 
-	priv->dbgfs_initialized = 1;
 	return 0;
 }
 
-
 static void stmmac_exit_fs(struct net_device *dev)
 {
-	struct stmmac_priv *priv = netdev_priv(dev);
-
-	debugfs_remove_recursive(priv->dbgfs_dir);
+	debugfs_remove(stmmac_rings_status);
+	debugfs_remove(stmmac_dma_cap);
+	debugfs_remove(stmmac_fs_dir);
 }
 #endif /* CONFIG_NXPMAC_DEBUG_FS */
 
