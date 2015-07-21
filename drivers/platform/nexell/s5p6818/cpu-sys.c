@@ -4,6 +4,7 @@
 #include <linux/types.h>
 #include <linux/clk.h>
 #include <linux/platform_device.h>
+#include <linux/ctype.h>
 
 #include <nexell/platform.h>
 
@@ -73,9 +74,28 @@ static ssize_t sys_id_show(struct device *pdev,
 		return -EINVAL;
 
 	if (!string)
-		s += sprintf(s, "%s\n", name);
+	{
+		if (isprint(name[0]))
+		{
+			s += sprintf(s, "%s\n", name);
+		}
+		else
+		{
+			#define _W			(12)		// width
+			int i;
+			for (i = 0; i < sizeof(name); i++)
+			{
+				s += sprintf(s, "%02x", name[i]);
+				if ((i+1) % _W == 0)
+					s += sprintf(s, " ");
+			}
+			s += sprintf(s, "\n");
+		}
+	}
 	else
+	{
 		s += sprintf(s, "%08x:%08x:%08x:%08x\n", uid[0], uid[1], uid[2], uid[3]);
+	}
 
 	if (s != buf)
 		*(s-1) = '\n';
