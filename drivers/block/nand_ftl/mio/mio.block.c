@@ -22,11 +22,16 @@
 
 #include "media/exchange.h"
 
-/* nexell soc headers */
-#include <nexell/platform.h>
-#include <nexell/soc-s5pxx18.h>
-
-#include <nexell/nxp-ftl-nand.h>
+#if defined (__COMPILE_MODE_X64__)
+    /* nexell soc headers */
+    #include <nexell/platform.h>
+    #include <nexell/soc-s5pxx18.h>
+    #include <nexell/nxp-ftl-nand.h>
+#else
+    #include <mach/platform.h>
+    #include <mach/devices.h>
+    #include <mach/soc.h>
+#endif
 
 
 /******************************************************************************
@@ -48,7 +53,11 @@ static u_int mio_major = 0;
  * Block Device Operation
  ******************************************************************************/
 static int mio_bdev_open(struct block_device * _bdev, fmode_t _mode);
+#if defined (__COMPILE_MODE_X64__)
+static void mio_bdev_close(struct gendisk * _disk, fmode_t _mode);
+#else
 static int mio_bdev_close(struct gendisk * _disk, fmode_t _mode);
+#endif
 static int mio_bdev_ioctl(struct block_device * _bdev, fmode_t _mode, unsigned int _cmd, unsigned long _arg);
 
 static struct block_device_operations mio_bdev_fops =
@@ -65,9 +74,12 @@ static struct block_device_operations mio_bdev_fops =
 DEFINE_SEMAPHORE(mio_mutex);
 
 static struct mio_state io_state;
-static struct mio_device mio_dev;
 
+#if defined (__COMPILE_MODE_X64__)
 struct nxp_ftl_nand nxp_nand;
+#else
+unsigned long nxp_ftl_start_block = CFG_NAND_FTL_START_BLOCK;
+#endif
 
 /******************************************************************************
  *
@@ -84,10 +96,17 @@ static int mio_bdev_open(struct block_device * _bdev, fmode_t _mode)
     return 0;
 }
 
+#if defined (__COMPILE_MODE_X64__)
+static void mio_bdev_close(struct gendisk * disk, fmode_t _mode)
+{
+    return;
+}
+#else
 static int mio_bdev_close(struct gendisk * disk, fmode_t _mode)
 {
     return 0;
 }
+#endif
 
 static int mio_bdev_ioctl(struct block_device * _bdev, fmode_t _mode, unsigned int _cmd, unsigned long _arg)
 {
@@ -1139,7 +1158,7 @@ static int nand_suspend(struct device * dev)
 
         if (tout)
         {
-            lldebugout("nand_suspend : elapsed %d sec, loop %lld times, thread status (tr:%d, bg:%d) \n", tout, lcnt, mio_dev.io_state->transaction.status, mio_dev.io_state->background.status);
+          //lldebugout("nand_suspend : elapsed %d sec, loop %lld times, thread status (tr:%d, bg:%d) \n", tout, lcnt, mio_dev.io_state->transaction.status, mio_dev.io_state->background.status);
             tout = 0;
         }
     }
@@ -1171,11 +1190,12 @@ static int nand_resume(struct device * dev)
  ******************************************************************************/
 static SIMPLE_DEV_PM_OPS(nand_pmops, nand_suspend, nand_resume);
 
+#if defined (__COMPILE_MODE_X64__)
 #ifdef CONFIG_OF
 static int ftl_probe_config_dt(struct platform_device *pdev)
 {
 	struct device_node *np = pdev->dev.of_node;
-	struct device *dev = &pdev->dev;
+	//struct device *dev = &pdev->dev;
 
 	if (!np)
 		return -ENODEV;
@@ -1246,7 +1266,9 @@ static const struct of_device_id nand_dt_ids[] = {
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, nand_dt_ids);
+#endif
 
+#if defined (__COMPILE_MODE_X64__)
 static struct platform_driver nand_driver =
 {
 	.probe = ftl_pltfr_probe,
@@ -1258,6 +1280,16 @@ static struct platform_driver nand_driver =
 		.of_match_table = of_match_ptr(nand_dt_ids),
     },
 };
+#else
+static struct platform_driver nand_driver =
+{
+    .driver = {
+        .name  = DEV_NAME_NAND,
+        .pm    = &nand_pmops,
+        .owner = THIS_MODULE,
+    },
+};
+#endif
 
 /******************************************************************************
  *
@@ -1267,9 +1299,14 @@ static int __init nand_init(void)
     memset((void *)&Exchange, 0, sizeof(EXCHANGES));
 
     platform_driver_register(&nand_driver);
+#if defined (__COMPILE_MODE_X64__)
 	// move to .probe
     //miosys_init();
     //mio_init();
+#else
+    miosys_init();
+    mio_init();
+#endif
 
     return 0;
 }

@@ -186,3 +186,5 @@ struct mio_device
     struct mio_state * io_state;
 };
 
+MIO_BLOCK_EXT struct mio_device mio_dev;
+

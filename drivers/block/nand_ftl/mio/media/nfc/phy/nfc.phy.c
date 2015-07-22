@@ -50,11 +50,16 @@
 #include <asm/traps.h>
 //#include <asm/unwind.h>
 
-/* nexell soc headers */
-#include <nexell/platform.h>
-#include <nexell/soc-s5pxx18.h>
-
-#include <nexell/nxp-ftl-nand.h>
+#if defined (__COMPILE_MODE_X64__)
+    /* nexell soc headers */
+    #include <nexell/platform.h>
+    #include <nexell/soc-s5pxx18.h>
+    #include <nexell/nxp-ftl-nand.h>
+#else
+    #include <mach/platform.h>
+    #include <mach/devices.h>
+    #include <mach/soc.h>
+#endif
 
 #elif defined (__BUILD_MODE_ARM_UBOOT_DEVICE_DRIVER__)
 #include <common.h>
@@ -85,9 +90,6 @@ void __nfc_readsb(const void __iomem *addr, void *data, int bytelen);
 void __nfc_readsl(const void __iomem *addr, void *data, int longlen);
 
 #endif
-
-
-
 
 /******************************************************************************
  * Optimize Option
@@ -698,7 +700,7 @@ unsigned int NFC_PHY_EccCorrection(char         * _error_at,
                 int data_idx=0;
                 unsigned int *data = (unsigned int *)read_buffer;
 
-                Exchange.sys.fn.print("uncorrected data: row:%d col:%d", row, col);
+                Exchange.sys.fn.print("%s uncorrected data: row:%d col:%d", _error_at, row, col);
                 for (data_idx=0; data_idx < (bytes_per_ecc/sizeof(unsigned int)); data_idx++)
                 {
                     if (!(data_idx % 16))
@@ -711,6 +713,17 @@ unsigned int NFC_PHY_EccCorrection(char         * _error_at,
                 }
                 Exchange.sys.fn.print("\n");
             }
+            
+          //{
+          //    int i = 0;
+          //    char *parity = parity_buffer;
+          //    Exchange.sys.fn.print("ParityBuff:0x%016lx", (unsigned long)parity);
+          //    for (i=0; i < bytes_per_parity; i++)
+          //    {
+          //        Exchange.sys.fn.print(" %02x", parity[i]);
+          //    }
+          //    Exchange.sys.fn.print("\n");
+          //}
 #endif
 
         }
@@ -981,9 +994,15 @@ unsigned int NFC_PHY_Init(unsigned int _scan_format)
 
 #if defined (__BUILD_MODE_ARM_LINUX_DEVICE_DRIVER__)
     nfcI = (MCUS_I *)IO_ADDRESS(PHY_BASEADDR_MCUSTOP_MODULE);
+#if defined (__COMPILE_MODE_X64__)
     nfcShadowI = (NFC_SHADOW_I *)nxp_nand.io_intf;
     nfcShadowI16 = (NFC_SHADOW_I16 *)nxp_nand.io_intf;
     nfcShadowI32 = (NFC_SHADOW_I32 *)nxp_nand.io_intf;
+#else
+    nfcShadowI = (NFC_SHADOW_I *)__PB_IO_MAP_NAND_VIRT;
+    nfcShadowI16 = (NFC_SHADOW_I16 *)__PB_IO_MAP_NAND_VIRT;
+    nfcShadowI32 = (NFC_SHADOW_I32 *)__PB_IO_MAP_NAND_VIRT;
+#endif
 #elif defined (__BUILD_MODE_ARM_UBOOT_DEVICE_DRIVER__)
     nfcI = (MCUS_I *)IO_ADDRESS(PHY_BASEADDR_MCUSTOP_MODULE);
     nfcShadowI = (NFC_SHADOW_I *)CONFIG_SYS_NAND_BASE;
@@ -3302,12 +3321,12 @@ int NFC_PHY_2ndReadData(unsigned int _stage,
 
                         if (Exchange.nfc.fnBoostOn) { Exchange.nfc.fnBoostOn(); }
 						{
-							int rlen = bytes_per_data_ecc;
 #ifdef _IOR_BURST
 							ior_burst(data, (void __iomem *)&nfcShadowI->nfdata, bytes_per_data_ecc);
 							data += bytes_per_data_ecc;
 #else
 #if (IOR_WIDTH == IO_WIDTH_X32)
+							int rlen = bytes_per_data_ecc;
 #if 0	/* working code */
                             for (read_loop = 0; read_loop < rlen/16; read_loop++)
                             {
