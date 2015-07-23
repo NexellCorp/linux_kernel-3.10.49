@@ -73,33 +73,25 @@ static ssize_t sys_id_show(struct device *pdev,
 	else
 		return -EINVAL;
 
-	if (!string)
-	{
-		if (isprint(name[0]))
-		{
+	if (!string) {
+		if (isprint(name[0])) {
 			s += sprintf(s, "%s\n", name);
-		}
-		else
-		{
-			#define _W			(12)		// width
+		} else {
+			#define _W	(12)		// width
 			int i;
-			for (i = 0; i < sizeof(name); i++)
-			{
+			for (i = 0; i < sizeof(name); i++) {
 				s += sprintf(s, "%02x", name[i]);
 				if ((i+1) % _W == 0)
 					s += sprintf(s, " ");
 			}
 			s += sprintf(s, "\n");
 		}
-	}
-	else
-	{
+	} else {
 		s += sprintf(s, "%08x:%08x:%08x:%08x\n", uid[0], uid[1], uid[2], uid[3]);
 	}
 
 	if (s != buf)
 		*(s-1) = '\n';
-
 
 	return (s - buf);
 }
