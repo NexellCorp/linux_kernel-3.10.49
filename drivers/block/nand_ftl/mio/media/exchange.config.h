@@ -88,6 +88,14 @@
     #define __COMPILE_MODE_ELAPSE_T__
   //#define __COMPILE_MODE_READONLY__
 
+  //#define __MIO_UNIT_TEST_RANDOMIZER__
+  //#define __MIO_UNIT_TEST_THREAD__
+  //#define __MIO_UNIT_TEST_SLEEP__
+
+	#ifndef CONFIG_LOCAL_TIMERS
+    #define __USING_DELAY_FOR_SHORT_SLEEP__
+	#endif
+
 #elif defined (__SUPPORT_MIO_UBOOT__)
 
   //#define __BUILD_MODE_X86_WINDOWS_SIMULATOR__

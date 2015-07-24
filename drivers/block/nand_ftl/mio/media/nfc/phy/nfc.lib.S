@@ -41,14 +41,7 @@ ENTRY(__nfc_readsl)
 		subs	r2, r2, #4
 		bmi	2f
 		stmfd	sp!, {r4, lr}
-#if 1
 1:		ldmia	r0, {r3, r4, ip, lr}
-#else
-1:		ldr	r3, [r0, #0]
-		ldr	r4, [r0, #0]
-		ldr	ip, [r0, #0]
-		ldr	lr, [r0, #0]
-#endif
 		subs	r2, r2, #4
 		stmia	r1!, {r3, r4, ip, lr}
 		bpl	1b
@@ -117,14 +110,7 @@ ENTRY(__nfc_writesl)
 		stmfd	sp!, {r4, lr}
 1:		ldmia	r1!, {r3, r4, ip, lr}
 		subs	r2, r2, #4
-#if 1
 		stmia	r0, {r3, r4, ip, lr}
-#else
-		str	r3, [r0, #0]
-		str	r4, [r0, #0]
-		str	ip, [r0, #0]
-		str	lr, [r0, #0]
-#endif
 		bpl	1b
 		ldmfd	sp!, {r4, lr}
 2:		movs	r2, r2, lsl #31
