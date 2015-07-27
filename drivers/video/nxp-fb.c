@@ -329,7 +329,7 @@ static unsigned nxp_fb_dev_get_addr(struct nxp_fb_param *par)
 static void nxp_fb_copy_boot_logo(struct nxp_fb_param *par, int size)
 {
 	unsigned base = par->fb_dev.fb_phy_base;
-	unsigned dest = (unsigned)par->fb_dev.fb_vir_base;
+	void *dest = (void *)par->fb_dev.fb_vir_base;
 	unsigned phys = 0;
 	void *virt = NULL;
 	struct page *page;
@@ -349,9 +349,8 @@ static void nxp_fb_copy_boot_logo(struct nxp_fb_param *par, int size)
 			virt = fb_copy_map(page, phys, size);
 
 		if (virt) {
-			memcpy((void*)dest, (const void*)virt, size);
-			dmac_map_area((void*)dest, size, DMA_TO_DEVICE);	/* L1 flush cache */
-			outer_clean_range(base, base + size);				/* L2 flush cache */
+			memcpy(dest, (const void*)virt, size);
+			__dma_map_area(dest, size, DMA_TO_DEVICE);	/* L1 flush cache */
 
 			fb_copy_unmap(page, virt);
 			if (new)
@@ -360,7 +359,7 @@ static void nxp_fb_copy_boot_logo(struct nxp_fb_param *par, int size)
 	}
 
  	if (phys && 0 == virt) {
-		printk("%s Fail boot logo copy from 0x%08x to 0x%08x (0x%08x)\n",
+		printk("%s Fail boot logo copy from 0x%08x to 0x%08x (%p)\n",
 			__func__, phys, base, dest);
 		__memblock_dump_all();
 	}
