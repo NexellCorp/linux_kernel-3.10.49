@@ -238,7 +238,7 @@
 				ver_back_porch	= <20>;
 				ver_front_porch	= <12>;
 				ver_sync_invert	= <1>;
-				pixel_clock_hz	= <(800000000/12)>;	/* PLL/div */
+				pixel_clock_hz	= <(800000000/16)>;	/* PLL/div */
 			};
 			clock {
 				clock,src_div0  = <2>;
