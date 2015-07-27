@@ -32,7 +32,8 @@ obj-y += \
 		prototype/module/nx_gpio.o		\
 		prototype/module/nx_alive.o		\
 		prototype/module/nx_clkgen.o		\
-		prototype/module/nx_ecid.o	
+		prototype/module/nx_ecid.o		\
+		prototype/module/nx_rtc.o
 
 obj-$(CONFIG_NXP_DISPLAY)				+= 	prototype/module/nx_displaytop.o		\
 								   			prototype/module/nx_disptop_clkgen.o	\
