@@ -49,7 +49,7 @@
 #define __SUPPORT_X64_OS__
 #endif
 
-#if 1
+#if defined(CONFIG_ARM64)
     #define __SUPPORT_X64_OS__
 #endif
 

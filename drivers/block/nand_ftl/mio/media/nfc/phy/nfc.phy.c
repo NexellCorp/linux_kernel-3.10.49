@@ -74,9 +74,41 @@
 
 
 /******************************************************************************
+ *
+ * NFC IO Width
+ *
+ ******************************************************************************/
+#define IO_BURST_X4		(0x4)
+#define IO_BURST_X1		(0x2)
+#define IO_BURST_X0		(0x1)
+
+#if defined(CONFIG_ARM64)			/* FIXME: u-boot cannot recognize__COMPILE_MODE_X64__ */
+#define IOR_WIDTH		IO_BURST_X4
+#define IOW_WIDTH		IO_BURST_X0
+#else
+#define IOR_WIDTH		IO_BURST_X4
+#define IOW_WIDTH		IO_BURST_X0
+#endif
+
+
+
+/******************************************************************************
  * IO Read/Write Burst
  ******************************************************************************/
-#ifdef IO_BURST_X4
+#ifdef CONFIG_ARM64
+void __nfc_read_burst(const void __iomem *addr, void *data, int len);
+void __nfc_write_burst(const void __iomem *addr, void *data, int len);
+
+static void ior_burst(char *data, void __iomem *nfdata, int len)
+{
+	__nfc_read_burst(nfdata, data, len);
+}
+
+static void iow_burst(char *data, void __iomem *nfdata, int len)
+{
+	__nfc_write_burst(nfdata, data, len);
+}
+#else
 void __nfc_readsb(const void __iomem *addr, void *data, int bytelen);
 void __nfc_readsl(const void __iomem *addr, void *data, int longlen);
 void __nfc_writesb(void __iomem *addr, const void *data, int bytelen);
@@ -99,7 +131,7 @@ static void iow_burst(char *data, void __iomem *nfdata, int len)
 	__nfc_writesl(nfdata, data, burst_len/4);
 	__nfc_writesb(nfdata, data + burst_len, len-burst_len);
 }
-#endif	/* IO_BURST_X4 */
+#endif
 
 static char *nfc_io_read(char *data, void __iomem *nfdata, int len)
 {
