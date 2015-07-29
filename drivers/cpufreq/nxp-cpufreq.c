@@ -247,6 +247,7 @@ static unsigned long nxp_cpufreq_change_frequency(struct cpufreq_dvfs_info *dvfs
 {
 	struct clk *clk = dvfs->clk;
 	unsigned long rate_khz = 0;
+	struct cpufreq_policy policy;
 
 	nxp_cpufreq_set_freq_point(dvfs, freqs->new);
 
@@ -256,6 +257,11 @@ static unsigned long nxp_cpufreq_change_frequency(struct cpufreq_dvfs_info *dvfs
 	/* pre voltage */
 	if (freqs->new >= freqs->old)
 		nxp_cpufreq_change_voltage(dvfs, freqs->new, margin);
+
+	if (NULL == dvfs->policy) {
+		cpumask_copy(policy.cpus, cpu_online_mask);
+		dvfs->policy = &policy;
+	}
 
 #ifdef CONFIG_LOCAL_TIMERS
 	for_each_cpu(freqs->cpu, dvfs->cpus)
@@ -310,7 +316,6 @@ static int nxp_cpufreq_pm_notify(struct notifier_block *this,
 			printk("DVFS: max freq %ldkhz less than boot %ldkz..\n",
 				max_freq, dvfs->boot_frequency);
 		}
-
 		freqs.old = clk_get_rate(clk)/1000;
 
 		dvfs->target_freq = freqs.new;
