@@ -23,7 +23,6 @@
  *
  * BJD, 04-Nov-2004
 */
-
 #if defined(CONFIG_SERIAL_NXP_S3C_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
 #define SUPPORT_SYSRQ
 #endif
@@ -58,7 +57,7 @@
 #include <nexell/platform.h>
 #include <nexell/soc-s5pxx18.h>
 
-#if 0 
+#if 0
 #define dbg(x...)		printk(x)
 #define dev_info(fmg,msg...) printk(msg)
 #else
@@ -475,7 +474,7 @@ static inline void s3c24xx_dma_tx_stop(struct s3c24xx_uart_port *uport)
 static inline bool s3c24xx_dma_tx_start(struct s3c24xx_uart_port *uport)
 {
 	struct uart_port *port = &uport->port;
-	struct s3c24xx_uart_drv_data *data = uport->data;
+
 	if (!uport->using_tx_dma)
 		return false;
 
@@ -983,6 +982,7 @@ static void s3c24xx_serial_rx_disable(struct uart_port *port)
 static void s3c24xx_serial_stop_tx(struct uart_port *port)
 {
 	struct s3c24xx_uart_port *uport = to_uport(port);
+
 #ifdef CONFIG_DMA_UART_ENGINE
 	struct s3c24xx_uart_drv_data *data = s3c24xx_port_to_data(port);
 	unsigned int ucon;
@@ -1387,14 +1387,17 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 	uport->pm_level = level;
 
 	switch (level) {
-	case 3:
+	case 3:	/* UART_PM_STATE_OFF */
+		#if defined (CONFIG_PM) && defined (CONFIG_EARLY_PRINTK)
+		break;	/* for suspend debug */
+		#endif
 		if (!IS_ERR(uport->baudclk))
 			clk_disable_unprepare(uport->baudclk);
 
 		clk_disable_unprepare(uport->clk);
 		break;
 
-	case 0:
+	case 0:	/* UART_PM_STATE_ON */
 		clk_prepare_enable(uport->clk);
 
 		if (!IS_ERR(uport->baudclk))
@@ -1956,19 +1959,18 @@ static struct s3c24xx_serial_drv_data *s3c24xx_get_driver_data(struct platform_d
 		ud->reset_id = reset;
 
 	if (!of_property_read_u32(pdev->dev.of_node, "dma-enable", &dma)) {
-		ud->enable_dma = dma;	
+		ud->enable_dma = dma;
 		ud->dma_filter =  &pl08x_filter_id;
-		switch(ud->hwport)
-		{	
+		switch(ud->hwport) {
 			case 0 :
 				ud->dma_rx_param = (void *)PL08X_DMA_NAME_UART0_RX;
 				ud->dma_tx_param = (void *)PL08X_DMA_NAME_UART0_TX;
 				break;
-			case 1 :	
+			case 1 :
 				ud->dma_rx_param = (void *)PL08X_DMA_NAME_UART1_RX;
 				ud->dma_tx_param = (void *)PL08X_DMA_NAME_UART1_TX;
 				break;
-			case 2 : 
+			case 2 :
 				ud->dma_rx_param = (void *)PL08X_DMA_NAME_UART2_RX;
 				ud->dma_tx_param = (void *)PL08X_DMA_NAME_UART2_TX;
 				break;
@@ -2014,7 +2016,7 @@ static int s3c24xx_serial_probe(struct platform_device *pdev)
 	uport->info = uport->drv_data->info;
 	uport->data = (pdev->dev.platform_data) ?
 			(struct s3c24xx_uart_drv_data *)pdev->dev.platform_data : udata;
-	uport->drv_data->def_data;
+
 	uport->port.line = port_index;
 	uport->port.iotype = UPIO_MEM;
 	uport->port.uartclk	= 0;
