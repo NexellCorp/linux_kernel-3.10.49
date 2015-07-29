@@ -34,9 +34,9 @@ static const struct cpu_operations *supported_cpu_ops[] __initconst = {
 #ifdef CONFIG_SMP
 	&smp_spin_table_ops,
 	&cpu_psci_ops,
+#endif
 #ifdef CONFIG_PLAT_SLSIAP
 	&cpu_nxp_ops,
-#endif
 #endif
 	NULL,
 };
