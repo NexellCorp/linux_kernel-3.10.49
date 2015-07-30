@@ -408,23 +408,23 @@ static struct regulator_ops nxe2000_ops = {
 *  DCDC5 = 400us/1.5V
 */
 static struct nxe2000_regulator nxe2000_regulators[] = {
-	NXE2000_REG(dcdc1, DC1, 0x2C, 0, 0x2C, 1, 0x36, 0xFF, 0x3B, 0x16, 
-			600, 3500, 12500, 0xE8, nxe2000_dcdc1_ops, 2, 300, 
+	NXE2000_REG(dcdc1, DC1, 0x2C, 0, 0x2C, 1, 0x36, 0xFF, 0x3B, 0x16,
+			600, 3500, 12500, 0xE8, nxe2000_dcdc1_ops, 2, 300,
 			0x00, 0, 0x00, 0),
 
-	NXE2000_REG(dcdc2, DC2, 0x2E, 0, 0x2E, 1, 0x37, 0xFF, 0x3C, 0x17, 
-			600, 3500, 12500, 0xE8, nxe2000_ops, 2, 300, 
+	NXE2000_REG(dcdc2, DC2, 0x2E, 0, 0x2E, 1, 0x37, 0xFF, 0x3C, 0x17,
+			600, 3500, 12500, 0xE8, nxe2000_ops, 2, 300,
 			0x00, 0, 0x00, 0),
 
-	NXE2000_REG(dcdc3, DC3, 0x30, 0, 0x30, 1, 0x38, 0xFF, 0x3D, 0x18, 
-			600, 3500, 12500, 0xE8, nxe2000_ops, 2, 700, 
+	NXE2000_REG(dcdc3, DC3, 0x30, 0, 0x30, 1, 0x38, 0xFF, 0x3D, 0x18,
+			600, 3500, 12500, 0xE8, nxe2000_ops, 2, 700,
 			0x00, 0, 0x00, 0),
 
-	NXE2000_REG(dcdc4, DC4, 0x32, 0, 0x32, 1, 0x39, 0xFF, 0x3E, 0x19, 
-			600, 3500, 12500, 0xE8, nxe2000_ops, 2, 400, 
+	NXE2000_REG(dcdc4, DC4, 0x32, 0, 0x32, 1, 0x39, 0xFF, 0x3E, 0x19,
+			600, 3500, 12500, 0xE8, nxe2000_ops, 2, 400,
 			0x00, 0, 0x00, 0),
 
-	NXE2000_REG(dcdc5, DC5, 0x34, 0, 0x34, 1, 0x3A, 0xFF, 0x3F, 0x1A, 
+	NXE2000_REG(dcdc5, DC5, 0x34, 0, 0x34, 1, 0x3A, 0xFF, 0x3F, 0x1A,
 			600, 3500, 12500, 0xE8, nxe2000_ops, 2, 400,
 			0x00, 0, 0x00, 0),
 
@@ -610,7 +610,7 @@ static int nxe2000_regulator_dt_parse_pdata(struct platform_device *pdev,
 
 	pdata->regulators = rdata;
 
-	for_each_child_of_node(regulators_np, reg_np) 
+	for_each_child_of_node(regulators_np, reg_np)
 	{
 		for (i = 0; i < ARRAY_SIZE(nxe2000_regulators); i++)
 			if (!of_node_cmp(reg_np->name, nxe2000_regulators[i].name))
@@ -655,6 +655,11 @@ static int nxe2000_regulator_dt_parse_pdata(struct platform_device *pdev,
 			rdata->init_uV 	= (int)val;
 		else
 			dev_err(&pdev->dev, "%s() \e[31mError\e[0m : init_uV \n", __func__);
+
+		if(!of_property_read_u32(reg_np, "nx,sleep_slots", &val))
+			rdata->sleep_slots 	= (int)val;
+		else
+			dev_err(&pdev->dev, "%s() \e[31mError\e[0m : sleep_slots \n", __func__);
 
 		rdata++;
 	}
