@@ -111,14 +111,18 @@ static const struct earlycon_match earlycon_match[] __initconst = {
 	{}
 };
 
+static DEFINE_SPINLOCK(early_printk_lock);
 static void early_write(struct console *con, const char *s, unsigned n)
 {
+	u_long flags;
+	spin_lock_irqsave(&early_printk_lock, flags);
 	while (n-- > 0) {
 		if (*s == '\n')
 			printch('\r');
 		printch(*s);
 		s++;
 	}
+	spin_unlock_irqrestore(&early_printk_lock, flags);
 }
 
 static struct console early_console_dev = {

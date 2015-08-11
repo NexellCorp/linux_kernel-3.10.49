@@ -55,6 +55,7 @@
 		};
 
 		#include "s5p6818-asb-pin.dtsi"
+		#include "s5p6818-asb-pm.dtsi"
 
    		dynamic-freq@bb000 {
    			supply_name  = "vdd_arm";
@@ -443,7 +444,7 @@
 
 				port            = <0>;
 				external_sync   = <0>;
-												
+
 				h_active        = <704>;
 				h_frontporch    = <7>;
 				h_syncwidth     = <1>;

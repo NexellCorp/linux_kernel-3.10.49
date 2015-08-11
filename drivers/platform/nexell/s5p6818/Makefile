@@ -4,11 +4,13 @@
 #
 
 obj-y += cpu_init_early.o cpu-sys.o
+obj-$(CONFIG_DEVTMPFS) += mount_devtmpfs.o
 
 ifeq ($(CONFIG_ARM64),y)
 obj-y += setup_64.o
-obj-$(CONFIG_SMP) += platsmp_64.o headsmp_64.o
-obj-$(CONFIG_SMP) += sched_clock_64.o
+obj-y += platsmp_64.o
+obj-$(CONFIG_SMP) += headsmp_64.o sched_clock_64.o
+obj-$(CONFIG_SUSPEND) += pm_64.o
 endif
 
 PROTO_MODULE := drivers/platform/nexell/s5p6818/prototype/module
@@ -27,3 +29,4 @@ include  $(srctree)/drivers/platform/nexell/s5p6818/prototype.mk
 # Board Type
 #===============================================================================
 obj-$(CONFIG_ARCH_S5P6818_SVT) += svt/
+

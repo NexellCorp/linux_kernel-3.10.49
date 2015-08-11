@@ -70,8 +70,8 @@ struct timer_info {
 	unsigned long rate;
 	int tmux;
 	int prescale;
-	unsigned long tcount;
-	unsigned long rcount;
+	unsigned int tcount;
+	unsigned int rcount;
 };
 
 struct timer_of_dev {
@@ -87,9 +87,19 @@ static struct timer_of_dev *timer_dev = NULL;
 
 static inline void timer_periph_reset(int id)
 {
+	volatile int loop = 10000 * 10;
+
 	if (-1 == id || nxp_soc_peri_reset_status(id))
 		return;
-	nxp_soc_peri_reset_set(id);
+	nxp_soc_peri_reset_enter(id);
+
+	/*
+	 * wait with loop delay,
+	 * timer is not ready for delay functions in soc reset set
+	 */
+	while (loop-- > 0) { }
+
+	nxp_soc_peri_reset_exit(id);
 }
 
 static inline void timer_clock(void __iomem *base, int ch, int mux, int scl)
@@ -223,6 +233,9 @@ static void timer_source_resume(struct clocksource *cs)
 	int ch = info->channel;
 	ulong flags;
 
+	pr_debug("%s (ch:%d, mux:%d, scale:%d cnt:0x%x,0x%x)\n",
+		__func__, ch, info->tmux, info->prescale, info->rcount, info->tcount);
+
 	local_irq_save(flags);
 
 	if (info->clk) {
@@ -266,9 +279,11 @@ static int __init timer_source_of_init(struct device_node *node)
 	int ch = info->channel;
 
 	info->request = CLK_SOURCE_HZ;
-	info->tcount = -1UL;
 
 	timer_clock_select(dev, info);
+
+	/* reset tcount */
+	info->tcount = 0xFFFFFFFF;
 
 	clocksource_register_hz(cs, info->rate);
 
@@ -287,17 +302,22 @@ static int __init timer_source_of_init(struct device_node *node)
 /*
  * Timer clock event
  */
-static inline void timer_event_resume(struct timer_of_dev *dev)
+static inline void timer_event_resume(struct clock_event_device *evt)
 {
+	struct timer_of_dev *dev = get_timer_dev();
 	struct timer_info *info = &dev->timer_event;
 	void __iomem *base = dev->base;
 	int ch = info->channel;
+
+	pr_debug("%s (ch:%d, mux:%d, scale:%d)\n",
+		__func__, ch, info->tmux, info->prescale);
 
 	if (info->clk) {
 		clk_set_rate(info->clk, info->rate);
 		clk_prepare_enable(info->clk);
 	}
 
+	timer_periph_reset(dev->reset_id);
 	timer_stop (base, ch, 1);
 	timer_clock(base, ch, info->tmux, info->prescale);
 }
@@ -323,7 +343,8 @@ static void timer_event_set_mode(enum clock_event_mode mode,
 		break;
 
 	case CLOCK_EVT_MODE_RESUME:		// 0x4
-		timer_event_resume(dev);
+		// timer_event_resume(evt);
+		break;
 	case CLOCK_EVT_MODE_PERIODIC:	// 0x2
 		timer_stop (base, ch, 0);
 		timer_count(base, ch, cnt);
@@ -359,6 +380,7 @@ static struct clock_event_device timer_clock_event = {
 	.features       = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT,
 	.set_mode		= timer_event_set_mode,
 	.set_next_event	= timer_event_set_next,
+	.resume			= timer_event_resume,
 	.rating			= 250,
 };
 

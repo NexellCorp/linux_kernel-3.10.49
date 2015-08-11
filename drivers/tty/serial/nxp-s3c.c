@@ -41,6 +41,7 @@
 #include <linux/serial.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
+#include <linux/clk-private.h>
 #include <linux/cpufreq.h>
 #include <linux/of.h>
 #include <linux/of_dma.h>
@@ -1367,12 +1368,12 @@ static int s3c24xx_serial_startup(struct uart_port *port)
 	/* Enable Rx Interrupt */
 	__clear_bit(S3C64XX_UINTM_RXD, portaddrl(port, S3C64XX_UINTM));
 
-
 	if (data->enable_dma) {
 		count = uart_circ_chars_pending(xmit);
 		if (count > 4)
 			s3c24xx_dma_startup(uport);
 	}
+
 	dbg("s3c24xx_serial_startup ok\n");
 	return ret;
 }
@@ -1385,28 +1386,7 @@ static void s3c24xx_serial_pm(struct uart_port *port, unsigned int level,
 	struct s3c24xx_uart_port *uport = to_uport(port);
 
 	uport->pm_level = level;
-
-	switch (level) {
-	case 3:	/* UART_PM_STATE_OFF */
-		#if defined (CONFIG_PM) && defined (CONFIG_EARLY_PRINTK)
-		break;	/* for suspend debug */
-		#endif
-		if (!IS_ERR(uport->baudclk))
-			clk_disable_unprepare(uport->baudclk);
-
-		clk_disable_unprepare(uport->clk);
-		break;
-
-	case 0:	/* UART_PM_STATE_ON */
-		clk_prepare_enable(uport->clk);
-
-		if (!IS_ERR(uport->baudclk))
-			clk_prepare_enable(uport->baudclk);
-
-		break;
-	default:
-		printk(KERN_ERR "s3c24xx_serial: unknown pm %d\n", level);
-	}
+	return;
 }
 
 /* baud rate calculation
@@ -1918,8 +1898,6 @@ static void s3c24xx_serial_drv_init(void *data, int port)
 	nxp_soc_peri_reset_set(drv_data->reset_id);
 }
 
-//#define DMA_PERIPHERAL_NAME_UART1_TX            "uart1_tx"          // ID: 2, UART0_MODULE
-//#define DMA_PERIPHERAL_NAME_UART1_RX            "uart1_rx"          // ID: 3, UART0_MODULE
 static u64 uart_dmamask = DMA_BIT_MASK(32);
 static struct s3c24xx_serial_drv_data *s3c24xx_get_driver_data(struct platform_device *pdev,
 					struct s3c24xx_uart_drv_data **udata, int *port_index)
@@ -2082,10 +2060,18 @@ static void s3c24xx_resume_work(struct work_struct *work)
 	struct uart_port *port = &uport->port;
 
 	if (uart_console(port)) {
+		#if defined (CONFIG_EARLY_PRINTK)
+		/* decrease clock count for clk enable */
+		if (__clk_is_enabled(uport->clk))
+			clk_disable_unprepare(uport->clk);
+		#endif
+
 		clk_prepare_enable(uport->clk);
 		wr_regl(port, S3C64XX_UINTM, s3c24xx_serial_mask_save[port->line]);
 		s3c24xx_serial_resetport(port, s3c24xx_port_to_data(port));
+		#if !defined (CONFIG_EARLY_PRINTK)
 		clk_disable_unprepare(uport->clk);
+		#endif
 
 		uart_resume_port(&s3c24xx_uart_drv, port);
 		wake_unlock(&uport->resume_lock);
@@ -2114,7 +2100,7 @@ static int s3c24xx_serial_resume(struct device *dev)
 		udata->init(udata, udata->hwport);
 
 	if (port) {
-#if defined (CONFIG_PM) && defined (CONFIG_SERIAL_NXP_RESUME_WORK)
+		#if defined (CONFIG_PM) && defined (CONFIG_SERIAL_NXP_RESUME_WORK)
 		/*
 		 * disable console duration delay time
 	 	 * to save wakeup time
@@ -2122,11 +2108,21 @@ static int s3c24xx_serial_resume(struct device *dev)
 		wake_lock(&uport->resume_lock);
 		schedule_delayed_work(&uport->resume_work, msecs_to_jiffies(UART_RESUME_WORK_DELAY));
 		return 0;
-#endif
+		#endif
+
+		#if defined (CONFIG_EARLY_PRINTK)
+		/* decrease clock count for clk enable */
+		if (__clk_is_enabled(uport->clk))
+			clk_disable_unprepare(uport->clk);
+		#endif
+
 		clk_prepare_enable(uport->clk);
 		wr_regl(port, S3C64XX_UINTM, s3c24xx_serial_mask_save[port->line]);
 		s3c24xx_serial_resetport(port, s3c24xx_port_to_data(port));
+
+		#if !defined (CONFIG_EARLY_PRINTK)
 		clk_disable_unprepare(uport->clk);
+		#endif
 
 		uart_resume_port(&s3c24xx_uart_drv, port);
 	}

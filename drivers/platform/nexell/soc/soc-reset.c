@@ -28,26 +28,36 @@
 #include <nexell/platform.h>
 #include <nexell/soc-s5pxx18.h>
 
-static DEFINE_SPINLOCK(lock);
+/*
+#define	pr_debug	printk
+*/
 
 #ifdef CONFIG_ARM64
 #undef IO_ADDRESS
-
-static void __iomem* reset_base = NULL;
+static void __iomem* io_reset_addr = NULL;
 static inline void __iomem* IO_ADDRESS(unsigned long base)
 {
-	if (!reset_base)
-		reset_base = ioremap(base, PAGE_SIZE);
-	return reset_base;
+	if (NULL == io_reset_addr)
+		io_reset_addr = ioremap(base, PAGE_SIZE);
+	return io_reset_addr;
 }
+#endif
+
+static DEFINE_SPINLOCK(lock);
+#if 1
+#define	DEALY(s)	mdelay(s)
+#else
+#define	DEALY(s)	{ volatile int loop = 10000 * 10;	while (loop-- > 0) { }	}
 #endif
 
 void nxp_soc_peri_reset_enter(int id)
 {
+	unsigned long base = NX_RSTCON_GetPhysicalAddress();
+	void *addr = (void*)IO_ADDRESS(base);
 	unsigned long flags;
 	U32 RSTIndex = id;
 
-	pr_debug("%s: id=%d\n", __func__, id);
+	pr_debug("%s: id=%d [0x%p:0x%lx]\n", __func__, id, addr, base);
 	RET_ASSERT(RESET_ID_VIP0 >= RSTIndex);
 
 	if (RESET_ID_CPU1   == RSTIndex ||
@@ -62,7 +72,7 @@ void nxp_soc_peri_reset_enter(int id)
 
 	spin_lock_irqsave(&lock, flags);
 
-	NX_RSTCON_SetBaseAddress((void*)IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_RSTCON_SetBaseAddress(addr);
 	NX_RSTCON_SetRST(RSTIndex, RSTCON_ASSERT);
 
 	spin_unlock_irqrestore(&lock, flags);
@@ -71,10 +81,12 @@ EXPORT_SYMBOL_GPL(nxp_soc_peri_reset_enter);
 
 void nxp_soc_peri_reset_exit(int id)
 {
+	unsigned long base = NX_RSTCON_GetPhysicalAddress();
+	void *addr = (void*)IO_ADDRESS(base);
 	unsigned long flags;
 	U32 RSTIndex = id;
 
-	pr_debug("%s: id=%d\n", __func__, id);
+	pr_debug("%s: id=%d [0x%p:0x%lx]\n", __func__, id, addr, base);
 	RET_ASSERT(RESET_ID_VIP0 >= RSTIndex);
 
 	if (RESET_ID_CPU1   == RSTIndex ||
@@ -89,7 +101,7 @@ void nxp_soc_peri_reset_exit(int id)
 
 	spin_lock_irqsave(&lock, flags);
 
-	NX_RSTCON_SetBaseAddress((void*)IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_RSTCON_SetBaseAddress(addr);
 	NX_RSTCON_SetRST(RSTIndex, RSTCON_NEGATE);
 
 	spin_unlock_irqrestore(&lock, flags);
@@ -98,10 +110,12 @@ EXPORT_SYMBOL_GPL(nxp_soc_peri_reset_exit);
 
 void nxp_soc_peri_reset_set(int id)
 {
+	unsigned long base = NX_RSTCON_GetPhysicalAddress();
+	void *addr = (void*)IO_ADDRESS(base);
 	unsigned long flags;
 	U32 RSTIndex = id;
 
-	pr_debug("%s: id=%d\n", __func__, id);
+	pr_debug("%s: id=%d [0x%p:0x%lx]\n", __func__, id, addr, base);
 	RET_ASSERT(RESET_ID_VIP0 >= RSTIndex);
 
 	if (RESET_ID_CPU1   == RSTIndex ||
@@ -116,9 +130,9 @@ void nxp_soc_peri_reset_set(int id)
 
 	spin_lock_irqsave(&lock, flags);
 
-	NX_RSTCON_SetBaseAddress((void*)IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_RSTCON_SetBaseAddress(addr);
 	NX_RSTCON_SetRST(RSTIndex, RSTCON_ASSERT);
-	mdelay(1);
+	DEALY(1);
 	NX_RSTCON_SetRST(RSTIndex, RSTCON_NEGATE);
 
 	spin_unlock_irqrestore(&lock, flags);
@@ -127,16 +141,18 @@ EXPORT_SYMBOL_GPL(nxp_soc_peri_reset_set);
 
 int nxp_soc_peri_reset_status(int id)
 {
+	unsigned long base = NX_RSTCON_GetPhysicalAddress();
+	void *addr = (void*)IO_ADDRESS(base);
 	unsigned long flags;
 	U32 RSTIndex = id;
 	int power = 0;
 
-	pr_debug("%s: id=%d\n", __func__, id);
+	pr_debug("%s: id=%d [0x%p:0x%lx]\n", __func__, id, addr, base);
 	RET_ASSERT_VAL(RESET_ID_VIP0 >= RSTIndex, -EINVAL);
 
 	spin_lock_irqsave(&lock, flags);
 
-	NX_RSTCON_SetBaseAddress((void*)IO_ADDRESS(NX_RSTCON_GetPhysicalAddress()));
+	NX_RSTCON_SetBaseAddress(addr);
 	power = NX_RSTCON_GetRST(RSTIndex) ? 1 : 0;
 
 	spin_unlock_irqrestore(&lock, flags);

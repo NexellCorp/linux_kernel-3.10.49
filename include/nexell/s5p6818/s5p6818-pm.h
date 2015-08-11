@@ -42,7 +42,7 @@
 #define	SCR_USER_SIG8_READ			(SCR_ALIVE_BASE + 0x108)
 
 #define SUSPEND_SIGNATURE			(0x50575200)	/* PWR (ASCII) */
-#define	SUSPEND_SAVE_SIZE			(128*1024)		/* (_etext - _stext) */
+#define	SUSPEND_SAVE_SIZE			(3*1024*1024)		/* (_etext - _stext) */
 #define RECOVERY_SIGNATURE			(0x52455343)	/* (ASCII) : R.E.S.C */
 
 #define	SCR_SMP_WAKE_CPU_ID			SCR_ARM_SECOND_BOOT_REG1

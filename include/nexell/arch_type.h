@@ -122,4 +122,13 @@
 #define LVDS_LCDFORMAT_JEIDA 	1
 #define LVDS_LCDFORMAT_LOC   	2
 
+/*f Alive wakeup detect mode */
+#define	PWR_DECT_ASYNC_LOWLEVEL 	0
+#define	PWR_DECT_ASYNC_HIGHLEVEL 	1
+#define	PWR_DECT_FALLINGEDGE 		2
+#define	PWR_DECT_RISINGEDGE  		3
+#define	PWR_DECT_SYNC_LOWLEVEL 		4
+#define	PWR_DECT_SYNC_HIGHLEVEL 	5
+#define	PWR_DECT_BOTHEDGE  			6
+
 #endif

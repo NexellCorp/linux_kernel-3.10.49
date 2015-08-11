@@ -1,0 +1,20 @@
+/*
+ * s5p6818 plls
+ *
+ * Copyright 2009 Nexell Co.
+ *		http://www.nexell.co.kr
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+
+#include "../../../../../include/nexell/arch_type.h"
+
+	pm_alive_config {
+		pm,alive_0 = < 1 PWR_DECT_FALLINGEDGE >;
+        pm,alive_1 = < 0 PWR_DECT_FALLINGEDGE >;
+        pm,alive_2 = < 0 PWR_DECT_FALLINGEDGE >;
+        pm,alive_3 = < 0 PWR_DECT_FALLINGEDGE >;
+        pm,alive_4 = < 0 PWR_DECT_FALLINGEDGE >;
+        pm,alive_5 = < 0 PWR_DECT_FALLINGEDGE >;
+	};

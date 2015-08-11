@@ -471,6 +471,22 @@ struct clk *clk_dev_clock_register(const char *name, const char *parent_name,
 	return clk;
 }
 
+#ifdef CONFIG_PM_SLEEP
+static int clk_syscore_suspend(void)
+{
+	return 0;
+}
+
+static void clk_syscore_resume(void)
+{
+}
+
+static struct syscore_ops clk_syscore_ops = {
+	.suspend	= clk_syscore_suspend,
+	.resume		= clk_syscore_resume,
+};
+#endif /* CONFIG_PM_SLEEP */
+
 static void __init clk_dev_of_setup(struct device_node *node)
 {
 	struct device_node *np;
@@ -529,6 +545,10 @@ static void __init clk_dev_of_setup(struct device_node *node)
 			clk_set_rate(clk, clk_data->rate);
 		}
 	}
+
+#ifdef CONFIG_PM_SLEEP
+	register_syscore_ops(&clk_syscore_ops);
+#endif
 
 	pr_debug("[%s:%d] %s (%d)\n", __func__, __LINE__, node->name, num_clks);
 	return;
