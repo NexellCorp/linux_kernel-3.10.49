@@ -1,49 +1,10 @@
 #
 # Copyright 2009 Nexell.
+#		http://www.nexell.co.kr
 #
-menu "SLsiAP s5p6818"
+# Select Board types
 
-choice
-	prompt "Prototype build mode"
-	default S5P6818_PROTO_RELEASE
-
-	config S5P6818_PROTO_RELEASE
-		bool "Release"
-
-	config S5P6818_PROTO_DEBUG
-		bool "Debug"
-endchoice
-
-config S5P6818_PM_IDLE
-	bool "Goto idle when Suspend"
-	depends on SUSPEND
-	default n
-
-config ARCH_S5P6818_BOARD
-	bool "s5p6818 Board Feactures"
-	default n
-	depends on ARCH_S5P6818
-
-choice
-    prompt "Type"
-    default ARCH_S5P6818_SVT
-    depends on ARCH_S5P6818_BOARD
-
-   	config ARCH_S5P6818_SVT
-		bool "SVT: Validation Board"
-		help
-   	 		Support for the Validation Board (SVT).
-
-   	config ARCH_S5P6818_ASB
-		bool "ASB: Validation Board"
-		help
-   	 		Support for the Validation Board (ASB).
-endchoice
-
-if ARCH_S5P6818_SVT
-source "drivers/platform/nexell/s5p6818/svt/Kconfig"
+if ARCH_S5P6818
+source "drivers/platform/nexell/s5p6818/cpu/Kconfig"
 endif
-
-endmenu
-
 
