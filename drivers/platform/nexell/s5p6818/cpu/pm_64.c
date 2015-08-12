@@ -34,8 +34,12 @@
 #include <nexell/platform.h>
 #include <nexell/pm.h>
 
+#if 0
 #define	pr_debug		printk
 #define	ll_debug		early_printk
+#else
+#define	ll_debug(m...)
+#endif
 
 //#define PM_IO_FORCE_INIT
 
@@ -446,12 +450,8 @@ static int suspend_enter(suspend_state_t state)
 	/*
 	 * goto sleep
 	 */
-	if (0 == ret) {
-	//	cpu_pm_enter();
+	if (0 == ret)
 		cpu_suspend(0);
-		flush_tlb_all();
-	//	cpu_pm_exit();
-	}
 
 	ll_debug("exit resume ...\n");
 
@@ -579,8 +579,6 @@ int cpu_suspend_machine(unsigned long arg)
 		__raw_writel(0, (iomap+0x60)); 	/* GPIOx_PULLENB - Disable */
 	}
 #endif
-
-	flush_cache_all();
 
 	return ret;
 }
