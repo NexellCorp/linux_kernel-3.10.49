@@ -130,6 +130,11 @@ static void smp_soc_cpu_die(unsigned int cpu)
 	pr_debug("[%s cpu.%d]\n", __func__, cpu);
 
 	/*
+	 * do core cache flush
+	 */
+	flush_cache_all();
+
+	/*
 	 * request suspend to 2ndbootloader in EL3
 	 */
 	__asm__("smc 12345");
