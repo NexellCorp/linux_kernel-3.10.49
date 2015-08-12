@@ -21,11 +21,13 @@
 #include <linux/of.h>
 #include <linux/smp.h>
 #include <linux/suspend.h>
+#include <linux/version.h>
 #include <asm/cacheflush.h>
 #include <asm/cpu_ops.h>
 #include <asm/cputype.h>
 #include <asm/smp_plat.h>
 #include <asm/io.h>
+#include <asm/suspend.h>
 
 #include <nexell/platform.h>
 
@@ -136,16 +138,34 @@ static void smp_soc_cpu_die(unsigned int cpu)
 
 #ifdef CONFIG_ARM64_CPU_SUSPEND
 extern int cpu_suspend_machine(unsigned long arg);
-static int smp_soc_cpu_suspend(unsigned long index)
-{
-	pr_debug("[%s index 0x%lx ..]\n", __func__, index);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,18,0)
+static int cpu_suspend_finisher(unsigned long index)
+{
 	cpu_suspend_machine(index);
 
 	/*
 	 * request suspend to 2ndbootloader in EL3
 	 */
 	__asm__("smc 12345");
+
+	return 0;
+}
+#endif
+static int smp_soc_cpu_suspend(unsigned long index)
+{
+	pr_debug("[%s index 0x%lx ..]\n", __func__, index);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,18,0)
+	__cpu_suspend(index, cpu_suspend_finisher);
+#else
+	cpu_suspend_machine(index);
+
+	/*
+	 * request suspend to 2ndbootloader in EL3
+	 */
+	__asm__("smc 12345");
+#endif
 	return 0;
 }
 #endif

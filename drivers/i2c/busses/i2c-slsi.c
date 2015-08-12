@@ -22,6 +22,7 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/version.h>
 
 #include <linux/i2c.h>
 #include <linux/init.h>
@@ -36,7 +37,9 @@
 #include <linux/cpufreq.h>
 #include <linux/slab.h>
 #include <linux/io.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,18,0)
 #include <linux/of_i2c.h>
+#endif
 #include <linux/of_gpio.h>
 
 #include <asm/irq.h>
@@ -229,7 +232,7 @@ static void s3c24xx_i2c_message_start(struct s3c24xx_i2c *i2c,
 	writel(stat, i2c->regs + S3C2410_IICSTAT);
 	dev_dbg(i2c->dev, "START: %08lx to IICSTAT, %02x to DS\n", stat, addr);
 	writeb(addr, i2c->regs + S3C2410_IICDS);
-	
+
 	/* delay here to ensure the data byte has gotten onto the bus
 	 * before the transaction is started */
 
@@ -566,9 +569,9 @@ static int s3c24xx_i2c_doxfer(struct s3c24xx_i2c *i2c,
 
 	s3c24xx_i2c_enable_irq(i2c);
 	s3c24xx_i2c_message_start(i2c, msgs);
-	
+
 	spin_unlock_irq(&i2c->lock);
-	
+
 	/* change set transfer timeout. modify by bok*/
 	do {
 	i2c->tr=0;
@@ -578,13 +581,13 @@ static int s3c24xx_i2c_doxfer(struct s3c24xx_i2c *i2c,
 		break;
 
 	} while(i2c->tr);
-		
+
 	ret = i2c->msg_idx;
 	/* having these next two as dev_err() makes life very
 	 * noisy when doing an i2cdetect */
 	if (i2c->condition == 0) {
 		pr_err("i2c-nxp.%d: timeout, num %d ,idx %d \n",
-			i2c->pdata->bus_num,num,i2c->msg_idx); 
+			i2c->pdata->bus_num,num,i2c->msg_idx);
 		dump_i2c_register(i2c);
 		ret = -ETIMEDOUT;
 	} else if (ret != num) {
@@ -771,7 +774,7 @@ static int s3c24xx_i2c_clockrate(struct s3c24xx_i2c *i2c)
 			sda_delay |= S3C2410_IICLC_FILTER_ON;
 		} else
 			sda_delay = 0;
-		
+
 		dev_dbg(i2c->dev, "IICLC=%08lx\n", sda_delay);
 		writel(sda_delay, i2c->regs + S3C2440_IICLC);
 	}
@@ -940,7 +943,7 @@ s3c24xx_i2c_parse_dt(struct device_node *np, struct s3c24xx_i2c *i2c)
 	if (!np)
 		return;
 
-	pdata->bus_num =  of_alias_get_id(np, "i2c");	
+	pdata->bus_num =  of_alias_get_id(np, "i2c");
 	of_property_read_u32(np, "nexell,reset-id", &pdata->reset_id);
 	of_property_read_u32(np, "nexell,i2c-sda-delay", &pdata->sda_delay);
 	of_property_read_u32(np, "nexell,i2c-slave-addr", &pdata->slave_addr);
@@ -975,7 +978,7 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 			return -EINVAL;
 		}
 	}
-	
+
 	i2c = devm_kzalloc(&pdev->dev, sizeof(struct s3c24xx_i2c), GFP_KERNEL);
 	if (!i2c) {
 		dev_err(&pdev->dev, "no memory for state\n");
@@ -1006,7 +1009,7 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	/* find the clock and enable it */
 
 	i2c->dev = &pdev->dev;
-	
+
 	i2c->clk = clk_get(&pdev->dev,NULL);
 	if (IS_ERR(i2c->clk)) {
 		dev_err(&pdev->dev, "cannot get clock %p \n",i2c->clk);
@@ -1019,7 +1022,7 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	clk_prepare_enable(i2c->clk);
 
 	nxp_soc_peri_reset_set(i2c->pdata->reset_id );
-	
+
 	/* map the registers */
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
@@ -1097,8 +1100,9 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "failed to add bus to i2c core\n");
 		goto err_cpufreq;
 	}
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,18,0)
 	of_i2c_register_devices(&i2c->adap);
+#endif
 	platform_set_drvdata(pdev, i2c);
 
 	pm_runtime_enable(&pdev->dev);
@@ -1181,7 +1185,7 @@ static int s3c24xx_i2c_resume(struct device *dev)
 	int rsc = i2c_reset[i2c->pdata->bus_num];
 
 	int ret;
-	
+
 	i2c_lock_adapter(&i2c->adap);
 
 	clk_prepare_enable(i2c->clk);
