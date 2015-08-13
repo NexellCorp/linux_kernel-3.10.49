@@ -38,12 +38,17 @@ static void s5p6818_cpu_reset(char str, const char *cmd)
 	mdelay(10);
 
 	__raw_writel(0xFFFFFFFF, __io_address(SCR_RESET_SIG_RESET));
-	if (cmd && !strcmp(cmd, "recovery")) {
+
+	if (cmd && !strcmp(cmd, "recovery"))
 		__raw_writel(RECOVERY_SIGNATURE, __io_address(SCR_RESET_SIG_SET));
-		__raw_readl (__io_address(SCR_RESET_SIG_READ));	/* verify */
-		printk("recovery signature [0x%x:0x%x] \n",
-			SCR_RESET_SIG_READ, __raw_readl(__io_address(SCR_RESET_SIG_READ)));
-	}
+
+	if (cmd && !strcmp(cmd, "usbboot"))
+		__raw_writel(USBBOOT_SIGNATURE, __io_address(SCR_RESET_SIG_SET));
+
+	__raw_readl (__io_address(SCR_RESET_SIG_READ));
+
+	printk("recovery signature [0x%x:0x%x] \n",
+		SCR_RESET_SIG_READ, __raw_readl(__io_address(SCR_RESET_SIG_READ)));
 
 	NX_ALIVE_SetWriteEnable(CFALSE);	/* close alive gate */
 	NX_CLKPWR_SetSoftwareResetEnable(CTRUE);

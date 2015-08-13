@@ -92,7 +92,7 @@ struct pm_soc_data {
 
 static struct pm_soc_data *pm_data = NULL;
 static struct pm_suspend_ops *pm_ops = NULL;
-void (*pm_suspend_signatrue)(struct pm_suspend_sign*, int) = NULL;
+void (*pm_suspend_signatrue)(int) = NULL;
 
 static const char * str_wake_event[] = {
 	[0] = "VDDPWRTOGGLE",
@@ -300,20 +300,11 @@ static inline u32 __crc_calc(void *addr, int len)
 static void suspend_sign(suspend_state_t stat, unsigned long addr, long size)
 {
 #ifndef CONFIG_S5P6818_PM_IDLE
-	struct pm_suspend_sign sign = {
-		.resume = (u32)virt_to_phys(cpu_resume),
-		.signature = SUSPEND_SIGNATURE,
-	};
 
-	if (!addr) {
-		addr = (unsigned long)PM_SAVE_VIRT;
-		size = PM_SAVE_SIZE;
+	if (pm_suspend_signatrue) {
+		pm_suspend_signatrue((SUSPEND_SUSPEND == stat ? 1: 0));
+		return;
 	}
-
-	sign.crc_addr = virt_to_phys((void*)addr);
-	sign.crc_size = size;
-
-	ll_debug("[%s:%d] (0x%lx, %ld)\n", __func__, __LINE__, addr, size);
 
 	__raw_writel(WAKE_REG_CLEAR, __io_address(SCR_WAKE_FN_RESET));
 	__raw_writel(WAKE_REG_CLEAR, __io_address(SCR_CRC_PHY_RESET));
@@ -322,16 +313,15 @@ static void suspend_sign(suspend_state_t stat, unsigned long addr, long size)
 	__raw_writel(WAKE_REG_CLEAR, __io_address(SCR_SIGNAGURE_RESET));
 
 	if (SUSPEND_SUSPEND == stat) {
-		int len = sign.crc_size;
-		sign.crc_ret = __crc_calc((void*)addr, len);
-	}
+		struct pm_suspend_sign sign = {
+			.resume = (u32)virt_to_phys(cpu_resume),
+			.signature = SUSPEND_SIGNATURE,
+			.crc_addr = addr ? virt_to_phys((void*)addr) : (unsigned long)PM_SAVE_ADDR,
+			.crc_size = size ? size : PM_SAVE_SIZE,
+		};
 
-	if (pm_suspend_signatrue) {
-		pm_suspend_signatrue(&sign, (SUSPEND_SUSPEND == stat ? 1: 0));
-		return;
-	}
+		sign.crc_ret = pm_crc_calc((void*)phys_to_virt(sign.crc_addr), sign.crc_size);
 
-	if (SUSPEND_SUSPEND == stat) {
 		ll_debug("[PM crc: 0x%08x, fn:0x%08x phy:0x%08x, len:0x%x]\n",
 				sign.crc_ret, sign.resume, sign.crc_addr, sign.crc_size);
 

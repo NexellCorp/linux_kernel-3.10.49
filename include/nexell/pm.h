@@ -41,6 +41,23 @@ struct pm_suspend_sign {
 };
 
 extern void pm_pre_ops_register(struct pm_suspend_ops *pm_ops);
-extern void (*pm_suspend_signatrue)(struct pm_suspend_sign*, int);
+extern void (*pm_suspend_signatrue)(int);
 
+#define CHKSTRIDE	(8)
+static inline u32 pm_crc_calc(void *addr, int len)
+{
+	u32 *c = (u32*)addr;
+	u32 crc = 0, count = ((len+3)/4);
+	int i, n;
+
+	for (i = 0; count > i; i += CHKSTRIDE, c += CHKSTRIDE) {
+		u32 dat = *c;
+		crc ^= dat;
+		for(n = 0; 32 > n; n++) {
+			if(crc & 0x01) crc ^= (0x04C11DB7L);
+			crc >>= 1;
+		}
+	}
+	return crc;
+}
 #endif /* __PLAT_PM_H__ */
