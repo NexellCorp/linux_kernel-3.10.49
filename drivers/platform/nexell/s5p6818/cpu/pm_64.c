@@ -55,9 +55,9 @@
 #define WAKE_ALIVE_NR		6			/* A,B,C,D,E */
 #define WAKE_REG_CLEAR		(0xffffffff)
 
-#define	PM_SAVE_ADDR		__pa(_stext) // SLEEP_SAVE_SP_PHYS			//__pa(_stext)
-#define	PM_SAVE_VIRT		_stext		// SLEEP_SAVE_SP_VIRT			// _stext
-#define	PM_SAVE_SIZE		SUSPEND_SAVE_SIZE	//CPU_SUSPEND_SZ				// SUSPEND_SAVE_SIZE
+#define	PM_SAVE_ADDR		__pa(_stext)
+#define	PM_SAVE_VIRT		_stext
+#define	PM_SAVE_SIZE		SUSPEND_SAVE_SIZE
 
 struct pm_reg_gpio {
 	u32 data;			/* 0x00 */
