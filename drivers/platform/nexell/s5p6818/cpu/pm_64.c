@@ -29,7 +29,6 @@
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 #include <asm/sections.h> 	/*_stext, _end*/
-//#include <asm/asm-offsets.h>
 
 #include <nexell/platform.h>
 #include <nexell/pm.h>
@@ -42,11 +41,6 @@
 #endif
 
 //#define PM_IO_FORCE_INIT
-
-/*------------------------------------------------------------------------------
- * 	Suspend mode
- */
-#define PM_RTC_WAKE		CFALSE
 
 /*-----------------------------------------------------------------------------*/
 #define SRAM_MEM_BASE		0xFFFF0000
@@ -83,6 +77,7 @@ struct pm_soc_data {
 	unsigned long *sram_map;
 	unsigned long  sram_len;
 	u32 wake_event;
+	u32 wake_rtc;
 	u32 wake_input[WAKE_ALIVE_NR][2];
 	/* registers */
 	u32 gpio_fn[GPIO_GROUP_NUM][2];
@@ -124,26 +119,33 @@ static void dump_wake_event(void)
 
 static void suspend_core_dt(struct pm_soc_data *pm)
 {
-	struct device_node *np = of_find_node_by_name(NULL, "pm_alive_config");
+	struct device_node *np;
 	const __be32 *list;
 	int i = 0;
-	const char *name[] = {
-			"pm,alive_0", "pm,alive_1",
-			"pm,alive_2", "pm,alive_3",
-			"pm,alive_4", "pm,alive_5"
-			};
 
-	if (!np) {
-		printk("*** WARNING: Not exist pm alive for power management. ***\n");
-		return;
+	np = of_find_node_by_name(NULL, "pm_alive_config");
+	if (np) {
+		const char *name[] = {
+				"pm,alive_0", "pm,alive_1",
+				"pm,alive_2", "pm,alive_3",
+				"pm,alive_4", "pm,alive_5"
+				};
+
+		for (i = 0; WAKE_ALIVE_NR > i; i++) {
+			list = of_get_property(np, name[i], NULL);
+			pm->wake_input[i][0] = be32_to_cpu(*list++);	/* ture/false */
+			pm->wake_input[i][1] = be32_to_cpu(*list++);	/* type */
+			printk("PM: ALIVE %d %s type %d (%s)\n", i,
+				pm->wake_input[i][0]?"on ":"off", pm->wake_input[i][1], name[i]);
+		}
 	}
 
-	for (i = 0; WAKE_ALIVE_NR > i; i++) {
-		list = of_get_property(np, name[i], NULL);
-		pm->wake_input[i][0] = be32_to_cpu(*list++);	/* ture/false */
-		pm->wake_input[i][1] = be32_to_cpu(*list++);	/* type */
-		printk("%s: %s, type %d\n", name[i],
-			pm->wake_input[i][0]?"on ":"off", pm->wake_input[i][1]);
+	np = of_find_node_by_name(NULL, "pm_rtc_config");
+	if (np) {
+		const char *name = "pm,rtc";
+		list = of_get_property(np, name, NULL);
+		pm->wake_rtc = be32_to_cpu(*list++);	/* ture/false */
+		printk("PM: RTC %s (%s)\n", pm->wake_rtc?"on ":"off", name);
 	}
 }
 
@@ -277,24 +279,6 @@ static void suspend_alive(suspend_state_t stat)
 		__raw_writel(alive->detenb, iomap + 0x50);	/* set */
 		__raw_writel(alive->irqenb, iomap + 0x5C);	/* set */
 	}
-}
-
-#define CHKSTRIDE	(8)
-static inline u32 __crc_calc(void *addr, int len)
-{
-	u32 *c = (u32*)addr;
-	u32 crc = 0, count = ((len+3)/4);
-	int i, n;
-
-	for (i = 0; count > i; i += CHKSTRIDE, c += CHKSTRIDE) {
-		u32 dat = *c;
-		crc ^= dat;
-		for(n = 0; 32 > n; n++) {
-			if(crc & 0x01) crc ^= (0x04C11DB7L);
-			crc >>= 1;
-		}
-	}
-	return crc;
 }
 
 static void suspend_sign(suspend_state_t stat, unsigned long addr, long size)
@@ -492,7 +476,6 @@ static int __init suspend_pm_init(void)
 }
 arch_initcall(suspend_pm_init);
 
-
 void pm_pre_ops_register(struct pm_suspend_ops *pm_ops)
 {
 	pm_ops = pm_ops;
@@ -536,12 +519,12 @@ int cpu_suspend_machine(unsigned long arg)
 	NX_ALIVE_SetInterruptEnable32(mask);
 
 	/* disable alarm wakeup */
-#if !(PM_RTC_WAKE)
-	__raw_writel(__raw_readl(rtcmap+RTC_REG_INTENB) & ~(3<<0),
-		(rtcmap+RTC_REG_INTENB));
-	__raw_writel(__raw_readl(rtcmap+RTC_REG_INTPND) & ~(3<<0),
-		(rtcmap+RTC_REG_INTPND));
-#endif
+	if (!pm->wake_rtc) {
+		__raw_writel(__raw_readl(rtcmap+RTC_REG_INTENB) & ~(3<<0),
+			(rtcmap+RTC_REG_INTENB));
+		__raw_writel(__raw_readl(rtcmap+RTC_REG_INTPND) & ~(3<<0),
+			(rtcmap+RTC_REG_INTPND));
+	}
 
 	if (NX_ALIVE_GetInterruptPending32() & mask)
 		return -EINVAL;
