@@ -20,5 +20,5 @@
 	};
 
 	pm_rtc_config {
-		pm,rtc = < 0 >;		/* set wakeup source <on/off> : alive 0  */
+		pm,rtc = < 1 >;		/* set wakeup source <on/off> : alive 0  */
 	};
