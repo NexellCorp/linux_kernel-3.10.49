@@ -401,8 +401,8 @@ static struct hc_driver dwc_otg_hc_driver = {
 	.hub_status_data = hub_status_data,
 	.hub_control = hub_control,
 #if defined(CONFIG_PM) && defined(CONFIG_PLAT_SLSIAP)
-//	.bus_suspend = dwc_otg_hcd_suspend,
-//	.bus_resume = dwc_otg_hcd_resume,
+	.bus_suspend = dwc_otg_hcd_suspend,
+	.bus_resume = dwc_otg_hcd_resume,
 #endif
 };
 
