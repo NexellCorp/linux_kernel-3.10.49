@@ -54,6 +54,7 @@
 		};
 
 		#include "s5p6818-svt-pin.dtsi"
+		#include "s5p6818-svt-pm.dtsi"
 
    		dynamic-freq@bb000 {
    			supply_name  = "vdd_arm";
