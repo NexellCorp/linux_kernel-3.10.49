@@ -273,6 +273,11 @@ struct s3c64xx_spi_port_config {
 //static struct s3c2410_dma_client s3c64xx_spi_dma_client = {
 //	.name = "samsung-spi-dma",
 //};
+static int reset_id[3][2] = { 
+		{ RESET_ID_SSP0_P,RESET_ID_SSP0},
+		{ RESET_ID_SSP1_P,RESET_ID_SSP1},
+		{ RESET_ID_SSP2_P,RESET_ID_SSP2},
+};
 static int set_up_next_transfer(struct s3c64xx_spi_driver_data *sdd,
 				struct spi_transfer *transfer);
 
@@ -791,7 +796,8 @@ static void s3c64xx_spi_config(struct s3c64xx_spi_driver_data *sdd,struct s3c64x
 
 	/* Disable Clock */
 	if (sci->clk_from_cmu) {
-		clk_disable(sdd->src_clk);
+		clk_disable_unprepare(sdd->src_clk);
+		
 	} else {
 		val = readl(regs + S3C64XX_SPI_CLK_CFG);
 		val &= ~S3C64XX_SPI_ENCLK_ENABLE;
@@ -843,6 +849,7 @@ static void s3c64xx_spi_config(struct s3c64xx_spi_driver_data *sdd,struct s3c64x
 		clk_set_rate(sdd->src_clk, sdd->cur_speed * 2);
 		/* Enable Clock */
 		clk_prepare_enable(sdd->src_clk);
+	
 	} else {
 		/* Configure Clock */
 		val = readl(regs + S3C64XX_SPI_CLK_CFG);
@@ -1473,6 +1480,11 @@ static void s3c64xx_spi_hwinit(struct s3c64xx_spi_driver_data *sdd, int channel)
 	
 	sdd->cur_speed = 0;
 
+	/* Reset */
+
+	nxp_soc_peri_reset_set(reset_id[channel][0]);
+	nxp_soc_peri_reset_set(reset_id[channel][1]);
+
 	S3C64XX_SPI_DEACT(sdd);
 
 	/* Disable Interrupts - we use Polling if not DMA mode */
@@ -1548,8 +1560,8 @@ static struct s3c64xx_spi_info *nexell_spi_parse_dt(struct device *dev)
 	}    
 		
 	of_property_read_u32(dev->of_node, "reset-id", &temp);
-	nxp_soc_peri_reset_set(temp-1);
-	nxp_soc_peri_reset_set(temp);
+	//nxp_soc_peri_reset_set(temp-1);
+	//nxp_soc_peri_reset_set(temp);
 	
 	return sci; 
 }
@@ -1709,7 +1721,9 @@ static int __init s3c64xx_spi_probe(struct platform_device *pdev)
 	pm_runtime_get_sync(&pdev->dev);
 #else
 	//clk_prepare_enable(sdd->clk);
+
 	clk_prepare_enable(sdd->src_clk);
+	
 #endif
 
 	/* Setup Deufult Mode */
@@ -1754,13 +1768,14 @@ err5:
 #if defined(CONFIG_PM_RUNTIME)
 	pm_runtime_put(&pdev->dev);
 #else
-	clk_disable(sdd->src_clk);
-	clk_disable(sdd->clk);
+	clk_disable_unprepare(sdd->src_clk);
+	//clk_disable(sdd->clk);
+	
 #endif
 	pm_runtime_disable(&pdev->dev);
 	clk_put(sdd->src_clk);
 err4:
-	clk_put(sdd->clk);
+	//clk_put(sdd->clk);
 //err3:
 //err2:
 	iounmap((void *) sdd->regs);
@@ -1786,8 +1801,9 @@ static int s3c64xx_spi_remove(struct platform_device *pdev)
 	free_irq(platform_get_irq(pdev, 0), sdd);
 
 #ifndef CONFIG_PM_RUNTIME
-	clk_disable(sdd->src_clk);
-	clk_disable(sdd->clk);
+	clk_disable_unprepare(sdd->src_clk);
+//	clk_disable(sdd->clk);
+	
 #endif
 
 	pm_runtime_disable(&pdev->dev);
@@ -1813,12 +1829,14 @@ static int s3c64xx_spi_suspend(struct device *dev)
 	struct spi_master *master = spi_master_get(dev_get_drvdata(dev));
 	struct s3c64xx_spi_driver_data *sdd = spi_master_get_devdata(master);
 
+	
 	spi_master_suspend(master);
 
 #ifndef CONFIG_PM_RUNTIME
 	/* Disable the clock */
-	clk_disable(sdd->src_clk);
-	clk_disable(sdd->clk);
+	clk_disable_unprepare(sdd->src_clk);
+//	clk_disable(sdd->clk);
+	
 #endif
 
 	sdd->cur_speed = 0; /* Output Clock is stopped */
@@ -1832,8 +1850,9 @@ static int s3c64xx_spi_resume(struct device *dev)
 	struct spi_master *master = spi_master_get(dev_get_drvdata(dev));
 	struct s3c64xx_spi_driver_data *sdd = spi_master_get_devdata(master);
 	struct s3c64xx_spi_info *sci = sdd->cntrlr_info;
-
-	sci->cfg_gpio(pdev);
+	
+	if(sci->cfg_gpio)
+		sci->cfg_gpio(pdev);
 
 #if defined(CONFIG_PM_RUNTIME)
 	pm_runtime_get_sync(&sdd->pdev->dev);
@@ -1841,6 +1860,7 @@ static int s3c64xx_spi_resume(struct device *dev)
 	/* Enable the clock */
 	clk_prepare_enable(sdd->src_clk);
 	//clk_prepare_enable(sdd->clk);
+	
 #endif
 
 	s3c64xx_spi_hwinit(sdd, pdev->id);
@@ -1863,8 +1883,9 @@ static int s3c64xx_spi_runtime_suspend(struct device *dev)
 	if (sci->gpio_pull_up)
 		sci->gpio_pull_up(false);
 
-	clk_disable(sdd->clk);
-	clk_disable(sdd->src_clk);
+	//clk_disable(sdd->clk);
+	clk_disable_unprepare(sdd->src_clk);
+	
 
 	return 0;
 }
@@ -1876,6 +1897,7 @@ static int s3c64xx_spi_runtime_resume(struct device *dev)
 	struct s3c64xx_spi_info *sci = sdd->cntrlr_info;
 
 	clk_prepare_enable(sdd->src_clk);
+	
 	//clk_prepare_enable(sdd->clk);
 
 	if (sci->gpio_pull_up)
