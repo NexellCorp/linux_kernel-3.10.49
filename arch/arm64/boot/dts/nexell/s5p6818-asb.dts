@@ -46,12 +46,12 @@
 			uart3:uart@ab000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
 			uart4:uart@6e000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
 			uart5:uart@84000 { clock-frequency = <UART_CLOCK_FREQUENCY>; };
-			i2c0:i2c@ae000 { clock-frequency = <I2C_CLOCK_FREQUENCY>; };
-			i2c1:i2c@af000 { clock-frequency = <I2C_CLOCK_FREQUENCY>; };
-			i2c2:i2c@b0000 { clock-frequency = <I2C_CLOCK_FREQUENCY>; };
-			spi0:spi@ac000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
-			spi1:spi@ad000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
-			spi2:spi@a7000 { clock-frequency = <SPI_CLOCK_FREQUENCY>; };
+			i2c0:i2c@ae000 	 { clock-frequency = <I2C_CLOCK_FREQUENCY>;  };
+			i2c1:i2c@af000   { clock-frequency = <I2C_CLOCK_FREQUENCY>;  };
+			i2c2:i2c@b0000   { clock-frequency = <I2C_CLOCK_FREQUENCY>;  };
+			spi0:spi@ac000   { clock-frequency = <SPI_CLOCK_FREQUENCY>;  };
+			spi1:spi@ad000   { clock-frequency = <SPI_CLOCK_FREQUENCY>;  };
+			spi2:spi@a7000   { clock-frequency = <SPI_CLOCK_FREQUENCY>;  };
 		};
 
 		#include "s5p6818-asb-pin.dtsi"
@@ -389,14 +389,14 @@
 			status = "okay";
 		};
 
-		gpu@0xC0070000 { 
+		gpu@0xC0070000 {
 			compatible = "arm,mali-400", "arm,mali-utgard";
 			reg = <0xC0070000 0x10000>;
-			interrupts = <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>; 
+			interrupts = <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>, <0 72 4>;
 			interrupt-names = "IRQGP", "IRQGPMMU", "IRQPP0", "IRQPPMMU0", "IRQPP1", "IRQPPMMU1", "IRQPP2", "IRQPPMMU2", "IRQPP3", "IRQPPMMU3", "IRQPMU";
-			pmu_domain_config = <0x1 0x4 0x8 0x10 0x20 0x0 0x0 0x0 0x0 0x2 0x0 0x0>; 
+			pmu_domain_config = <0x1 0x4 0x8 0x10 0x20 0x0 0x0 0x0 0x0 0x2 0x0 0x0>;
 			pmu_switch_delay = <0xff>;
-		};	
+		};
 	};	/*** soc ***/
 
 	nxp-ion {
@@ -555,4 +555,23 @@
 		sample_rate = <48000>;
 	    format = "S16";
 	};
+
+	#ifdef CONFIG_KEYBOARD_GPIO
+    gpio-keys {
+        compatible = "gpio-keys";
+        power {
+            label = "Power";
+            gpios = <&gpio_alive 0 0 >;
+            linux,code = <116>; /* KEY_POWER */
+        };
+    };
+	#endif
+	#ifdef CONFIG_KEYBOARD_NXP_IO_KEY
+    io-keypad {
+        compatible = "nexell,nxp-keypad";
+        buttons  = <
+			(PAD_GPIO_ALV + 0)	116 0	/* gpio, keycode, active high */
+        >;
+    };
+    #endif
 };
