@@ -501,7 +501,8 @@ static int mp8845c_regulator_preinit(struct mp8845c_regulator *ri, struct mp8845
 
 #ifdef FEATURE_ASV_CORE_TABLE
 	if(!strcmp(ri->name, "vout2"))
-		asv_core_setup(ri, mp8845c_pdata);
+		return ret;
+		//asv_core_setup(ri, mp8845c_pdata);
 #endif
 
 	mp8845c_set_bits(ri->client, MP8845C_REG_SYSCNTL1, (1 << MP8845C_POS_MODE));

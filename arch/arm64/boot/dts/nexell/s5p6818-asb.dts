@@ -320,7 +320,6 @@
 			};
 		};
 
-		#if 0
 		iic2:iic@a6000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -334,7 +333,6 @@
 				};
 			};
 		};
-		#endif
 		#endif // CONFIG_REGULATOR_MP8845C
 
 		#ifdef CONFIG_REGULATOR_NXE2000
@@ -347,9 +345,7 @@
 				reg = <0x32>;
 				nx,id = <0>;
 				vdd_arm-supply		= <&VCC1P1_ARM_PMIC>;
-				#if 0
 				vdd_core-supply		= <&VCC1P0_CORE_PMIC>;
-				#endif
 				regulators {
 					#ifndef CONFIG_REGULATOR_MP8845C
 					VCC1P1_ARM_PMIC:	dcdc1	{ PMIC_PDATA_INIT( 0, "nxe2000_dcdc1",	 900000, 1500000, 1, 1, 1200000, 1, 0x4) };
