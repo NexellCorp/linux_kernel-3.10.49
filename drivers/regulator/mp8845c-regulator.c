@@ -36,7 +36,7 @@
 #include <linux/mfd/mp8845c.h>
 
 
-#if defined(CONFIG_PLAT_S5P6818_ASB) || defined(CONFIG_PLAT_S5P6818_SVT)
+#if defined(CONFIG_ARCH_S5P6818_ASB) || defined(CONFIG_ARCH_S5P6818_SVT)
 #define FEATURE_ASV_CORE_TABLE
 #endif
 
