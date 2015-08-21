@@ -2615,7 +2615,6 @@ static int __dwmci_initialize(int ch, ulong rate)
 static void __dwmci_suspend(struct dw_mci *host)
 {
 	clk_disable_unprepare(host->hclk);
-	
 }
 
 static void __dwmci_resume(struct dw_mci *host)
@@ -2692,11 +2691,11 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 		if(tmp == 8)
 			pdata->caps |= MMC_CAP_8_BIT_DATA;
 	}
-#if 0
+
 	if(!(of_property_read_u32(np,"reset-id",&tmp))){
-		nxp_soc_peri_reset_set(tmp);
+		pdata->reset_id = tmp;
 	}
-#endif
+
 	if(of_find_property(np,"non-removable",NULL)){
 		pdata->caps |= MMC_CAP_NONREMOVABLE;
 	}
@@ -3001,6 +3000,7 @@ int dw_mci_resume(struct dw_mci *host)
 	int i;
 #endif
 
+	nxp_soc_peri_reset_set(host->pdata->reset_id);
 	if (host->pdata->resume)
 		host->pdata->resume(host);
 

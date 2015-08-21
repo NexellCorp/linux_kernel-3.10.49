@@ -1189,7 +1189,7 @@ static int s3c24xx_i2c_resume(struct device *dev)
 	i2c_lock_adapter(&i2c->adap);
 
 	clk_prepare_enable(i2c->clk);
-
+	
 	nxp_soc_peri_reset_set(rsc);
 	ret = s3c24xx_i2c_init(i2c);
 	if (ret) {
@@ -1198,7 +1198,7 @@ static int s3c24xx_i2c_resume(struct device *dev)
 		return ret;
 	}
 
-	//clk_disable(i2c->clk);
+	clk_disable_unprepare(i2c->clk);
 
 	i2c->is_suspended = false;
 
