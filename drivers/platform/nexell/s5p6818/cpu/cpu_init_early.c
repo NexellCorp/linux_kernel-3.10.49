@@ -5,7 +5,9 @@
 #include <linux/of.h>
 #include <linux/of_fdt.h>
 #include <linux/of_address.h>
+#include <linux/of_reserved_mem.h>
 #include <asm/io.h>
+
 
 #include <nexell/platform.h>
 
@@ -91,6 +93,7 @@ static void cpu_early_setup_alive(void __iomem *base,
 #include <linux/memblock.h>
 #include <linux/cma.h>
 
+#if 0
 static void __init cma_region_reserve(struct cma_region *regions, const char *map)
 {
     struct cma_region *reg;
@@ -204,6 +207,47 @@ static void __init cpu_early_setup_mem(void)
 }
 #endif
 
+static int __init my_cma_setup(struct reserved_mem *rmem)
+{
+    static struct cma_region regions[] = {
+        {
+            .name = "ion",
+#ifdef CONFIG_ION_NXP_CONTIGHEAP_SIZE
+            .size = CONFIG_ION_NXP_CONTIGHEAP_SIZE * SZ_1K,
+#else
+			.size = 0,
+#endif
+            {
+                .alignment = PAGE_SIZE,
+            }
+        },
+        {
+            .size = 0
+        }
+    };
+
+    static const char map[] __initconst =
+        "*=ion;"
+        "ion-nxp=ion;"
+        "nx_vpu=ion;";
+
+    phys_addr_t start = rmem->base;
+    phys_addr_t size = rmem->size;
+
+    struct cma_region reg;
+    reg.start = start;
+    reg.size = size;
+    reg.alignment = PAGE_SIZE;
+    reg.reserved = 1;
+
+    cma_early_region_register(&reg);
+    cma_set_defaults(NULL, map);
+}
+
+RESERVEDMEM_OF_DECLARE(my_cma, "cma_for_ion", my_cma_setup);
+
+#endif
+
 static int __init cpu_early_initcall_setup(void)
 {
 	struct device_node *np = of_find_node_by_name(NULL, "pin_config");
@@ -240,8 +284,10 @@ static int __init cpu_early_initcall_setup(void)
 		index++;
 	}
 
+#if 0
 #if defined CONFIG_CMA && defined CONFIG_ION
 	cpu_early_setup_mem();
+#endif
 #endif
 
 	return 0;
