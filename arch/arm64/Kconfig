@@ -147,6 +147,7 @@ config ARCH_S5P6818
 	select PLAT_SLSIAP
 	select ARCH_REQUIRE_GPIOLIB
 	select CLKSRC_NXP_TIMER
+	select OF_RESERVED_MEM 
 	help
 	  This enables support for the ARMv8 software model (Versatile
 	  Express).
