@@ -205,27 +205,13 @@ static void __init cpu_early_setup_mem(void)
 #endif
     cma_region_reserve(regions, map);
 }
-#endif
 
+#else
+
+static char *my_cma_name = "ion";
+static struct cma_region reg;
 static int __init my_cma_setup(struct reserved_mem *rmem)
 {
-    static struct cma_region regions[] = {
-        {
-            .name = "ion",
-#ifdef CONFIG_ION_NXP_CONTIGHEAP_SIZE
-            .size = CONFIG_ION_NXP_CONTIGHEAP_SIZE * SZ_1K,
-#else
-			.size = 0,
-#endif
-            {
-                .alignment = PAGE_SIZE,
-            }
-        },
-        {
-            .size = 0
-        }
-    };
-
     static const char map[] __initconst =
         "*=ion;"
         "ion-nxp=ion;"
@@ -234,17 +220,24 @@ static int __init my_cma_setup(struct reserved_mem *rmem)
     phys_addr_t start = rmem->base;
     phys_addr_t size = rmem->size;
 
-    struct cma_region reg;
+	printk("%s: start 0x%lx, size %lu\n", __func__, (long)start, (long)size);
+
+	reg.name = my_cma_name;
     reg.start = start;
     reg.size = size;
     reg.alignment = PAGE_SIZE;
     reg.reserved = 1;
 
-    cma_early_region_register(&reg);
-    cma_set_defaults(NULL, map);
+    if(0 == cma_early_region_register(&reg)) {
+		printk("%s: cma_eary_region_register success!!!\n", __func__);
+		cma_set_defaults(NULL, map);
+	} else {
+		printk("%s: FATAL ERROR ===> failed to cma_early_region_register!!!\n");
+	}
 }
 
 RESERVEDMEM_OF_DECLARE(my_cma, "cma_for_ion", my_cma_setup);
+#endif
 
 #endif
 
