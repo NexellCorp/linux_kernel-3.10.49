@@ -5,9 +5,7 @@
 #include <linux/of.h>
 #include <linux/of_fdt.h>
 #include <linux/of_address.h>
-#include <linux/of_reserved_mem.h>
 #include <asm/io.h>
-
 
 #include <nexell/platform.h>
 
@@ -89,158 +87,6 @@ static void cpu_early_setup_alive(void __iomem *base,
 	NX_ALIVE_SetWriteEnable(CTRUE);
 }
 
-#if defined CONFIG_CMA && defined CONFIG_ION
-#include <linux/memblock.h>
-#include <linux/cma.h>
-
-#if 0
-static void __init cma_region_reserve(struct cma_region *regions, const char *map)
-{
-    struct cma_region *reg;
-    phys_addr_t paddr_last = 0xFFFFFFFF;
-
-    for (reg = regions; reg->size != 0; reg++) {
-        phys_addr_t paddr;
-
-        if (!IS_ALIGNED(reg->size, PAGE_SIZE)) {
-            pr_debug("NXP/CMA: size of '%s' is NOT page-aligned\n", reg->name);
-            reg->size = PAGE_ALIGN(reg->size);
-        }
-
-        if (reg->reserved) {
-            pr_err("NXP/CMA: '%s' already reserved\n", reg->name);
-            continue;
-        }
-
-        if (reg->alignment) {
-            if ((reg->alignment & ~PAGE_MASK) ||
-                (reg->alignment & ~reg->alignment)) {
-                pr_err("NXP/CMA: failed to reserve '%s': "
-                        "incorrect alignment 0x%08x.\n",
-                        reg->name, (uint)reg->alignment);
-                continue;
-            }
-        } else {
-            reg->alignment = PAGE_SIZE;
-        }
-
-        if (reg->start) {
-            if (!memblock_is_region_reserved(reg->start, reg->size)
-                && (memblock_reserve(reg->start, reg->size) == 0)) {
-                reg->reserved = 1;
-            } else {
-                pr_err("NXP/CMA: failed to reserve '%s'\n", reg->name);
-            }
-
-        } else {
-            paddr = memblock_find_in_range(0, MEMBLOCK_ALLOC_ACCESSIBLE,
-                    reg->size, reg->alignment);
-            if (paddr) {
-                if (memblock_reserve(paddr, reg->size)) {
-                    pr_err("NXP/CMA: failed to reserve '%s': memblock_reserve() failed\n",
-                            reg->name);
-                    continue;
-                }
-
-                reg->start = paddr;
-                reg->reserved = 1;
-            } else {
-                pr_err("NXP/CMA: No free space in memory for '%s': size(%d)\n",
-                        reg->name, (int)reg->size);
-            }
-        }
-
-        if (reg->reserved) {
-            printk("NXP/CMA: "
-                    "Reserved 0x%p/0x%08x for '%s'\n",
-                    (void*)reg->start, (uint)reg->size, reg->name);
-
-#if 1
-            if (0 == cma_early_region_register(reg)) {
-                paddr_last = min(paddr, paddr_last);
-                printk("NXP/CMA: success register cma region for '%s'\n",
-                        reg->name);
-            } else {
-                pr_err("NXP/CMA: failed to cma_early_region_register for '%s'\n",
-                        reg->name);
-                memblock_free(reg->start, reg->size);
-            }
-#endif
-        }
-    }
-
-#if 1
-    if (map) {
-        cma_set_defaults(NULL, map);
-    }
-#endif
-}
-
-static void __init cpu_early_setup_mem(void)
-{
-    static struct cma_region regions[] = {
-        {
-            .name = "ion",
-#ifdef CONFIG_ION_NXP_CONTIGHEAP_SIZE
-            .size = CONFIG_ION_NXP_CONTIGHEAP_SIZE * SZ_1K,
-#else
-			.size = 0,
-#endif
-            {
-                .alignment = PAGE_SIZE,
-            }
-        },
-        {
-            .size = 0
-        }
-    };
-
-    static const char map[] __initconst =
-        "*=ion;"
-        "ion-nxp=ion;"
-        "nx_vpu=ion;";
-
-#ifdef CONFIG_ION_NXP_CONTIGHEAP_SIZE
-    printk("%s: reserve CMA: size %d\n", __func__, CONFIG_ION_NXP_CONTIGHEAP_SIZE * SZ_1K);
-#endif
-    cma_region_reserve(regions, map);
-}
-
-#else
-
-static char *my_cma_name = "ion";
-static struct cma_region reg;
-static int __init my_cma_setup(struct reserved_mem *rmem)
-{
-    static const char map[] __initconst =
-        "*=ion;"
-        "ion-nxp=ion;"
-        "nx_vpu=ion;";
-
-    phys_addr_t start = rmem->base;
-    phys_addr_t size = rmem->size;
-
-	printk("%s: start 0x%lx, size %lu\n", __func__, (long)start, (long)size);
-
-	reg.name = my_cma_name;
-    reg.start = start;
-    reg.size = size;
-    reg.alignment = PAGE_SIZE;
-    reg.reserved = 1;
-
-    if(0 == cma_early_region_register(&reg)) {
-		printk("%s: cma_eary_region_register success!!!\n", __func__);
-		cma_set_defaults(NULL, map);
-	} else {
-		printk("%s: FATAL ERROR ===> failed to cma_early_region_register!!!\n");
-	}
-}
-
-RESERVEDMEM_OF_DECLARE(my_cma, "cma_for_ion", my_cma_setup);
-#endif
-
-#endif
-
 static int __init cpu_early_initcall_setup(void)
 {
 	struct device_node *np = of_find_node_by_name(NULL, "pin_config");
@@ -276,13 +122,6 @@ static int __init cpu_early_initcall_setup(void)
 		iounmap(base);
 		index++;
 	}
-
-#if 0
-#if defined CONFIG_CMA && defined CONFIG_ION
-	cpu_early_setup_mem();
-#endif
-#endif
-
 	return 0;
 }
 early_initcall(cpu_early_initcall_setup);
