@@ -38,7 +38,7 @@
 /*
 #define pr_debug     printk
 */
-
+#define CPUFREQ_SMP_BROADCAST	// CONFIG_LOCAL_TIMERS
 #define DEV_NAME_CPUFREQ	"nxp-cpufreq"
 
 /*
@@ -263,7 +263,7 @@ static unsigned long nxp_cpufreq_change_frequency(struct cpufreq_dvfs_info *dvfs
 		dvfs->policy = &policy;
 	}
 
-#ifdef CONFIG_LOCAL_TIMERS
+#ifdef CPUFREQ_SMP_BROADCAST
 	for_each_cpu(freqs->cpu, dvfs->cpus)
 #endif
 		cpufreq_notify_transition(dvfs->policy, freqs, CPUFREQ_PRECHANGE);
@@ -284,7 +284,7 @@ static unsigned long nxp_cpufreq_change_frequency(struct cpufreq_dvfs_info *dvfs
 		dvfs->pre_freq_point = id;
 	}
 
-#ifdef CONFIG_LOCAL_TIMERS
+#ifdef CPUFREQ_SMP_BROADCAST
 	for_each_cpu(freqs->cpu, dvfs->cpus)
 #endif
 		cpufreq_notify_transition(dvfs->policy, freqs, CPUFREQ_POSTCHANGE);
@@ -736,7 +736,7 @@ static int __cpuinit nxp_cpufreq_init(struct cpufreq_policy *policy)
 	 * Each cpu is bound to the same speed.
 	 * So the affected cpu is all of the cpus.
 	 */
-#ifdef CONFIG_LOCAL_TIMERS
+#ifdef CPUFREQ_SMP_BROADCAST
 	if (num_online_cpus() == 1) {
 		cpumask_copy(policy->related_cpus, cpu_possible_mask);
 		cpumask_copy(policy->cpus, cpu_online_mask);
