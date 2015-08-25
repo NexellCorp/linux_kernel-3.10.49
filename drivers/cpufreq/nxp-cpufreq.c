@@ -38,7 +38,6 @@
 /*
 #define pr_debug     printk
 */
-#define CPUFREQ_SMP_BROADCAST	// CONFIG_LOCAL_TIMERS
 #define DEV_NAME_CPUFREQ	"nxp-cpufreq"
 
 /*
@@ -157,6 +156,7 @@ static enum hrtimer_restart nxp_cpufreq_restore_timer(struct hrtimer *hrtimer)
 		hrtimer_start(&dvfs->limits.rest_hrtimer,
 			ms_to_ktime(dvfs->limits.max_retent), HRTIMER_MODE_REL_PINNED);
 	}
+
 	return HRTIMER_NORESTART;
 }
 
@@ -218,13 +218,8 @@ static long nxp_cpufreq_change_voltage(struct cpufreq_dvfs_info *dvfs,
 		return -EINVAL;
 	}
 
-	if (false == margin && dvfs->asv_ops->get_voltage) {
+	if (false == margin && dvfs->asv_ops->get_voltage)
 		uV = dvfs->asv_ops->get_voltage(frequency);
-		/*
-		if (dvfs->asv_ops->get_vol_margin)
-			uV = dvfs->asv_ops->get_vol_margin(uV, 13, false, false);
-		*/
-	}
 
 	regulator_set_voltage(dvfs->volt, uV, uV);
 
@@ -263,10 +258,7 @@ static unsigned long nxp_cpufreq_change_frequency(struct cpufreq_dvfs_info *dvfs
 		dvfs->policy = &policy;
 	}
 
-#ifdef CPUFREQ_SMP_BROADCAST
-	for_each_cpu(freqs->cpu, dvfs->cpus)
-#endif
-		cpufreq_notify_transition(dvfs->policy, freqs, CPUFREQ_PRECHANGE);
+	cpufreq_notify_transition(dvfs->policy, freqs, CPUFREQ_PRECHANGE);
 
 	clk_set_rate(clk, freqs->new*1000);
 	rate_khz = clk_get_rate(clk)/1000;
@@ -284,10 +276,7 @@ static unsigned long nxp_cpufreq_change_frequency(struct cpufreq_dvfs_info *dvfs
 		dvfs->pre_freq_point = id;
 	}
 
-#ifdef CPUFREQ_SMP_BROADCAST
-	for_each_cpu(freqs->cpu, dvfs->cpus)
-#endif
-		cpufreq_notify_transition(dvfs->policy, freqs, CPUFREQ_POSTCHANGE);
+	cpufreq_notify_transition(dvfs->policy, freqs, CPUFREQ_POSTCHANGE);
 
 	/* post voltage */
 	if (freqs->old > freqs->new)
@@ -712,46 +701,24 @@ static int __cpuinit nxp_cpufreq_init(struct cpufreq_policy *policy)
 {
 	struct cpufreq_dvfs_info *dvfs = get_dvfs_ptr();
 	struct cpufreq_frequency_table *freq_table = dvfs->freq_table;
-	int res;
+	int table_size = dvfs->table_size;
 
-	pr_debug("nxp-cpufreq: available cpus (%d)\n", num_online_cpus());
-
-	res = cpufreq_frequency_table_cpuinfo(policy, freq_table);
-	if (res) {
-		pr_err("nxp-cpufreq: Failed to read policy table\n");
-		return res;
-	}
+	cpufreq_frequency_table_get_attr(freq_table, policy->cpu);
 
 	policy->cur = nxp_cpufreq_get_speed(policy->cpu);
-	policy->governor = CPUFREQ_DEFAULT_GOVERNOR;
+	policy->cpuinfo.min_freq = freq_table[table_size-1].frequency;
+	policy->cpuinfo.max_freq = freq_table[0].frequency;
 
 	/* set the transition latency value */
 	policy->cpuinfo.transition_latency = 100000;
 
-	cpufreq_frequency_table_get_attr(freq_table, policy->cpu);
+	/* for suspend */
+	cpumask_setall(policy->cpus);
 
-	/*
-	 * multi-core processors has 2 cores
-	 * that the frequency cannot be set independently.
-	 * Each cpu is bound to the same speed.
-	 * So the affected cpu is all of the cpus.
-	 */
-#ifdef CPUFREQ_SMP_BROADCAST
-	if (num_online_cpus() == 1) {
-		cpumask_copy(policy->related_cpus, cpu_possible_mask);
-		cpumask_copy(policy->cpus, cpu_online_mask);
-		cpumask_copy(dvfs->cpus, cpu_online_mask);
-	} else {
-		cpumask_setall(policy->cpus);
-		cpumask_setall(dvfs->cpus);
-	}
-#else
-	cpumask_copy(policy->related_cpus, cpu_possible_mask);
-	cpumask_copy(policy->cpus, cpu_online_mask);
-	cpumask_set_cpu(0, dvfs->cpus);
-#endif
+	pr_debug("nxp-cpufreq: available cpus (%d) (%u ~ %u)\n",
+		num_online_cpus(), policy->cpuinfo.min_freq, policy->cpuinfo.max_freq);
 
-	return 0;
+	return cpufreq_frequency_table_cpuinfo(policy, freq_table);
 }
 
 static struct cpufreq_driver nxp_cpufreq_driver = {
