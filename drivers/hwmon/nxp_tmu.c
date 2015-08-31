@@ -646,9 +646,9 @@ static ssize_t thermal_show_trim(struct device *dev,
 	return (s - buf);
 }
 
-static SENSOR_DEVICE_ATTR(temp_label, 0666, thermal_show_temp , NULL, SHOW_LABEL);
-static SENSOR_DEVICE_ATTR(temp_max  , 0666, thermal_show_max  , NULL, SHOW_LABEL);
-static SENSOR_DEVICE_ATTR(temp_trim , 0666, thermal_show_trim , NULL, SHOW_LABEL);
+static SENSOR_DEVICE_ATTR(temp_label, S_IRUGO, thermal_show_temp , NULL, SHOW_LABEL);
+static SENSOR_DEVICE_ATTR(temp_max  , S_IRUGO, thermal_show_max  , NULL, SHOW_LABEL);
+static SENSOR_DEVICE_ATTR(temp_trim , S_IRUGO, thermal_show_trim , NULL, SHOW_LABEL);
 
 static struct attribute *temp_attr[] = {
 	&sensor_dev_attr_temp_label.dev_attr.attr,
