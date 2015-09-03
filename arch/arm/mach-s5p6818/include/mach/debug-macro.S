@@ -21,16 +21,24 @@
 #include <nexell/serial-s3c.h>
 #include <mach/debug.h>
 
+#define PB_IO_MAP(_n_, _v_, _p_, _s_, _t_)			\
+	.equ	__PB_IO_MAP_ ## _n_ ## _PHYS,	_p_;	\
+	.equ	__PB_IO_MAP_ ## _n_ ## _VIRT,	_v_;	\
+
+#include <mach/s5p6818_iomap.h>
+
     /* note, for the boot process to work we have to keep the UART
      * virtual address aligned to an 1MiB boundary for the L1
      * mapping the head code makes. We keep the UART virtual address
      * aligned and add in the offset when we load the value here.
      */
 
+#define	PB_UART_VIRT_BASE	(__PB_IO_MAP_REGS_VIRT + (PB_UART_PHYS_BASE - __PB_IO_MAP_REGS_PHYS))
+
     .macro addruart, rp, rv, tmp
 #if defined(CONFIG_DEBUG_LL) && !defined(CONFIG_DEBUG_LL_UART_NONE)
 	ldr	\rp, = PB_UART_PHYS_BASE		@ physical address
-	ldr	\rv, = PB_UART_PHYS_BASE 		@ virtual address
+	ldr	\rv, = PB_UART_VIRT_BASE 		@ virtual address
 #endif
     .endm
 
