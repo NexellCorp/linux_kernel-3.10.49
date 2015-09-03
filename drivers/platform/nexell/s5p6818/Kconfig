@@ -1,10 +1,26 @@
 #
 # Copyright 2009 Nexell.
-#		http://www.nexell.co.kr
 #
-# Select Board types
+menu "SLsiAP s5p6818"
 
-if ARCH_S5P6818
-source "drivers/platform/nexell/s5p6818/cpu/Kconfig"
-endif
+choice
+	prompt "Prototype build mode"
+	default S5P6818_PROTO_RELEASE
+
+	config S5P6818_PROTO_RELEASE
+		bool "Release"
+
+	config S5P6818_PROTO_DEBUG
+		bool "Debug"
+endchoice
+
+config S5P6818_PM_IDLE
+	bool "Goto idle when Suspend"
+	depends on SUSPEND
+	default n
+
+source "drivers/platform/nexell/s5p6818/board/Kconfig"
+
+endmenu
+
 
