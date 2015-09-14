@@ -288,14 +288,15 @@ static inline void ts_adjust_calibration(u16 *x, u16 *y)
 	TS_DEBUG1("\n");
 }
 
-static void ts_setup_calibration(struct i2c_client *client)
+static void ts_setup_calibration(struct i2c_client *client,
+					struct nxp_ts_cali_plat_data *pdata)
 {
-	struct nxp_ts_cali_plat_data *plat = client->dev.platform_data;
+	struct nxp_ts_cali_plat_data *plat = client->dev.platform_data ?
+				client->dev.platform_data : pdata;
 	struct ft5x0x_ts_data *ts = i2c_get_clientdata(client);
 	struct ts_pointercal *point = &ts->pointer;
 	struct kobject *kobj = NULL;
-	int len = sizeof(int)*CAL_POINTER_NUM;
-	int ret;
+	int i = 0, ret;
 
 	TS_DEBUG("ts_setup_calibration\n");
 
@@ -319,7 +320,7 @@ static void ts_setup_calibration(struct i2c_client *client)
 	point->kobj = kobj;
     point->enable = 0;
 
-	if (! plat)
+	if (!plat)
 		return;
 
 	point->x_resol = plat->x_resol;
@@ -335,8 +336,11 @@ static void ts_setup_calibration(struct i2c_client *client)
 		plat->pointercal[2] != 0 || plat->pointercal[3] != 0 ||
 		plat->pointercal[4] != 0 || plat->pointercal[5] != 0 ||
 		plat->pointercal[6] != 0 ) {
-		memcpy(point->pointercal, plat->pointercal, len);
+
+		for (i = 0;	CAL_POINTER_NUM > i; i++)
+			point->pointercal[i] = plat->pointercal[i];
 		point->enable = 1;
+
 		TS_DEBUG("TS: pointercal {%d, %d, %d, %d, %d, %d, %d }\n",
 			point->pointercal[0], point->pointercal[1], point->pointercal[2],
 			point->pointercal[3], point->pointercal[4], point->pointercal[5],
@@ -579,6 +583,8 @@ static int ft5x0x_i2c_ts_probe_dt(struct device *dev, struct nxp_ts_cali_plat_da
 {
 	struct nxp_ts_cali_plat_data *pdata;
 	struct device_node *np = dev->of_node;
+	const char *cali = NULL;
+	int count = 0, i = 0;
 
 	if (!*ppdata) {
 		*ppdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
@@ -597,15 +603,16 @@ static int ft5x0x_i2c_ts_probe_dt(struct device *dev, struct nxp_ts_cali_plat_da
 	of_property_read_u32(np, "x_resol", &pdata->x_resol);
 	of_property_read_u32(np, "y_resol", &pdata->y_resol);
 	of_property_read_u32(np, "rotate", &pdata->rotate);
-	/*if (!of_property_read_u32(np, "ptr_cnt", &pdata->ptr_cnt)) {
-		of_property_read_u32_array(np, "pointercal", (uint32_t*)pdata->pointercal, pdata->ptr_cnt);
-	}*/
 
-	do {
-		printk("x_resol: %x, y_resol: %x, touch_points: %x, rotate: %x, irq: %x\n",
-				pdata->x_resol, pdata->y_resol, pdata->touch_points, pdata->rotate, pdata->touch_irq);
-	} while(0);
+	count = of_property_count_strings(np, "pointercal");
+	for (i= 0; count > i; i++) {
+		of_property_read_string_index(np, "pointercal", i, &cali);
+		pdata->pointercal[i] = simple_strtol(cali, NULL, 10);
+	}
 
+	printk("ft5x0x: %d x %d, points %d, rotate %d, irq: %d\n",
+		pdata->x_resol, pdata->y_resol, pdata->touch_points,
+		pdata->rotate, pdata->touch_irq);
 
 	return 0;
 }
@@ -644,13 +651,9 @@ ft5x0x_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 				"DT probe failed and no platform data present\n");
 			return err;
 		}
-	} else {
 	}
 
-	printk("before - irq: 0x%x, addr: 0x%x\n", client->irq, client->addr);
 	client->irq = pdata->touch_irq;
-	printk("after - irq: 0x%x, addr: 0x%x\n", client->irq, client->addr);
-
 
 	this_client = client;
 	i2c_set_clientdata(client, ts);
@@ -683,8 +686,8 @@ ft5x0x_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 
     set_bit(EV_ABS, input_dev->evbit);
 
-    input_set_abs_params(input_dev, ABS_MT_POSITION_X , 0, SCREEN_MAX_X-1, 0, 0);
-    input_set_abs_params(input_dev, ABS_MT_POSITION_Y , 0, SCREEN_MAX_Y-1, 0, 0);
+    input_set_abs_params(input_dev, ABS_MT_POSITION_X , 0, pdata->x_resol-1, 0, 0);
+    input_set_abs_params(input_dev, ABS_MT_POSITION_Y , 0, pdata->y_resol-1, 0, 0);
     input_set_abs_params(input_dev, ABS_MT_TOUCH_MAJOR, 0, PRESS_MAX, 0, 0);
 	input_set_abs_params(input_dev, ABS_MT_PRESSURE, 0, 255, 0, 0);
 #else
@@ -693,8 +696,8 @@ ft5x0x_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	set_bit(ABS_PRESSURE, input_dev->absbit);
 	set_bit(BTN_TOUCH, input_dev->keybit);
 
-	input_set_abs_params(input_dev, ABS_X, 0, SCREEN_MAX_X, 0, 0);
-	input_set_abs_params(input_dev, ABS_Y, 0, SCREEN_MAX_Y, 0, 0);
+	input_set_abs_params(input_dev, ABS_X, 0, pdata->x_resol, 0, 0);
+	input_set_abs_params(input_dev, ABS_Y, 0, pdata->y_resol, 0, 0);
 	input_set_abs_params(input_dev, ABS_PRESSURE, 0, PRESS_MAX, 0 , 0);
 
 	set_bit(EV_ABS, input_dev->evbit);
@@ -711,7 +714,7 @@ ft5x0x_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	}
 
 	/* Add by jhkim */
-	ts_setup_calibration(client);
+	ts_setup_calibration(client, pdata);
 
 	printk("touch: ft5x0x support %d point \n", ts->touch_point_max);
     return 0;
