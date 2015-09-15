@@ -1010,7 +1010,7 @@ static struct platform_driver cpufreq_driver = {
 };
 module_platform_driver(cpufreq_driver);
 
-static int __init early_asv_margin(char *str)
+int __init early_asv_margin(char *str)
 {
 	struct asv_margin *p = &asv_margin;
 	const char *s = strchr(str, '-');
