@@ -26,8 +26,8 @@ choice
    	config S5P6818_MARGIN_SVT_MINUS_3
 		bool "-3%"
 
-   	config S5P6818_MARGIN_SVT_PLUS_3
-		bool "+3%"
+   	config S5P6818_MARGIN_SVT_MINUS_5
+		bool "-5%"
 
 endchoice
 
