@@ -13,7 +13,7 @@ int __init svt_early_asv_margin(void)
 	#endif
 
 	#ifdef CONFIG_S5P6818_MARGIN_SVT_MINUS_5
-	char *margin = "-3%";
+	char *margin = "-5%";
 	#endif
 
 	early_asv_margin(margin);
