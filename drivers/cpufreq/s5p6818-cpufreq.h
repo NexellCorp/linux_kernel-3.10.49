@@ -231,12 +231,49 @@ static long s5p4418_asv_get_voltage(long freqkhz)
 	return uV;
 }
 
+#if defined (CONFIG_REGULATOR_MP8845C)
+#define	_V(v)	(v*100)
+
+static long find_uV(long uV)
+{
+	static const int vout_uV_list[] = {
+/*  0 */	_V( 6000), _V( 6067), _V( 6134), _V( 6201), _V( 6268), _V( 6335), _V( 6401), _V( 6468), _V( 6535), _V( 6602),
+/* 10 */	_V( 6669), _V( 6736), _V( 6803), _V( 6870), _V( 6937), _V( 7004), _V( 7070), _V( 7137), _V( 7204), _V( 7271),
+/* 20 */	_V( 7338), _V( 7405), _V( 7472), _V( 7539), _V( 7606), _V( 7673), _V( 7739), _V( 7806), _V( 7873), _V( 7940),
+/* 30 */	_V( 8007), _V( 8074), _V( 8141), _V( 8208), _V( 8275), _V( 8342), _V( 8408), _V( 8475), _V( 8542), _V( 8609),
+/* 40 */	_V( 8676), _V( 8743), _V( 8810), _V( 8877), _V( 8944), _V( 9011), _V( 9077), _V( 9144), _V( 9211), _V( 9278),
+/* 50 */	_V( 9345), _V( 9412), _V( 9479), _V( 9546), _V( 9613), _V( 9680), _V( 9746), _V( 9813), _V( 9880), _V( 9947),
+/* 60 */	_V(10014), _V(10081), _V(10148), _V(10215), _V(10282), _V(10349), _V(10415), _V(10482), _V(10549), _V(10616),
+/* 70 */	_V(10683), _V(10750), _V(10817), _V(10884), _V(10951), _V(11018), _V(11084), _V(11151), _V(11218), _V(11285),
+/* 80 */	_V(11352), _V(11419), _V(11486), _V(11553), _V(11620), _V(11687), _V(11753), _V(11820), _V(11887), _V(11954),
+/* 90 */	_V(12021), _V(12088), _V(12155), _V(12222), _V(12289), _V(12356), _V(12422), _V(12489), _V(12556), _V(12623),
+/*100 */	_V(12690), _V(12757), _V(12824), _V(12891), _V(12958), _V(13025), _V(13091), _V(13158), _V(13225), _V(13292),
+/*110 */	_V(13359), _V(13426), _V(13493), _V(13560), _V(13627), _V(13694), _V(13760), _V(13827), _V(13894), _V(13961),
+/*120 */	_V(14028), _V(14095), _V(14162), _V(14229), _V(14296), _V(14363), _V(14429), _V(14496),
+		};
+
+	int size = ARRAY_SIZE(vout_uV_list);
+	int ret = 0;
+
+	/* find upper vol */
+  	for (ret = 0; ret < size; ret++) {
+    	if (vout_uV_list[ret] >= uV)
+			break;
+  	}
+
+	if (ret == size)
+		ret = size - 1;
+
+  	return vout_uV_list[ret];
+}
+#endif
+
 static int s5p4418_asv_modify_vol_table(unsigned long (*freq_tables)[2], int table_size,
 				long value, bool down, bool percent)
 {
-	long step_vol = VOLTAGE_STEP_UV;
 	long uV, dv, new;
 	int i = 0, n = 0;
+	int al = 0;
 
 	if (NULL == freq_tables ||
 		NULL == pAsv_Table || (0 > value))
@@ -254,21 +291,26 @@ static int s5p4418_asv_modify_vol_table(unsigned long (*freq_tables)[2], int tab
 	printk("DVFS:%s%ld%s\n", down?"-":"+", value, percent?"%":"mV");
 
 	/* new voltage */
-	for (i = 0; table_size > i; i++) {
-		int al = 0;
+	for (i = 0; table_size > i; i++, al = 0) {
 		uV = freq_tables[i][1];
 		dv = percent ? ((uV/100) * value) : (value*1000);
 		new = down ? uV - dv : uV + dv;
 
-		if ((new % step_vol)) {
-			new = (new / step_vol) * step_vol;
-			al = 1;
-			if (down) new += step_vol;	/* Upper */
-		}
-
-		printk("%7ldkhz, %7ld (%s%ld) align %ld (%s) -> %7ld\n",
+		#if defined (CONFIG_REGULATOR_MP8845C)
+		new = find_uV(new);
+		printk("%7ldkhz, %7ld (%s%ld) request %7ld -> %7ld\n",
 			freq_tables[i][0], freq_tables[i][1],
-			down?"-":"+", dv, step_vol, al?"X":"O", new);
+			down?"-":"+", dv, (down ? uV - dv : uV + dv), new);
+		#else
+		if ((new % VOLTAGE_STEP_UV)) {
+			new = (new / VOLTAGE_STEP_UV) * VOLTAGE_STEP_UV;
+			al = 1;
+			if (down) new += VOLTAGE_STEP_UV;	/* Upper */
+		}
+		printk("%7ldkhz, %7ld (%s%ld) align %d (%s) -> %7ld\n",
+			freq_tables[i][0], freq_tables[i][1],
+			down?"-":"+", dv, VOLTAGE_STEP_UV, al?"X":"O", new);
+		#endif
 
 		freq_tables[i][1] = new;
 	}
