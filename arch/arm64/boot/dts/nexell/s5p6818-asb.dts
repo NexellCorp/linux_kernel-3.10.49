@@ -149,7 +149,7 @@
 				reg = <0>;
 				spi-max-frequency = < 50000000 >;
 				controller-data {
-			  	spi-cs-gpio = <(PAD_GPIO_C + 10)>;
+			  		//spi-cs-gpio = <(PAD_GPIO_C + 10)>;
 					spi-feedback-delay = <02>;
 					hierarchy = <1>; //0 : master, 1 : slave
 				};
